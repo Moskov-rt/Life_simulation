@@ -1,0 +1,6 @@
+{
+  "name": "Text-based Life Simulator",
+  "description": "A BitLife-inspired text-based life simulation game featuring an age-up game loop, conditional event triggering, persistent memory, and compartmentalized reputation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
