@@ -788,7 +788,13 @@ export default function App() {
   // Appearance Modal State
   const [showAppearanceModal, setShowAppearanceModal] = useState(false);
   const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
-  const [assetsSubView, setAssetsSubView] = useState<'main' | 'possessions' | 'social_media'>('main');
+  const [assetsSubView, setAssetsSubView] = useState<'main' | 'possessions' | 'social_media' | 'social_channel_dashboard'>('main');
+  const [activeSocialModal, setActiveSocialModal] = useState<'post' | 'troll' | 'celebrity' | 'promote' | null>(null);
+  const [selectedVictim, setSelectedVictim] = useState<string>('');
+  const [selectedPostType, setSelectedPostType] = useState<string>('');
+  const [selectedCelebrity, setSelectedCelebrity] = useState<string>('');
+  const [celebrityInteractionType, setCelebrityInteractionType] = useState<'reply' | 'flirt' | 'insult'>('reply');
+  const [showVerifyRejection, setShowVerifyRejection] = useState<boolean>(false);
   const [selectedSocialChannel, setSelectedSocialChannel] = useState<string | null>(null);
 
   // Sleep Popup state
@@ -6708,6 +6714,227 @@ export default function App() {
                 </div>
               )}
 
+              {/* ── SOCIAL CHANNEL DASHBOARD ── */}
+              {assetsSubView === 'social_channel_dashboard' && selectedSocialChannel && gameState.socialMedia?.[selectedSocialChannel] && (
+                (() => {
+                  const channel = selectedSocialChannel;
+                  const data = gameState.socialMedia[channel];
+                  const emojis = {
+                    facebook: '📘', instagram: '📸', onlyfans: '🍑', tiktok: '🎵',
+                    twitch: '🔮', twitter: '🐦', soundcloud: '☁️', podcast: '🎙️', youtube: '🎥'
+                  };
+                  const titles = {
+                    facebook: 'Facebook', instagram: 'Instagram', onlyfans: 'OnlyFans', tiktok: 'TikTok',
+                    twitch: 'Twitch', twitter: 'Twitter', soundcloud: 'SoundCloud', podcast: 'Podcast', youtube: 'YouTube'
+                  };
+
+                  const handleVerifyRequest = () => {
+                    triggerSound('click');
+                    // Requirements: > 50,000 followers and high status
+                    if (data.followers >= 50000 && gameState.stats.status >= 70) {
+                      triggerSound('success');
+                      setGameState({
+                        ...gameState,
+                        socialMedia: {
+                          ...gameState.socialMedia,
+                          [channel]: { ...data, verified: true }
+                        },
+                        log: [...gameState.log, `✔️ Verification Approved! Your ${titles[channel]} account is now officially verified.`]
+                      });
+                      setActionPopup({ isOpen: true, title: 'Verification Approved', message: `Congratulations! The moderators verified your account! You now have a verified badge next to your profile.` });
+                    } else {
+                      triggerSound('error');
+                      setShowVerifyRejection(true);
+                    }
+                  };
+
+                  const handlePromoteProduct = () => {
+                    triggerSound('click');
+                    if (data.followers < 5000) {
+                      setActionPopup({ isOpen: true, title: 'Not Famous Enough', message: 'You need at least 5,000 followers to promote products.' });
+                      return;
+                    }
+                    triggerSound('success');
+                    const payment = Math.min(5000, Math.floor(data.followers * 0.05));
+                    const lostFollowers = Math.floor(data.followers * 0.02);
+                    
+                    setGameState({
+                      ...gameState,
+                      cash: gameState.cash + payment,
+                      socialMedia: {
+                        ...gameState.socialMedia,
+                        [channel]: { ...data, followers: Math.max(0, data.followers - lostFollowers) }
+                      },
+                      log: [...gameState.log, `📈 Sponsored Promotion: Promoted a product on ${titles[channel]} and earned $${payment.toLocaleString()}. Lost ${lostFollowers.toLocaleString()} followers due to commercializing.`]
+                    });
+
+                    setActionPopup({ 
+                      isOpen: true, 
+                      title: 'Promotion Complete', 
+                      message: `You promoted a sponsored product!\n\nEarnings: +$${payment.toLocaleString()}\nFollower Change: -${lostFollowers.toLocaleString()} (fans hate ads!)`
+                    });
+                  };
+
+                  return (
+                    <div className="flex-grow flex flex-col min-h-0 bg-[#f4f3f0]">
+                      {/* Header banner */}
+                      <div className="bg-[#0f4a8a] text-white py-3 px-4 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => { triggerSound('click'); setAssetsSubView('social_media'); }}
+                            className="text-xs font-black bg-white/20 hover:bg-white/30 px-3 py-1 rounded cursor-pointer transition"
+                          >
+                            ❮ Back
+                          </button>
+                          <span className="font-extrabold text-sm tracking-wider uppercase">{titles[channel]}</span>
+                        </div>
+                        <span className="text-[10px] font-bold opacity-80">v3.24a</span>
+                      </div>
+
+                      {/* Profile Banner */}
+                      <div className="bg-white border-b border-[#ebdcb9] p-4 text-left flex items-center gap-4 shrink-0">
+                        <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center text-3xl shadow-sm border border-slate-200 shrink-0">
+                          {emojis[channel]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-black text-[#0f4a8a] text-base leading-tight flex items-center gap-1.5">
+                            {titles[channel]} Account
+                            {data.verified && <span className="text-sky-500 text-sm" title="Verified">✔️</span>}
+                          </h4>
+                          <p className="text-xs font-bold text-slate-500 mt-1">{(data.followers || 0).toLocaleString()} followers</p>
+                        </div>
+                      </div>
+
+                      {/* Activities Header */}
+                      <div className="bg-[#5d4037] text-white text-[9px] font-black text-center py-1 tracking-widest uppercase font-mono shrink-0">
+                        Activities
+                      </div>
+
+                      {/* List of actions */}
+                      <div className="flex-1 overflow-y-auto divide-y divide-[#ebdcb9] bg-white border-b border-[#ebdcb9] text-left pb-24">
+                        
+                        {/* Celebrity Interaction */}
+                        <button 
+                          onClick={() => {
+                            triggerSound('click');
+                            setSelectedCelebrity('Taylor Swift');
+                            setCelebrityInteractionType('reply');
+                            setActiveSocialModal('celebrity');
+                          }}
+                          className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="text-2xl">⭐</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-extrabold text-sm text-[#5d4037] block">Celebrity</span>
+                            <span className="text-[10px] text-slate-400 block truncate">Reply to a celebrity</span>
+                          </div>
+                          <span className="text-slate-300 font-bold">•••</span>
+                        </button>
+
+                        {/* Delete Account */}
+                        <button 
+                          onClick={() => {
+                            triggerSound('click');
+                            if (window.confirm(`Are you sure you want to permanently delete your ${titles[channel]} account?`)) {
+                              setGameState({
+                                ...gameState,
+                                socialMedia: {
+                                  ...gameState.socialMedia,
+                                  [channel]: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 }
+                                },
+                                log: [...gameState.log, `❌ Closed your ${titles[channel]} account.`]
+                              });
+                              setAssetsSubView('social_media');
+                            }
+                          }}
+                          className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="text-2xl">🗑️</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-extrabold text-sm text-red-600 block">Delete</span>
+                            <span className="text-[10px] text-slate-400 block truncate font-mono">Delete your account</span>
+                          </div>
+                          <span className="text-slate-300 font-bold">•••</span>
+                        </button>
+
+                        {/* Post Content */}
+                        <button 
+                          onClick={() => {
+                            triggerSound('click');
+                            const defaultPostTypes = {
+                              facebook: 'Selfie', instagram: 'Selfie', onlyfans: 'Thirst Trap',
+                              tiktok: 'Dance Trend', twitch: 'Gaming Stream', twitter: 'Meme',
+                              soundcloud: 'Original Track', podcast: 'Solo Rant', youtube: 'Vlog'
+                            };
+                            setSelectedPostType(defaultPostTypes[channel] || 'Selfie');
+                            setActiveSocialModal('post');
+                          }}
+                          className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="text-2xl">✍️</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-extrabold text-sm text-[#5d4037] block">Post</span>
+                            <span className="text-[10px] text-slate-400 block truncate">Make a post</span>
+                          </div>
+                          <span className="text-slate-300 font-bold">•••</span>
+                        </button>
+
+                        {/* Promote Product */}
+                        <button 
+                          onClick={handlePromoteProduct}
+                          className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="text-2xl">📈</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-extrabold text-sm text-[#5d4037] block">Promote</span>
+                            <span className="text-[10px] text-slate-400 block truncate">Promote a product</span>
+                          </div>
+                          <span className="text-slate-300 font-bold">•••</span>
+                        </button>
+
+                        {/* Troll */}
+                        <button 
+                          onClick={() => {
+                            triggerSound('click');
+                            // Pick first available relative/friend, otherwise fallback to celebrity
+                            const contacts = gameState.relationships.filter(r => !r.isDeceased);
+                            if (contacts.length > 0) {
+                              setSelectedVictim(contacts[0].name);
+                            } else {
+                              setSelectedVictim('Taylor Swift');
+                            }
+                            setActiveSocialModal('troll');
+                          }}
+                          className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="text-2xl">👹</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-extrabold text-sm text-[#5d4037] block">Troll</span>
+                            <span className="text-[10px] text-slate-400 block truncate">Troll someone</span>
+                          </div>
+                          <span className="text-slate-300 font-bold">•••</span>
+                        </button>
+
+                        {/* Verify Request */}
+                        <button 
+                          onClick={handleVerifyRequest}
+                          className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="text-2xl">✔️</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-extrabold text-sm text-[#5d4037] block">Verify</span>
+                            <span className="text-[10px] text-slate-400 block truncate">Request verification</span>
+                          </div>
+                          <span className="text-slate-300 font-bold">•••</span>
+                        </button>
+
+                      </div>
+
+                    </div>
+                  );
+                })()
+              )}
+
               {/* ── SOCIAL MEDIA VIEW ── */}
               {assetsSubView === 'social_media' && (
                 <div className="flex-1 flex flex-col min-h-0 bg-white">
@@ -6755,6 +6982,7 @@ export default function App() {
                               triggerSound('click');
                               if (active) {
                                 setSelectedSocialChannel(c.id);
+                                setAssetsSubView('social_channel_dashboard');
                               } else {
                                 // Sign up flow
                                 setGameState({
@@ -8031,8 +8259,8 @@ export default function App() {
         </div>
       )}
 
-            {/* SOCIAL MEDIA DETAIL/DASHBOARD MODAL */}
-      {selectedSocialChannel && gameState.socialMedia?.[selectedSocialChannel] && (
+            {/* SOCIAL MEDIA DETAIL/DASHBOARD MODAL - REMOVED */}
+      {false && (
         (() => {
           const channel = selectedSocialChannel;
           const data = gameState.socialMedia[channel];
@@ -8306,6 +8534,457 @@ export default function App() {
         })()
       )}
 
+
+      {/* SOCIAL MEDIA POST MODAL */}
+      {activeSocialModal === 'post' && selectedSocialChannel && gameState.socialMedia?.[selectedSocialChannel] && (
+        (() => {
+          const channel = selectedSocialChannel;
+          const data = gameState.socialMedia[channel];
+          const titles = {
+            facebook: 'Facebook', instagram: 'Instagram', onlyfans: 'OnlyFans', tiktok: 'TikTok',
+            twitch: 'Twitch', twitter: 'Twitter', soundcloud: 'SoundCloud', podcast: 'Podcast', youtube: 'YouTube'
+          };
+          const emojis = {
+            facebook: '📘', instagram: '📸', onlyfans: '🍑', tiktok: '🎵',
+            twitch: '🔮', twitter: '🐦', soundcloud: '☁️', podcast: '🎙️', youtube: '🎥'
+          };
+
+          const postOptions = {
+            facebook: ['Reshare Musician', 'Selfie', 'Social Justice', 'Story', 'Travel Photo', 'Vlog', 'Family Photo'],
+            instagram: ['Thirst Trap', 'Selfie', 'Travel Photo', 'Workout Selfie', 'OOTD (Outfit of the Day)', 'Food Pic'],
+            onlyfans: ['Thirst Trap', 'Bikini Pic', 'Sexy Video', 'Lingerie Shoot', 'Custom Request', 'Nude Photo'],
+            tiktok: ['Dance Trend', 'Comedy Skit', 'Lip Sync', 'Transition Video', 'Prank Video'],
+            youtube: ['Gaming Video', 'Review Video', 'Vlog', 'Tutorial', 'DIY Challenge'],
+            twitch: ['Gaming Stream', 'ASMR Stream', 'Just Chatting', 'Speedrun'],
+            twitter: ['Hot Take', 'Shitpost', 'Political Rant', 'Meme', 'Life Update'],
+            soundcloud: ['Original Track', 'Remix Track', 'Freestyle Rap'],
+            podcast: ['Solo Rant', 'True Crime Story', 'Guest Interview', 'Conspiracy Theory']
+          };
+
+          const options = postOptions[channel as keyof typeof postOptions] || ['Selfie'];
+
+          const executePost = () => {
+            triggerSound('click');
+            let looksFactor = gameState.stats.looks / 100;
+            let smartsFactor = gameState.stats.smarts / 100;
+            let followerGained = 0;
+            let happinessChange = 3;
+            let relationshipPenalty = 0;
+            let outcomeText = "";
+
+            const topic = selectedPostType || options[0];
+
+            if (channel === 'onlyfans') {
+              // Adult themed posting
+              followerGained = Math.floor((Math.random() * 6000 + 1000) * (looksFactor * 2 + 0.3));
+              relationshipPenalty = 15; // Conservative relationships drop trust
+              outcomeText = `You uploaded a provocative "${topic}" to your OnlyFans. Fans rushed to subscribe!`;
+            } else {
+              if (topic.includes('Thirst Trap') || topic.includes('Workout Selfie') || topic.includes('Bikini')) {
+                followerGained = Math.floor((Math.random() * 2000 + 300) * (looksFactor + 0.2));
+                outcomeText = `You posted a spicy ${topic}. Your looks gathered plenty of likes!`;
+              } else if (topic.includes('Hot Take') || topic.includes('Political') || topic.includes('Opinion')) {
+                const roll = Math.random();
+                if (roll > 0.45) {
+                  followerGained = Math.floor(Math.random() * 4500) + 800;
+                  outcomeText = `You shared a controversial ${topic}. It generated massive debate and went viral!`;
+                } else {
+                  followerGained = -Math.floor(Math.random() * 2000) - 300;
+                  happinessChange = -15;
+                  outcomeText = `You shared a highly controversial ${topic}. You were completely canceled by the internet mob!`;
+                }
+              } else if (topic.includes('Tutorial') || topic.includes('Review') || topic.includes('DIY') || topic.includes('Conspiracy')) {
+                followerGained = Math.floor((Math.random() * 1500 + 200) * (smartsFactor + 0.2));
+                outcomeText = `You uploaded a detailed ${topic}. People appreciated your knowledge.`;
+              } else {
+                followerGained = Math.floor(Math.random() * 1000) + 100;
+                outcomeText = `You shared a standard ${topic} on your account.`;
+              }
+            }
+
+            const nextStats = { ...gameState.stats };
+            nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + happinessChange));
+            
+            // Apply relationship penalty for OnlyFans/Thirst posts
+            let nextRelationships = [...gameState.relationships];
+            if (relationshipPenalty > 0) {
+              nextRelationships = gameState.relationships.map(r => {
+                if (r.relation === 'parent' || r.relation === 'partner' || r.relation === 'spouse') {
+                  return { ...r, trust: Math.max(0, r.trust - relationshipPenalty), resentment: Math.min(100, r.resentment + 5) };
+                }
+                return r;
+              });
+            }
+
+            setGameState({
+              ...gameState,
+              stats: nextStats,
+              relationships: nextRelationships,
+              socialMedia: {
+                ...gameState.socialMedia,
+                [channel]: {
+                  ...data,
+                  followers: Math.max(0, data.followers + followerGained),
+                  postsCount: data.postsCount + 1
+                }
+              },
+              log: [...gameState.log, `📱 Posted a "${topic}" on ${titles[channel]}. Gained ${followerGained.toLocaleString()} followers.`]
+            });
+
+            setActiveSocialModal(null);
+            setActionPopup({ 
+              isOpen: true, 
+              title: followerGained >= 0 ? 'Post Successful' : 'Drama Alert', 
+              message: `${outcomeText}\n\nFollowers: ${followerGained >= 0 ? '+' : ''}${followerGained.toLocaleString()}`
+            });
+          };
+
+          return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative border-4 border-slate-300 flex flex-col">
+                <button 
+                  onClick={() => { triggerSound('click'); setActiveSocialModal(null); }}
+                  className="absolute -top-3 -left-3 z-10 bg-white rounded-full p-1 shadow-lg border border-slate-300 hover:scale-110 transition active:scale-95 cursor-pointer"
+                >
+                  <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-extrabold text-sm select-none">✕</div>
+                </button>
+
+                <div className="bg-gradient-to-r from-[#d75024] to-[#f55928] py-4 px-6 text-white border-b-4 border-white/20 flex justify-between items-center">
+                  <h3 className="font-black text-xl tracking-tight drop-shadow-md flex items-center gap-2">
+                    {emojis[channel]} Post
+                  </h3>
+                  <span className="text-white/70 font-black tracking-widest text-xs uppercase font-mono">Social</span>
+                </div>
+
+                <div className="p-6 space-y-5 text-left">
+                  <p className="text-sm font-bold text-slate-700">Make a post on {titles[channel]} today!</p>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">Pick your post:</label>
+                    <div className="relative">
+                      <select 
+                        value={selectedPostType || options[0]}
+                        onChange={(e) => setSelectedPostType(e.target.value)}
+                        className="w-full bg-[#f4f3f0] border-2 border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 font-bold text-sm outline-none focus:border-indigo-600 transition cursor-pointer appearance-none"
+                      >
+                        {options.map((opt) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-xs">▼</div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={executePost}
+                    className="w-full bg-[#2da641] hover:bg-[#258a36] text-white font-black py-3 rounded-xl transition cursor-pointer text-center text-sm shadow-md"
+                  >
+                    Post
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()
+      )}
+
+      {/* SOCIAL MEDIA TROLL MODAL */}
+      {activeSocialModal === 'troll' && selectedSocialChannel && (
+        (() => {
+          const channel = selectedSocialChannel;
+          const data = gameState.socialMedia[channel];
+          const titles = {
+            facebook: 'Facebook', instagram: 'Instagram', onlyfans: 'OnlyFans', tiktok: 'TikTok',
+            twitch: 'Twitch', twitter: 'Twitter', soundcloud: 'SoundCloud', podcast: 'Podcast', youtube: 'YouTube'
+          };
+
+          const celebrities = ['Usher', 'Kesha', 'Olivia Rodrigo', '@BitLifeApp', 'Taylor Swift'];
+          const relatives = gameState.relationships.filter(r => !r.isDeceased).map(r => r.name);
+          const victims = [...celebrities, ...relatives];
+
+          const executeTroll = () => {
+            triggerSound('click');
+            const target = selectedVictim || victims[0];
+            const isCelebrity = celebrities.includes(target);
+            const roll = Math.random();
+
+            let followerChange = 0;
+            let happinessChange = 0;
+            let trustChange = 0;
+            let resentmentChange = 0;
+            let outcomeText = "";
+
+            if (isCelebrity) {
+              if (roll > 0.6) {
+                // Success
+                followerChange = Math.floor(Math.random() * 3000) + 500;
+                outcomeText = `You made a savage troll post targeting ${target}. It went completely viral and got tons of retweets!`;
+              } else if (roll > 0.3) {
+                // Ignore/Block
+                followerChange = -Math.floor(Math.random() * 500);
+                outcomeText = `${target} noticed your comment and immediately blocked you. Your followers laughed at you.`;
+              } else {
+                // Roasted
+                followerChange = -Math.floor(Math.random() * 1500) - 200;
+                happinessChange = -15;
+                outcomeText = `${target} clapped back at your comment with a brutal, genius burn. You feel humiliated.`;
+              }
+            } else {
+              // Trolling relationships
+              trustChange = -25;
+              resentmentChange = 30;
+              if (roll > 0.5) {
+                followerChange = Math.floor(Math.random() * 200) + 50;
+                outcomeText = `You trolled your relationship contact, ${target}, with an embarrassing meme. Your followers found it hilarious, but ${target} is extremely angry!`;
+              } else {
+                followerChange = -Math.floor(Math.random() * 100);
+                outcomeText = `You posted a mean troll post targeting ${target}. The community criticized you for picking on someone you know.`;
+              }
+            }
+
+            const nextStats = { ...gameState.stats };
+            if (happinessChange !== 0) nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + happinessChange));
+
+            let nextRelationships = [...gameState.relationships];
+            if (!isCelebrity) {
+              nextRelationships = gameState.relationships.map(r => {
+                if (r.name === target) {
+                  return {
+                    ...r,
+                    trust: Math.max(0, r.trust + trustChange),
+                    resentment: Math.min(100, r.resentment + resentmentChange)
+                  };
+                }
+                return r;
+              });
+            }
+
+            setGameState({
+              ...gameState,
+              stats: nextStats,
+              relationships: nextRelationships,
+              socialMedia: {
+                ...gameState.socialMedia,
+                [channel]: { ...data, followers: Math.max(0, data.followers + followerChange) }
+              },
+              log: [...gameState.log, `👹 Trolled ${target} on ${titles[channel]}. Followers change: ${followerChange.toLocaleString()}.`]
+            });
+
+            setActiveSocialModal(null);
+            setActionPopup({
+              isOpen: true,
+              title: followerChange >= 0 ? 'Trolling Successful' : 'Troll Outcome',
+              message: `${outcomeText}\n\nFollowers: ${followerChange >= 0 ? '+' : ''}${followerChange.toLocaleString()}`
+            });
+          };
+
+          return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative border-4 border-slate-300 flex flex-col">
+                <button 
+                  onClick={() => { triggerSound('click'); setActiveSocialModal(null); }}
+                  className="absolute -top-3 -left-3 z-10 bg-white rounded-full p-1 shadow-lg border border-slate-200 hover:scale-110 transition active:scale-95 cursor-pointer"
+                >
+                  <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-extrabold text-sm select-none">✕</div>
+                </button>
+
+                <div className="bg-gradient-to-r from-[#d75024] to-[#f55928] py-4 px-6 text-white border-b-4 border-white/20 flex justify-between items-center">
+                  <h3 className="font-black text-xl tracking-tight drop-shadow-md flex items-center gap-2">
+                    👹 Troll
+                  </h3>
+                  <span className="text-white/70 font-black tracking-widest text-xs uppercase font-mono">Social</span>
+                </div>
+
+                <div className="p-6 space-y-5 text-left">
+                  <p className="text-sm font-bold text-slate-700">Troll someone on {titles[channel]} today!</p>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">Pick your victim:</label>
+                    <div className="relative">
+                      <select 
+                        value={selectedVictim || victims[0]}
+                        onChange={(e) => setSelectedVictim(e.target.value)}
+                        className="w-full bg-[#f4f3f0] border-2 border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 font-bold text-sm outline-none focus:border-indigo-600 transition cursor-pointer appearance-none"
+                      >
+                        {victims.map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-xs">▼</div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={executeTroll}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl transition cursor-pointer text-center text-sm shadow-md"
+                  >
+                    Troll
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()
+      )}
+
+      {/* SOCIAL MEDIA CELEBRITY INTERACTION MODAL */}
+      {activeSocialModal === 'celebrity' && selectedSocialChannel && (
+        (() => {
+          const channel = selectedSocialChannel;
+          const data = gameState.socialMedia[channel];
+          const titles = {
+            facebook: 'Facebook', instagram: 'Instagram', onlyfans: 'OnlyFans', tiktok: 'TikTok',
+            twitch: 'Twitch', twitter: 'Twitter', soundcloud: 'SoundCloud', podcast: 'Podcast', youtube: 'YouTube'
+          };
+          const celebrities = ['Taylor Swift', 'Olivia Rodrigo', 'Usher', 'Kesha', '@BitLifeApp'];
+
+          const executeCelebrityInteraction = () => {
+            triggerSound('click');
+            const target = selectedCelebrity || celebrities[0];
+            const type = celebrityInteractionType || 'reply';
+            const roll = Math.random();
+
+            let followerChange = 0;
+            let happinessChange = 0;
+            let outcomeText = "";
+
+            if (type === 'reply') {
+              if (roll > 0.7) {
+                followerChange = Math.floor(Math.random() * 2000) + 400;
+                outcomeText = `You left a witty reply under ${target}'s latest post. They pinned your reply, giving you a huge boost!`;
+              } else {
+                followerChange = Math.floor(Math.random() * 200);
+                outcomeText = `You replied to ${target}'s post. It got a few likes but was mostly buried in the comments.`;
+              }
+            } else if (type === 'flirt') {
+              if (roll > 0.85) {
+                followerChange = Math.floor(Math.random() * 8000) + 1500;
+                happinessChange = 15;
+                outcomeText = `MIRACLE! ${target} replied to your flirtatious message with a wink emoji! The internet went absolutely crazy.`;
+              } else if (roll > 0.4) {
+                outcomeText = `You sent a cheesy pickup line to ${target}. They completely ignored it.`;
+              } else {
+                followerChange = -Math.floor(Math.random() * 1000);
+                happinessChange = -5;
+                outcomeText = `${target} blocked you for flirting on their professional profile. Awkward.`;
+              }
+            } else if (type === 'insult') {
+              if (roll > 0.6) {
+                followerChange = Math.floor(Math.random() * 3000) + 500;
+                outcomeText = `You left a hilarious, highly critical insult on ${target}'s page. Fans loved the drama!`;
+              } else {
+                followerChange = -Math.floor(Math.random() * 2000) - 200;
+                happinessChange = -10;
+                outcomeText = `${target}'s massive fanbase swarmed your profile, mass-reporting you and leaving nasty comments.`;
+              }
+            }
+
+            const nextStats = { ...gameState.stats };
+            if (happinessChange !== 0) nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + happinessChange));
+
+            setGameState({
+              ...gameState,
+              stats: nextStats,
+              socialMedia: {
+                ...gameState.socialMedia,
+                [channel]: { ...data, followers: Math.max(0, data.followers + followerChange) }
+              },
+              log: [...gameState.log, `⭐ Interacted with ${target} (${type}) on ${titles[channel]}. Followers change: ${followerChange.toLocaleString()}.`]
+            });
+
+            setActiveSocialModal(null);
+            setActionPopup({
+              isOpen: true,
+              title: 'Celebrity Interaction',
+              message: `${outcomeText}\n\nFollowers: ${followerChange >= 0 ? '+' : ''}${followerChange.toLocaleString()}`
+            });
+          };
+
+          return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative border-4 border-slate-300 flex flex-col">
+                <button 
+                  onClick={() => { triggerSound('click'); setActiveSocialModal(null); }}
+                  className="absolute -top-3 -left-3 z-10 bg-white rounded-full p-1 shadow-lg border border-slate-200 hover:scale-110 transition active:scale-95 cursor-pointer"
+                >
+                  <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-extrabold text-sm select-none">✕</div>
+                </button>
+
+                <div className="bg-gradient-to-r from-[#d75024] to-[#f55928] py-4 px-6 text-white border-b-4 border-white/20 flex justify-between items-center">
+                  <h3 className="font-black text-xl tracking-tight drop-shadow-md flex items-center gap-2">
+                    ⭐ Celebrity Interaction
+                  </h3>
+                  <span className="text-white/70 font-black tracking-widest text-xs uppercase font-mono">Social</span>
+                </div>
+
+                <div className="p-6 space-y-4 text-left">
+                  <p className="text-sm font-bold text-slate-700">Choose your celebrity target & action:</p>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">Celebrity:</label>
+                    <div className="relative">
+                      <select 
+                        value={selectedCelebrity || celebrities[0]}
+                        onChange={(e) => setSelectedCelebrity(e.target.value)}
+                        className="w-full bg-[#f4f3f0] border-2 border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 font-bold text-sm outline-none focus:border-indigo-600 transition cursor-pointer appearance-none"
+                      >
+                        {celebrities.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-xs">▼</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">Action:</label>
+                    <div className="relative">
+                      <select 
+                        value={celebrityInteractionType || 'reply'}
+                        onChange={(e) => setCelebrityInteractionType(e.target.value as any)}
+                        className="w-full bg-[#f4f3f0] border-2 border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 font-bold text-sm outline-none focus:border-indigo-600 transition cursor-pointer appearance-none"
+                      >
+                        <option value="reply">💬 Leave Witty Reply</option>
+                        <option value="flirt">❤️ Flirt with Them</option>
+                        <option value="insult">🔥 Troll / Insult Them</option>
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-xs">▼</div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={executeCelebrityInteraction}
+                    className="w-full bg-[#2da641] hover:bg-[#258a36] text-white font-black py-3 rounded-xl transition cursor-pointer text-center text-sm shadow-md mt-2"
+                  >
+                    Interact
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()
+      )}
+
+      {/* VERIFY REJECTION MODAL */}
+      {showVerifyRejection && selectedSocialChannel && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative border-4 border-sky-400 flex flex-col p-6 text-center">
+            
+            <h2 className="text-[#0f4a8a] font-black text-2xl tracking-tight mb-4 uppercase mt-2">Who are you?</h2>
+            
+            <p className="text-slate-600 font-bold text-sm leading-relaxed mb-6">
+              Your attempt to verify your {selectedSocialChannel.charAt(0).toUpperCase() + selectedSocialChannel.slice(1)} account has been rejected.
+            </p>
+
+            <button
+              onClick={() => { triggerSound('click'); setShowVerifyRejection(false); }}
+              className="bg-[#0f4a8a] hover:bg-[#093566] text-white font-black py-2.5 rounded-xl transition cursor-pointer text-sm shadow-md"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       {showAppearanceModal && gameState && (
           <AppearanceModal
