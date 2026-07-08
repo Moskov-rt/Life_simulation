@@ -787,6 +787,9 @@ export default function App() {
 
   // Appearance Modal State
   const [showAppearanceModal, setShowAppearanceModal] = useState(false);
+  const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
+  const [assetsSubView, setAssetsSubView] = useState<'main' | 'possessions' | 'social_media'>('main');
+  const [selectedSocialChannel, setSelectedSocialChannel] = useState<string | null>(null);
 
   // Sleep Popup state
   const [actionPopup, setActionPopup] = useState<{
@@ -1218,7 +1221,18 @@ export default function App() {
       activeRelationshipContextId: null,
       recentEventIds: [],
       lastOutcome: null,
-      completedEducation: []
+      completedEducation: [],
+      socialMedia: {
+        facebook: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        instagram: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        onlyfans: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0, subscribers: 0, subscriptionPrice: 10 },
+        tiktok: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        twitch: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        twitter: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        soundcloud: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        podcast: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        youtube: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 }
+      },
     };
 
     setGameState(initialGameState);
@@ -2048,6 +2062,7 @@ export default function App() {
     let nextCareer = { ...gameState.career };
     nextCareer.yearsInRole = (nextCareer.yearsInRole || 0) + 1;
     let nextCompletedEducation = gameState.completedEducation ? [...gameState.completedEducation] : [];
+    let nextSocialMedia = gameState.socialMedia ? JSON.parse(JSON.stringify(gameState.socialMedia)) : {};
 
     // Graduation logic
     if (nextCareer.type === 'school' && nextCareer.educationLevel && nextCareer.educationLevel !== 'High School') {
@@ -2079,7 +2094,73 @@ export default function App() {
 
     // 1. Natural stat fluctuations & career progression
     if (nextCareer.type === 'job' && nextCareer.performance !== undefined) {
-      nextCareer.workHarderCount = 0; // Reset annual work harder count
+          // Social Media natural updates and income
+    if (gameState.socialMedia) {
+      let earnedCash = 0;
+      let socialLogs: string[] = [];
+
+      Object.entries(nextSocialMedia).forEach(([channel, data]) => {
+        if (!data.signedUp || data.suspended) return;
+
+        // Organic growth/decay
+        let growthFactor = 1.0;
+        if (gameState.stats.looks > 70) growthFactor += 0.05;
+        if (gameState.stats.smarts > 70) growthFactor += 0.03;
+        if (data.verified) growthFactor += 0.05;
+
+        // Natural decay if they didn't post
+        if (data.postsCount === 0) {
+          data.followers = Math.max(0, Math.floor(data.followers * 0.95));
+        } else {
+          // Organic new followers based on posts count
+          const newFollowers = Math.floor(Math.random() * 200 * data.postsCount * growthFactor);
+          data.followers += newFollowers;
+        }
+
+        // Reset annual post counts
+        data.postsCount = 0;
+
+        // Auto verification milestone
+        if (data.followers >= 100000 && !data.verified) {
+          data.verified = true;
+          socialLogs.push(`🌟 Congratulations! Your ${channel} account has been verified!`);
+        }
+
+        // Payout logic
+        if (channel === 'onlyfans') {
+          const price = data.subscriptionPrice || 10;
+          const targetSubs = Math.floor(data.followers * (gameState.stats.looks / 100) * (15 / price));
+          data.subscribers = Math.max(0, Math.min(data.followers, targetSubs));
+          const payout = data.subscribers * price * 12; // Yearly earnings
+          if (payout > 0) {
+            earnedCash += payout;
+            socialLogs.push(`🍑 OnlyFans: Earned $${payout.toLocaleString()} from your subscribers this year!`);
+          }
+        } else if (channel === 'youtube' && data.followers >= 10000) {
+          const payout = Math.floor(data.followers * 0.05);
+          earnedCash += payout;
+          socialLogs.push(`🎥 YouTube: Earned $${payout.toLocaleString()} from ad revenue this year!`);
+        } else if (channel === 'twitch' && data.followers >= 5000) {
+          const payout = Math.floor(data.followers * 0.08);
+          earnedCash += payout;
+          socialLogs.push(`🔮 Twitch: Earned $${payout.toLocaleString()} from subscriptions and donations!`);
+        } else if (channel === 'tiktok' && data.followers >= 50000) {
+          const payout = Math.floor(data.followers * 0.02);
+          earnedCash += payout;
+          socialLogs.push(`🎵 TikTok: Earned $${payout.toLocaleString()} from the Creator Fund!`);
+        }
+      });
+
+      if (earnedCash > 0) {
+        nextCash += earnedCash;
+      }
+      if (socialLogs.length > 0) {
+        newLogs.push(...socialLogs);
+      }
+      
+      // Update state
+      nextCareer.workHarderCount = 0;
+
       
       // Handle weekly hours effects
       const hours = nextCareer.hoursPerWeek || 40;
@@ -2513,6 +2594,7 @@ export default function App() {
       career: nextCareer,
       completedEducation: nextCompletedEducation,
       delayedEvents: nextDelayedEvents,
+      socialMedia: nextSocialMedia,
       log: [...gameState.log, ...newLogs],
       currentEvent: triggeredEvent,
       activeRelationshipContextId,
@@ -3418,6 +3500,17 @@ export default function App() {
         });
       }
       
+      const employers = {
+        'tech': ['TechNova Solutions', 'CyberDyne Systems', 'Initech', 'Pied Piper'],
+        'medical': ['St. Jude\'s Hospital', 'Mercy General', 'Springfield Medical Center', 'Apex Health'],
+        'corporate': ['Globex Corporation', 'Wayne Enterprises', 'Omni Consumer Products', 'Prestige Worldwide'],
+        'retail': ['Dumpton\'s', 'S-Mart', 'MegaLo Mart', 'Cloud 9 Superstore'],
+        'special': ['Freelance', 'Independent', 'Government'],
+        'entertainment': ['Star Records', 'Vivid Productions', 'Hollywood Studios']
+      };
+      const empList = employers[theJob.industry as keyof typeof employers] || employers['retail'];
+      const randomEmployer = empList[Math.floor(Math.random() * empList.length)];
+      
       nextCareer = {
         type: 'job',
         title: theJob.title,
@@ -3427,7 +3520,8 @@ export default function App() {
         workHarderCount: 0,
         hoursPerWeek: 40,
         industry: theJob.industry,
-        tier: theJob.tier
+        tier: theJob.tier,
+        employer: randomEmployer
       };
       
       nextLog.push(`💼 Started a new career as a ${theJob.title} earning $${theJob.salary.toLocaleString()}/year!`);
@@ -6105,21 +6199,26 @@ export default function App() {
 
                       {occupationSubView === 'current_job' && gameState.career.type === 'job' && (
                         <div className="flex flex-col">
-                          {/* Performance Indicator */}
-                          <div className="bg-slate-50 p-4 border-b border-slate-200 flex flex-col gap-2">
-                            <div className="flex justify-between items-center">
-                              <span className="font-extrabold text-[14px] text-[#0f4a8a] flex items-center gap-2">
-                                📊 Performance
-                              </span>
-                              <span className="text-xs font-bold text-slate-500">{gameState.career.performance}%</span>
+                          {/* Job Profile Header */}
+                          <button 
+                            onClick={() => { triggerSound('click'); setShowJobDetailsModal(true); }}
+                            className="w-full bg-[#c2c6cc] p-3 border-b-2 border-[#aab0b8] flex items-center gap-3 cursor-pointer hover:bg-[#b0b5bc] transition active:bg-[#9fa6b0]"
+                          >
+                            <div className="text-3xl drop-shadow-sm">💼</div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <h3 className="font-black text-[#0f4a8a] text-lg tracking-tight leading-none truncate">{gameState.career.title}</h3>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <span className="text-[11px] font-bold text-[#5c728a]">Performance</span>
+                                <div className="w-full bg-white/70 h-2 rounded-sm overflow-hidden border border-white flex-1 max-w-[120px]">
+                                  <div 
+                                    className="h-full bg-[#2da641]"
+                                    style={{ width: `${gameState.career.performance}%` }}
+                                  ></div>
+                                </div>
+                              </div>
                             </div>
-                            <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full transition-all duration-300 ${gameState.career.performance > 75 ? 'bg-emerald-500' : gameState.career.performance > 40 ? 'bg-amber-400' : 'bg-rose-500'}`}
-                                style={{ width: `${gameState.career.performance}%` }}
-                              ></div>
-                            </div>
-                          </div>
+                            <div className="text-[#0f4a8a] text-xl font-black">•••</div>
+                          </button>
                           
                           {/* Co-Workers */}
                           <button 
@@ -6342,166 +6441,389 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 2.5: ASSETS - BitLife Style */}
+                    {/* TAB 2.5: ASSETS - BitLife Style */}
           {activeTab === 'assets' && (
-            <div className="flex-1 flex flex-col min-h-0 bg-white relative">
+            <div className="flex-1 flex flex-col min-h-0 bg-[#f4f3f0] relative">
 
               {/* ── Finances summary row ── */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
-                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-2xl shrink-0">💰</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-[#1a6fb5]">Finances</p>
-                  <p className="text-[11px] text-slate-400">Cash: ${gameState.cash.toLocaleString()}</p>
+              <div className="flex items-center gap-3 px-4 py-3 bg-[#e6e2da] border-b border-[#ebdcb9] shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[#fcd015]/30 flex items-center justify-center text-2xl shrink-0 border border-[#fcd015]/60 shadow-sm">💰</div>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-[13px] font-black text-[#5d4037]">Finances</p>
+                  <p className="text-[11px] text-slate-500 font-semibold">Cash: ${gameState.cash.toLocaleString()}</p>
                 </div>
-                <span className="text-slate-300 text-lg font-bold">···</span>
+                <span className="text-slate-400 text-lg font-bold">···</span>
               </div>
 
-              {/* ── Scrollable content ── */}
-              <div className="flex-1 overflow-y-auto pb-24">
-
-                {/* ── Possessions section ── */}
-                {(() => {
-                  const getAssetEmoji = (type: string, name: string) => {
-                    if (type === 'property') return '🏠';
-                    if (type === 'vehicle') {
-                      if (name.toLowerCase().includes('bicycle') || name.toLowerCase().includes('bike')) return '🚲';
-                      if (name.toLowerCase().includes('sport') || name.toLowerCase().includes('super')) return '🏎️';
-                      if (name.toLowerCase().includes('skateboard')) return '🛹';
-                      return '🚗';
-                    }
-                    if (type === 'accessory') {
-                      if (name.toLowerCase().includes('watch')) return '⌚';
-                      if (name.toLowerCase().includes('hoodie') || name.toLowerCase().includes('cloth')) return '👕';
-                      return '💎';
-                    }
-                    if (type === 'gadget') {
-                      if (name.toLowerCase().includes('phone')) return '📱';
-                      if (name.toLowerCase().includes('console') || name.toLowerCase().includes('gaming')) return '🎮';
-                      return '💻';
-                    }
-                    if (type === 'toy') {
-                      if (name.toLowerCase().includes('yo-yo') || name.toLowerCase().includes('yoyo')) return '🪀';
-                      if (name.toLowerCase().includes('comic')) return '📚';
-                      return '🧸';
-                    }
-                    if (type === 'everyday') {
-                      if (name.toLowerCase().includes('coffee') || name.toLowerCase().includes('latte')) return '☕';
-                      if (name.toLowerCase().includes('gym')) return '🏋️';
-                      if (name.toLowerCase().includes('pencil') || name.toLowerCase().includes('book')) return '✏️';
-                      if (name.toLowerCase().includes('bubblegum')) return '🍬';
-                      return '🎒';
-                    }
-                    return '📦';
-                  };
-
-                  const getConditionPct = (cost: number) => {
-                    // Simulate condition as a % — higher value items show near-full bar; randomize slightly
-                    const base = Math.min(95, 40 + Math.floor(Math.log(cost + 1) * 8));
-                    return base;
-                  };
-
-                  const ownedItems = purchasedAssets.map(name => ASSETS_LIST.find(a => a.name === name)).filter(Boolean) as typeof ASSETS_LIST;
-
-                  const properties   = ownedItems.filter(a => a.type === 'property');
-                  const vehicles     = ownedItems.filter(a => a.type === 'vehicle');
-                  const accessories  = ownedItems.filter(a => a.type === 'accessory');
-                  const gadgets      = ownedItems.filter(a => a.type === 'gadget');
-                  const everyday     = ownedItems.filter(a => a.type === 'everyday' || a.type === 'toy');
-
-                  const ownedGroups = [
-                    { label: 'Real Estate',   items: properties },
-                    { label: 'Vehicles',       items: vehicles },
-                    { label: 'Accessories',    items: accessories },
-                    { label: 'Gadgets & Tech', items: gadgets },
-                    { label: 'Possessions',    items: everyday },
-                  ].filter(g => g.items.length > 0);
-
-                  if (ownedGroups.length === 0) {
-                    return (
-                      <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-                        <div className="text-4xl mb-3">🛍️</div>
-                        <p className="text-sm font-bold text-slate-600">Nothing owned yet</p>
-                        <p className="text-[11px] text-slate-400 mt-1">Tap <span className="font-bold text-[#00bcd4]">Go Shopping</span> below to browse the marketplace!</p>
+              {/* ── Subview Dispatcher ── */}
+              {assetsSubView === 'main' && (
+                <div className="flex-1 overflow-y-auto pb-24">
+                  
+                  {/* Category Lists */}
+                  <div className="divide-y divide-[#ebdcb9] border-b border-[#ebdcb9] bg-white">
+                    {/* Finances */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'Finances & Bank accounts are coming soon in a future update!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Finances</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Finances</span>
+                        <span className="text-[10px] text-slate-400 block truncate">View your bank accounts and credit cards</span>
                       </div>
-                    );
-                  }
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
 
-                  return ownedGroups.map(group => (
-                    <div key={group.label}>
-                      {/* Dark category header bar */}
-                      <div className="bg-[#4a4a4a] text-white text-[11px] font-bold text-center py-1.5 tracking-wide">
-                        {group.label}
+                    {/* Investments */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'Investments and Stock Market trading are coming soon in a future update!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Investments</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Investments</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Manage your investment portfolio</span>
                       </div>
-                      {/* Items in this category */}
-                      <div className="divide-y divide-slate-100">
-                        {group.items.map(asset => {
-                          const condPct = getConditionPct(asset.cost);
-                          const condColor = condPct > 60 ? 'bg-green-500' : condPct > 30 ? 'bg-amber-400' : 'bg-red-500';
-                          return (
-                            <div key={asset.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition cursor-pointer">
-                              <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl shrink-0">
-                                {getAssetEmoji(asset.type, asset.name)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-bold text-[#1a6fb5] leading-tight">{asset.name}</p>
-                                <div className="flex items-center gap-1.5 mt-1.5">
-                                  <span className="text-[10px] text-slate-400 font-medium">Condition</span>
-                                  <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
-                                    <div className={`h-full rounded-full ${condColor} transition-all`} style={{ width: `${condPct}%` }} />
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+
+                    {/* Luxury */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'Luxury services and VIP chartering are coming soon!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Luxury</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Luxury</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Enjoy the perks of being a VIP</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+                  </div>
+
+                  {/* PREMIUM ASSETS HEADER */}
+                  <div className="bg-[#5d4037] text-white text-[9px] font-black text-center py-1 tracking-widest uppercase font-mono">
+                    Premium Assets
+                  </div>
+                  <div className="divide-y divide-[#ebdcb9] border-b border-[#ebdcb9] bg-white">
+                    {/* Auction Houses */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'Participate in premium item auctions in a future update!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Auction</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Auction Houses</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Purchase rare collectibles</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+
+                    {/* Casino */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'Start your own casino empire in a future update!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Casino</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Casino</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Start your own casino</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+
+                    {/* Museum */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'Museum ownership is coming soon!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Museum</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Museum</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Display your collectibles</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+
+                    {/* Race Car Garage */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'F1 Garages and vehicle custom tuning are coming soon!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Race</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Race Car Garage</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Purchase a race car garage</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+
+                    {/* Zoo */}
+                    <button 
+                      onClick={() => setActionPopup({ isOpen: true, title: 'Coming Soon', message: 'Build and customize a personal zoo soon!' })}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Zoo</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Zoo</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Purchase a zoo</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+                  </div>
+
+                  {/* COLLECTIBLES HEADER */}
+                  <div className="bg-[#5d4037] text-white text-[9px] font-black text-center py-1 tracking-widest uppercase font-mono">
+                    Collectibles
+                  </div>
+                  <div className="divide-y divide-[#ebdcb9] border-b border-[#ebdcb9] bg-white">
+                    {/* Belongings */}
+                    <button 
+                      onClick={() => { triggerSound('click'); setAssetsSubView('possessions'); }}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Belongings</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Belongings</span>
+                        <span className="text-[10px] text-slate-400 block truncate">View your possessions</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+                  </div>
+
+                  {/* MISC HEADER */}
+                  <div className="bg-[#5d4037] text-white text-[9px] font-black text-center py-1 tracking-widest uppercase font-mono">
+                    Misc.
+                  </div>
+                  <div className="divide-y divide-[#ebdcb9] border-b border-[#ebdcb9] bg-white">
+                    {/* Social Media */}
+                    <button 
+                      onClick={() => {
+                        triggerSound('click');
+                        if (gameState.age < 13) {
+                          setActionPopup({ isOpen: true, title: 'Too Young', message: 'You must be at least 13 years old to use social media.' });
+                          return;
+                        }
+                        setAssetsSubView('social_media');
+                      }}
+                      className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-2xl">Social Media</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Social Media</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Manage your online identity</span>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+                  </div>
+
+                </div>
+              )}
+
+              {/* ── POSSESSIONS VIEW ── */}
+              {assetsSubView === 'possessions' && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  {/* Back banner */}
+                  <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center gap-2">
+                    <button 
+                      onClick={() => { triggerSound('click'); setAssetsSubView('main'); }}
+                      className="text-xs font-black text-indigo-600 bg-white px-2 py-1 rounded shadow-sm border border-slate-200 cursor-pointer"
+                    >
+                      ❮ Back
+                    </button>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">My Belongings</span>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto pb-24">
+                    {(() => {
+                      const getAssetEmoji = (type: string, name: string) => {
+                        if (type === 'property') return '🏠';
+                        if (type === 'vehicle') return '🚗';
+                        if (type === 'accessory') return '💎';
+                        if (type === 'gadget') return '📱';
+                        if (type === 'toy') return '🧸';
+                        return '🎒';
+                      };
+
+                      const getConditionPct = (cost: number) => {
+                        return Math.min(95, 40 + Math.floor(Math.log(cost + 1) * 8));
+                      };
+
+                      const ownedItems = purchasedAssets.map(name => ASSETS_LIST.find(a => a.name === name)).filter(Boolean) as typeof ASSETS_LIST;
+
+                      const properties   = ownedItems.filter(a => a.type === 'property');
+                      const vehicles     = ownedItems.filter(a => a.type === 'vehicle');
+                      const accessories  = ownedItems.filter(a => a.type === 'accessory');
+                      const gadgets      = ownedItems.filter(a => a.type === 'gadget');
+                      const everyday     = ownedItems.filter(a => a.type === 'everyday' || a.type === 'toy');
+
+                      const ownedGroups = [
+                        { label: 'Real Estate',   items: properties },
+                        { label: 'Vehicles',       items: vehicles },
+                        { label: 'Accessories',    items: accessories },
+                        { label: 'Gadgets & Tech', items: gadgets },
+                        { label: 'Possessions',    items: everyday },
+                      ].filter(g => g.items.length > 0);
+
+                      if (ownedGroups.length === 0) {
+                        return (
+                          <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+                            <div className="text-4xl mb-3">🎒</div>
+                            <p className="text-sm font-bold text-slate-600">Nothing owned yet</p>
+                            <p className="text-[11px] text-slate-400 mt-1">Go to the marketplace and buy something!</p>
+                          </div>
+                        );
+                      }
+
+                      return ownedGroups.map(group => (
+                        <div key={group.label}>
+                          <div className="bg-[#4a4a4a] text-white text-[10px] font-bold text-center py-1 tracking-wider uppercase font-mono">
+                            {group.label}
+                          </div>
+                          <div className="divide-y divide-slate-100 bg-white">
+                            {group.items.map(asset => {
+                              const condPct = getConditionPct(asset.cost);
+                              return (
+                                <div key={asset.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition cursor-pointer">
+                                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl shrink-0">
+                                    {getAssetEmoji(asset.type, asset.name)}
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-left">
+                                    <p className="text-[13px] font-bold text-[#1a6fb5] leading-tight">{asset.name}</p>
+                                    <div className="flex items-center gap-1.5 mt-1.5">
+                                      <span className="text-[10px] text-slate-400 font-medium">Condition</span>
+                                      <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                                        <div className="h-full bg-emerald-500" style={{ width: `${condPct}%` }} />
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <span className="text-slate-300 text-lg font-bold shrink-0">❯</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ));
-                })()}
-
-                {/* ── Shop categories ── */}
-                <div>
-                  <div className="bg-[#4a4a4a] text-white text-[11px] font-bold text-center py-1.5 tracking-wide mt-1">
-                    Marketplace
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {[
-                      { label: 'All Items',      icon: '🛒', filter: 'all' as const,     desc: 'Browse everything available' },
-                      { label: 'Youth & Toys',   icon: '🧸', filter: 'youth' as const,   desc: 'Fun stuff for kids' },
-                      { label: 'Tech & Gear',    icon: '📱', filter: 'gear' as const,    desc: 'Gadgets, accessories & more' },
-                      { label: 'Vehicles & Real Estate', icon: '🚗', filter: 'estates' as const, desc: 'Cars, bikes, homes & estates' },
-                    ].map(cat => (
-                      <div
-                        key={cat.filter}
-                        onClick={() => { triggerSound('click'); setAssetMarketFilter(cat.filter); setShowShopModal(true); }}
-                        className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition cursor-pointer"
-                      >
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl shrink-0">
-                          {cat.icon}
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-bold text-[#1a6fb5]">{cat.label}</p>
-                          <p className="text-[11px] text-slate-400">{cat.desc}</p>
-                        </div>
-                        <span className="text-slate-300 text-lg font-bold shrink-0">❯</span>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 </div>
+              )}
 
-              </div>{/* end scrollable */}
+              {/* ── SOCIAL MEDIA VIEW ── */}
+              {assetsSubView === 'social_media' && (
+                <div className="flex-1 flex flex-col min-h-0 bg-white">
+                  {/* Header */}
+                  <div className="bg-[#0f4a8a] text-white py-3 px-4 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => { triggerSound('click'); setAssetsSubView('main'); }}
+                        className="text-xs font-black bg-white/20 hover:bg-white/30 px-3 py-1 rounded cursor-pointer transition"
+                      >
+                        ❮ Back
+                      </button>
+                      <span className="font-extrabold text-sm tracking-wider uppercase">Social Media</span>
+                    </div>
+                    <span className="text-[10px] font-bold opacity-80">v3.24a</span>
+                  </div>
 
-              {/* ── Fixed bottom "Go Shopping" button ── */}
-              <div className="absolute bottom-0 left-0 right-0">
-                <button
-                  onClick={() => { triggerSound('click'); setAssetMarketFilter('all'); setShowShopModal(true); }}
-                  className="w-full bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-[15px] py-4 flex items-center justify-center gap-3 transition cursor-pointer"
-                  id="go-shopping-btn"
-                >
-                  <span className="text-xl">🛍️</span> Go Shopping...
-                </button>
-              </div>
+                  <div className="flex-1 overflow-y-auto pb-24">
+                    {(() => {
+                      const channels = [
+                        { id: 'facebook', name: 'Facebook', emoji: '📘', desc: 'Connect with family and friends' },
+                        { id: 'instagram', name: 'Instagram', emoji: '📸', desc: 'Share photos and aesthetic stories' },
+                        { id: 'onlyfans', name: 'OnlyFans', emoji: '🍑', desc: 'Adult subscription channel' },
+                        { id: 'tiktok', name: 'TikTok', emoji: '🎵', desc: 'Upload short, viral video clips' },
+                        { id: 'twitch', name: 'Twitch', emoji: '🔮', desc: 'Live stream games and chats' },
+                        { id: 'twitter', name: 'Twitter', emoji: '🐦', desc: 'Share unhinged thoughts and arguments' },
+                        { id: 'soundcloud', name: 'SoundCloud', emoji: '☁️', desc: 'Share your self-produced music tracks' },
+                        { id: 'podcast', name: 'Podcast', emoji: '🎙️', desc: 'Start your own podcast channel' },
+                        { id: 'youtube', name: 'YouTube', emoji: '🎥', desc: 'Create vlogs, reviews, and video content' }
+                      ];
+
+                      const activeList = channels.filter(c => gameState.socialMedia?.[c.id]?.signedUp);
+                      const inactiveList = channels.filter(c => !gameState.socialMedia?.[c.id]?.signedUp);
+
+                      const renderChannelItem = (c: typeof channels[0], active: boolean) => {
+                        const data = gameState.socialMedia?.[c.id];
+                        const subtext = active 
+                          ? `${(data?.followers || 0).toLocaleString()} Followers${data?.verified ? ' • Verified' : ''}`
+                          : `Sign up for ${c.name}`;
+
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              triggerSound('click');
+                              if (active) {
+                                setSelectedSocialChannel(c.id);
+                              } else {
+                                // Sign up flow
+                                setGameState({
+                                  ...gameState,
+                                  socialMedia: {
+                                    ...gameState.socialMedia,
+                                    [c.id]: { signedUp: true, followers: 10, verified: false, suspended: false, postsCount: 0, subscribers: 0, subscriptionPrice: 10 }
+                                  },
+                                  log: [...gameState.log, `📱 Signed up for ${c.name}! Let's post some content.`]
+                                });
+                                setActionPopup({ isOpen: true, title: 'Account Created', message: `You have successfully signed up for ${c.name}!` });
+                              }
+                            }}
+                            className="w-full text-left p-3.5 hover:bg-slate-50 transition border-b border-slate-100 flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-3xl">{c.emoji}</span>
+                              <div className="flex flex-col">
+                                <span className="font-extrabold text-sm text-[#0f4a8a]">{c.name}</span>
+                                <span className="text-[11px] text-slate-400 font-semibold">{subtext}</span>
+                              </div>
+                            </div>
+                            <span className="text-[#0f4a8a] text-xs font-bold font-mono">❯</span>
+                          </button>
+                        );
+                      };
+
+                      return (
+                        <div className="flex flex-col">
+                          {activeList.length > 0 && (
+                            <>
+                              <div className="bg-[#4281a4] text-white text-[9px] font-bold text-center py-1 tracking-widest uppercase font-mono">
+                                Active Channels
+                              </div>
+                              <div className="bg-white">
+                                {activeList.map(c => renderChannelItem(c, true))}
+                              </div>
+                            </>
+                          )}
+
+                          {inactiveList.length > 0 && (
+                            <>
+                              <div className="bg-slate-200 text-slate-600 text-[9px] font-bold text-center py-1 tracking-widest uppercase font-mono">
+                                Inactive Channels
+                              </div>
+                              <div className="bg-white">
+                                {inactiveList.map(c => renderChannelItem(c, false))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Fixed bottom "Go Shopping" button (only in main Assets screen) ── */}
+              {assetsSubView === 'main' && (
+                <div className="absolute bottom-0 left-0 right-0">
+                  <button
+                    onClick={() => { triggerSound('click'); setAssetMarketFilter('all'); setShowShopModal(true); }}
+                    className="w-full bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-[15px] py-4 flex items-center justify-center gap-3 transition cursor-pointer border-t border-[#00acc1]"
+                    id="go-shopping-btn"
+                  >
+                    <span className="text-xl">🛍️</span> Go Shopping...
+                  </button>
+                </div>
+              )}
 
               {/* ── Shop Modal overlay ── */}
               {showShopModal && (
@@ -6531,8 +6853,8 @@ export default function App() {
                         onClick={() => { triggerSound('click'); setAssetMarketFilter(cat.filter); }}
                         className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
                           assetMarketFilter === cat.filter
-                            ? 'bg-[#1a6fb5] text-white'
-                            : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300'
+                            ? 'bg-[#00bcd4] text-white shadow-xs'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                         }`}
                       >
                         {cat.label}
@@ -6540,72 +6862,64 @@ export default function App() {
                     ))}
                   </div>
 
-                  {/* Item list */}
-                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                  {/* Marketplace Items Scroll List */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
                     {displayedMarketAssets.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-14 text-center px-6">
-                        <div className="text-3xl mb-2">🔍</div>
-                        <p className="text-sm font-bold text-slate-500">No items available in this category for your age.</p>
-                      </div>
+                      <div className="text-center text-slate-400 py-10 font-bold text-xs uppercase">No items in this category for your age</div>
                     ) : (
                       displayedMarketAssets.map(asset => {
                         const isMinor = gameState.age < 12;
                         const isOwned = purchasedAssets.includes(asset.name);
                         const canAfford = gameState.cash >= asset.cost;
-                        const canBuy = !isOwned && (isMinor || canAfford);
+                        const canAction = !isOwned && (isMinor || canAfford);
 
                         const getEmoji = (type: string, name: string) => {
                           if (type === 'property') return '🏠';
-                          if (type === 'vehicle') {
-                            if (name.toLowerCase().includes('bicycle') || name.toLowerCase().includes('bike')) return '🚲';
-                            if (name.toLowerCase().includes('sport') || name.toLowerCase().includes('super')) return '🏎️';
-                            if (name.toLowerCase().includes('skateboard')) return '🛹';
-                            return '🚗';
-                          }
+                          if (type === 'vehicle') return '🚗';
                           if (type === 'accessory') return name.toLowerCase().includes('watch') ? '⌚' : '👕';
                           if (type === 'gadget') return name.toLowerCase().includes('phone') ? '📱' : '🎮';
                           if (type === 'toy') return name.toLowerCase().includes('comic') ? '📚' : '🧸';
-                          if (type === 'everyday') {
-                            if (name.toLowerCase().includes('coffee')) return '☕';
-                            if (name.toLowerCase().includes('gym')) return '🏋️';
-                            return '✏️';
-                          }
-                          return '📦';
+                          return '☕';
                         };
 
                         return (
-                          <div key={asset.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition">
-                            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl shrink-0">
-                              {getEmoji(asset.type, asset.name)}
+                          <div 
+                            key={asset.id} 
+                            className="bg-white border border-slate-200 p-3 flex justify-between items-center rounded-xl shadow-xs"
+                          >
+                            <div className="text-left flex-1 min-w-0 pr-2">
+                              <h4 className="font-extrabold text-[13px] text-slate-800 flex items-center gap-1">
+                                <span className="text-sm">{getEmoji(asset.type, asset.name)}</span> {asset.name}
+                              </h4>
+                              <p className="text-[10px] text-slate-400 mt-0.5">{asset.desc}</p>
+                              <div className="flex gap-2 mt-1 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                                <span>+{asset.style} Style</span>
+                                <span>+{asset.status} Status</span>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-bold text-[#1a6fb5] leading-tight">{asset.name}</p>
-                              <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed line-clamp-2">{asset.desc}</p>
-                              <p className="text-[10px] text-indigo-400 font-semibold mt-0.5">+{asset.style} Style · +{asset.status} Status</p>
-                            </div>
-                            <div className="flex flex-col items-end gap-1.5 shrink-0">
-                              <span className="text-[12px] font-black text-emerald-600">${asset.cost.toLocaleString()}</span>
+                            
+                            <div className="text-right shrink-0">
+                              <span className="font-mono text-xs font-bold text-emerald-700 block mb-1.5">${asset.cost.toLocaleString()}</span>
                               <button
-                                disabled={!canBuy}
+                                disabled={!canAction}
                                 onClick={() => {
-                                  triggerSound(canBuy ? 'success' : 'error');
-                                  if (isOwned) return;
+                                  triggerSound('click');
                                   if (isMinor) {
                                     handleAskParentsToBuy(asset);
                                   } else {
                                     handleBuyAsset(asset);
                                   }
                                 }}
-                                className={`px-3 py-1 rounded-full text-[10px] font-bold transition cursor-pointer ${
-                                  isOwned
-                                    ? 'bg-slate-100 text-slate-400 cursor-default'
-                                    : canBuy
-                                      ? 'bg-[#1a6fb5] text-white hover:bg-[#1565c0]'
-                                      : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                className={`px-3 py-1 text-[10px] font-black transition rounded-lg uppercase tracking-wider cursor-pointer ${
+                                  isOwned 
+                                    ? 'bg-slate-100 text-slate-400 border border-slate-200' 
+                                    : canAction 
+                                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs' 
+                                    : 'bg-slate-100 text-slate-400 border border-slate-200'
                                 }`}
-                                id={`modal-buy-${asset.id}`}
+                                id={`buy-${asset.id}`}
                               >
-                                {isOwned ? '✓ Owned' : isMinor ? 'Ask Parents' : canAfford ? 'Buy' : 'Need $' + (asset.cost - gameState.cash).toLocaleString()}
+                                {isOwned ? '✓ Owned' : isMinor ? 'Ask Parents' : 'Buy'}
                               </button>
                             </div>
                           </div>
@@ -6619,7 +6933,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 3: RELATIONSHIPS */}
+
           {activeTab === 'relationships' && (
             <div className="p-4 space-y-4 flex-1 flex flex-col min-h-0 overflow-y-auto">
               <div className="flex justify-between items-center pb-3 border-b border-slate-100">
@@ -7649,7 +7963,351 @@ export default function App() {
           </>
         )}
 
-        {showAppearanceModal && gameState && (
+              {/* JOB DETAILS MODAL */}
+      {showJobDetailsModal && gameState.career.type === 'job' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#f0f0f0] w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl relative border-4 border-[#ff4e00] flex flex-col max-h-[90vh]">
+            
+            <button 
+              onClick={() => { triggerSound('click'); setShowJobDetailsModal(false); }}
+              className="absolute -top-3 -left-3 z-10 bg-white rounded-full p-1 shadow-lg border-2 border-slate-300 hover:scale-110 transition active:scale-95"
+            >
+              <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white font-bold leading-none select-none">✕</div>
+            </button>
+
+            <div className="bg-gradient-to-r from-[#d75024] to-[#f55928] p-3 flex items-center justify-between border-b-4 border-white/20">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/50 bg-[#e0d6c8] flex items-center justify-center text-2xl shadow-md">
+                  {gameState.avatar}
+                </div>
+                <div className="text-white font-black text-lg tracking-tight drop-shadow-md">
+                  {gameState.name}
+                </div>
+              </div>
+              <span className="text-white font-black text-xl italic drop-shadow-md pr-2">You</span>
+            </div>
+
+            <div className="p-5 flex-1 overflow-y-auto">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <span className="text-3xl drop-shadow-sm">💼</span>
+                <h2 className="text-[#3b120c] font-black text-xl text-center">{gameState.career.title}</h2>
+              </div>
+
+              <div className="bg-[#e6e6e6] rounded-xl overflow-hidden shadow-inner border border-slate-300">
+                <div className="flex px-3 py-2.5 border-b border-white/50">
+                  <span className="w-32 font-black text-[#4a2e2a]">Title:</span>
+                  <span className="flex-1 text-[#5c3e3a] font-semibold">{gameState.career.title}</span>
+                </div>
+                <div className="flex px-3 py-2.5 border-b border-white/50 bg-[#dbdbdb]">
+                  <span className="w-32 font-black text-[#4a2e2a]">Career:</span>
+                  <span className="flex-1 text-[#5c3e3a] font-semibold capitalize">{gameState.career.industry || 'General'} Industry</span>
+                </div>
+                <div className="flex px-3 py-2.5 border-b border-white/50">
+                  <span className="w-32 font-black text-[#4a2e2a]">Employer:</span>
+                  <span className="flex-1 text-[#5c3e3a] font-semibold">{gameState.career.employer || 'The Company'}</span>
+                </div>
+                <div className="flex px-3 py-2.5 border-b border-white/50 bg-[#dbdbdb]">
+                  <span className="w-32 font-black text-[#4a2e2a]">Years in Position:</span>
+                  <span className="flex-1 text-[#5c3e3a] font-semibold">{gameState.career.yearsInRole || 0}</span>
+                </div>
+                <div className="flex px-3 py-2.5">
+                  <span className="w-32 font-black text-[#4a2e2a]">Salary:</span>
+                  <span className="flex-1 text-[#5c3e3a] font-semibold">${(gameState.career.salary || 0).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="mt-8 flex items-center gap-4">
+                <span className="font-black text-[#4a2e2a] text-sm">Performance</span>
+                <div className="flex-1 bg-white h-4 rounded-sm border border-slate-300 shadow-inner overflow-hidden">
+                  <div 
+                    className="h-full bg-[#2da641] transition-all duration-300"
+                    style={{ width: `${gameState.career.performance || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+            {/* SOCIAL MEDIA DETAIL/DASHBOARD MODAL */}
+      {selectedSocialChannel && gameState.socialMedia?.[selectedSocialChannel] && (
+        (() => {
+          const channel = selectedSocialChannel;
+          const data = gameState.socialMedia[channel];
+          
+          const emojis = {
+            facebook: '📘', instagram: '📸', onlyfans: '🍑', tiktok: '🎵',
+            twitch: '🔮', twitter: '🐦', soundcloud: '☁️', podcast: '🎙️', youtube: '🎥'
+          };
+          
+          const titles = {
+            facebook: 'Facebook', instagram: 'Instagram', onlyfans: 'OnlyFans', tiktok: 'TikTok',
+            twitch: 'Twitch', twitter: 'Twitter', soundcloud: 'SoundCloud', podcast: 'Podcast', youtube: 'YouTube'
+          };
+
+          const handlePostContent = (topic) => {
+            triggerSound('click');
+            
+            let looksFactor = gameState.stats.looks / 100;
+            let smartsFactor = gameState.stats.smarts / 100;
+            let followerGained = 0;
+            let happinessChange = 2;
+            let outcomeText = "";
+
+            if (topic === 'Meme') {
+              followerGained = Math.floor(Math.random() * 800) + 100;
+              outcomeText = "You shared a spicy meme that went semi-viral! People liked your humor.";
+            } else if (topic === 'Dance') {
+              followerGained = Math.floor((Math.random() * 2000 + 200) * (looksFactor + 0.2));
+              outcomeText = "You filmed yourself doing a trending dance challenge. Your looks got you a lot of views!";
+            } else if (topic === 'Vlog') {
+              followerGained = Math.floor((Math.random() * 1500 + 100) * (smartsFactor + looksFactor) / 2);
+              outcomeText = "You posted a vlog about your daily routine. People loved the authenticity.";
+            } else if (topic === 'Opinion') {
+              const roll = Math.random();
+              if (roll > 0.4) {
+                followerGained = Math.floor(Math.random() * 4000) + 500;
+                outcomeText = "You gave a hot take on a trending topic. Your post exploded in popularity!";
+              } else {
+                followerGained = -Math.floor(Math.random() * 1500) - 200;
+                happinessChange = -15;
+                outcomeText = "You shared a highly controversial opinion. The internet mob swarmed your account and canceled you!";
+              }
+            } else if (topic === 'Lewd') {
+              followerGained = Math.floor((Math.random() * 6000 + 1000) * (looksFactor * 1.5 + 0.3));
+              outcomeText = "You posted exclusive, highly provocative content. Subscriptions skyrocketed!";
+            }
+
+            const nextStats = { ...gameState.stats };
+            nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + happinessChange));
+            
+            const channelData = {
+              ...data,
+              followers: Math.max(0, data.followers + followerGained),
+              postsCount: data.postsCount + 1
+            };
+
+            setGameState({
+              ...gameState,
+              stats: nextStats,
+              socialMedia: {
+                ...gameState.socialMedia,
+                [channel]: channelData
+              },
+              log: [...gameState.log, `📱 Posted a ${topic} on ${titles[channel]}. Gained ${followerGained.toLocaleString()} followers.`]
+            });
+
+            setActionPopup({ 
+              isOpen: true, 
+              title: followerGained >= 0 ? 'Post Successful!' : 'Controversial Post', 
+              message: `${outcomeText}\n\nFollower Change: ${followerGained >= 0 ? '+' : ''}${followerGained.toLocaleString()}`
+            });
+          };
+
+          const handleBuyFollowers = () => {
+            triggerSound('click');
+            if (gameState.cash < 500) {
+              setActionPopup({ isOpen: true, title: 'Insufficient Funds', message: 'It costs $500 to buy bot followers.' });
+              return;
+            }
+
+            const roll = Math.random();
+            if (roll < 0.25) {
+              triggerSound('error');
+              setGameState({
+                ...gameState,
+                cash: gameState.cash - 500,
+                socialMedia: {
+                  ...gameState.socialMedia,
+                  [channel]: { ...data, signedUp: false, followers: 0, verified: false }
+                },
+                log: [...gameState.log, `🚫 BANNED: Caught buying fake bot followers on ${titles[channel]}! Account terminated.`]
+              });
+              setActionPopup({ isOpen: true, title: 'Account Terminated', message: `The moderators caught you buying fake followers and permanently deleted your account!` });
+              setSelectedSocialChannel(null);
+            } else {
+              triggerSound('success');
+              const botsGained = Math.floor(Math.random() * 4000) + 3000;
+              setGameState({
+                ...gameState,
+                cash: gameState.cash - 500,
+                socialMedia: {
+                  ...gameState.socialMedia,
+                  [channel]: { ...data, followers: data.followers + botsGained }
+                },
+                log: [...gameState.log, `🤖 Bought bot followers on ${titles[channel]} for $500.`]
+              });
+              setActionPopup({ isOpen: true, title: 'Bots Delivered', message: `Your follower packages have been quietly delivered! (+${botsGained.toLocaleString()} followers)` });
+            }
+          };
+
+          const handleDeleteAccount = () => {
+            triggerSound('click');
+            setGameState({
+              ...gameState,
+              socialMedia: {
+                ...gameState.socialMedia,
+                [channel]: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 }
+              },
+              log: [...gameState.log, `❌ Closed your ${titles[channel]} account.`]
+            });
+            setActionPopup({ isOpen: true, title: 'Account Closed', message: `Your ${titles[channel]} account has been permanently deleted.` });
+            setSelectedSocialChannel(null);
+          };
+
+          return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-[#f0f0f0] w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl relative border-4 border-[#0f4a8a] flex flex-col max-h-[90vh]">
+                
+                <button 
+                  onClick={() => { triggerSound('click'); setSelectedSocialChannel(null); }}
+                  className="absolute -top-3 -left-3 z-10 bg-white rounded-full p-1 shadow-lg border-2 border-slate-300 hover:scale-110 transition active:scale-95 cursor-pointer"
+                >
+                  <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white font-bold leading-none select-none">✕</div>
+                </button>
+
+                <div className="bg-gradient-to-r from-[#0f4a8a] to-[#2575fc] p-4 text-white border-b-4 border-white/20">
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl drop-shadow-md">{emojis[channel]}</span>
+                    <div className="text-left">
+                      <h3 className="font-black text-xl tracking-tight leading-none drop-shadow-md">{titles[channel]}</h3>
+                      <p className="text-xs font-semibold opacity-90 mt-1">{data.verified ? '🌟 Verified Profile' : 'Standard Profile'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5 flex-1 overflow-y-auto space-y-4">
+                  <div className="bg-[#e6e6e6] rounded-xl p-3 border border-slate-300 flex justify-around text-center shadow-inner">
+                    <div>
+                      <span className="text-slate-400 font-bold text-[10px] uppercase block">Followers</span>
+                      <span className="font-black text-[#5d4037] text-lg">{(data.followers || 0).toLocaleString()}</span>
+                    </div>
+                    {channel === 'onlyfans' && (
+                      <div>
+                        <span className="text-slate-400 font-bold text-[10px] uppercase block">Subscribers</span>
+                        <span className="font-black text-[#5d4037] text-lg">{(data.subscribers || 0).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {channel === 'onlyfans' && (
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-black text-xs text-[#0f4a8a]">Subscription Price</span>
+                        <span className="font-bold text-sm text-[#0f4a8a]">${data.subscriptionPrice || 10}/mo</span>
+                      </div>
+                      <input 
+                        type="range"
+                        min="5"
+                        max="50"
+                        value={data.subscriptionPrice || 10}
+                        onChange={(e) => {
+                          setGameState({
+                            ...gameState,
+                            socialMedia: {
+                              ...gameState.socialMedia,
+                              onlyfans: { ...data, subscriptionPrice: parseInt(e.target.value) }
+                            }
+                          });
+                        }}
+                        className="w-full accent-[#0f4a8a] cursor-pointer"
+                      />
+                      <span className="text-[9px] text-slate-400 font-bold block mt-1 uppercase text-center">Higher price = fewer subscribers</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <span className="text-[9px] uppercase tracking-widest font-bold text-slate-400 block font-mono text-left">Actions</span>
+                    
+                    <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-xs space-y-2 text-left">
+                      <span className="font-extrabold text-xs text-slate-600 block">Post New Content</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {channel === 'onlyfans' ? (
+                          <>
+                            <button 
+                              onClick={() => handlePostContent('Vlog')}
+                              className="bg-slate-100 hover:bg-[#fffaf2] border border-slate-200 font-bold text-xs py-2 px-3 text-[#5d4037] rounded-lg transition active:scale-95 cursor-pointer text-center"
+                            >
+                              🎥 Daily Vlog
+                            </button>
+                            <button 
+                              onClick={() => handlePostContent('Lewd')}
+                              className="bg-[#ffeef0] hover:bg-[#ffd5da] border border-[#ffb3c1] font-bold text-xs py-2 px-3 text-red-600 rounded-lg transition active:scale-95 cursor-pointer text-center"
+                            >
+                              🍑 Lewd Photos
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button 
+                              onClick={() => handlePostContent('Meme')}
+                              className="bg-slate-100 hover:bg-[#fffaf2] border border-slate-200 font-bold text-xs py-2 px-3 text-[#5d4037] rounded-lg transition active:scale-95 cursor-pointer text-center"
+                            >
+                              🤪 Meme
+                            </button>
+                            <button 
+                              onClick={() => handlePostContent('Dance')}
+                              className="bg-slate-100 hover:bg-[#fffaf2] border border-slate-200 font-bold text-xs py-2 px-3 text-[#5d4037] rounded-lg transition active:scale-95 cursor-pointer text-center"
+                            >
+                              💃 Dance
+                            </button>
+                            <button 
+                              onClick={() => handlePostContent('Vlog')}
+                              className="bg-slate-100 hover:bg-[#fffaf2] border border-slate-200 font-bold text-xs py-2 px-3 text-[#5d4037] rounded-lg transition active:scale-95 cursor-pointer text-center"
+                            >
+                              🎥 Vlog
+                            </button>
+                            <button 
+                              onClick={() => handlePostContent('Opinion')}
+                              className="bg-slate-100 hover:bg-[#fffaf2] border border-slate-200 font-bold text-xs py-2 px-3 text-[#5d4037] rounded-lg transition active:scale-95 cursor-pointer text-center"
+                            >
+                              🗣️ Opinion
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={handleBuyFollowers}
+                      className="w-full bg-[#fcf8f2] hover:bg-[#fff4e0] border border-[#ebdcb9] hover:border-[#f5d59e] p-3 text-left rounded-xl transition flex items-center justify-between group cursor-pointer shadow-xs"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl group-hover:scale-110 transition-transform">🤖</span>
+                        <div className="flex flex-col text-left">
+                          <span className="font-extrabold text-xs text-[#5d4037]">Buy Followers ($500)</span>
+                          <span className="text-[9px] text-slate-400 font-semibold">Buy 5,000 bot followers (25% risk of ban!)</span>
+                        </div>
+                      </div>
+                      <span className="text-slate-300 font-bold">❯</span>
+                    </button>
+
+                    <button 
+                      onClick={handleDeleteAccount}
+                      className="w-full bg-red-50 hover:bg-red-100 border border-red-200 p-3 text-left rounded-xl transition flex items-center justify-between group cursor-pointer shadow-xs"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl group-hover:scale-110 transition-transform">❌</span>
+                        <div className="flex flex-col text-left">
+                          <span className="font-extrabold text-xs text-red-600">Delete Account</span>
+                          <span className="text-[9px] text-slate-400 font-semibold">Permanently erase this account profile</span>
+                        </div>
+                      </div>
+                      <span className="text-red-300 font-bold">❯</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()
+      )}
+
+
+      {showAppearanceModal && gameState && (
           <AppearanceModal
             currentConfig={gameState.avatarConfig || {
               eyes: 'default',

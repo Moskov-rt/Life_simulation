@@ -148,6 +148,16 @@ export interface AvatarConfig {
   makeupSimulated?: string;
 }
 
+export interface SocialMediaAccount {
+  signedUp: boolean;
+  followers: number;
+  verified: boolean;
+  suspended: boolean;
+  postsCount: number;
+  subscribers?: number; // OnlyFans specific
+  subscriptionPrice?: number; // OnlyFans specific
+}
+
 export interface GameState {
   name: string;
   gender: string;
@@ -173,6 +183,9 @@ export interface GameState {
     yearsInRole: number;
     educationLevel?: string;
     major?: string;
+    employer?: string;
+    workHarderCount?: number;
+    hoursPerWeek?: number;
   };
   karma: number; // 0 - 100
   willpower: number; // 0 - 100
@@ -187,4 +200,5 @@ export interface GameState {
     cashChange?: number;
   } | null;
   completedEducation: { level: string; major: string }[];
+  socialMedia: Record<string, SocialMediaAccount>;
 }
