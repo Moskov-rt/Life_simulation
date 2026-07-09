@@ -8758,15 +8758,71 @@ export default function App() {
           };
 
           const postOptions = {
-            facebook: ['Reshare Musician', 'Selfie', 'Social Justice', 'Story', 'Travel Photo', 'Vlog', 'Family Photo'],
-            instagram: ['Thirst Trap', 'Selfie', 'Travel Photo', 'Workout Selfie', 'OOTD (Outfit of the Day)', 'Food Pic'],
-            onlyfans: ['Thirst Trap', 'Bikini Pic', 'Sexy Video', 'Lingerie Shoot', 'Custom Request', 'Nude Photo'],
-            tiktok: ['Dance Trend', 'Comedy Skit', 'Lip Sync', 'Transition Video', 'Prank Video'],
-            youtube: ['Gaming Video', 'Review Video', 'Vlog', 'Tutorial', 'DIY Challenge'],
-            twitch: ['Gaming Stream', 'ASMR Stream', 'Just Chatting', 'Speedrun'],
-            twitter: ['Hot Take', 'Shitpost', 'Political Rant', 'Meme', 'Life Update'],
-            soundcloud: ['Original Track', 'Remix Track', 'Freestyle Rap'],
-            podcast: ['Solo Rant', 'True Crime Story', 'Guest Interview', 'Conspiracy Theory']
+            facebook: [
+              '👵 Minion Meme about Mondays', 
+              '😒 Passive-Aggressive Rant about a Cousin', 
+              '🧄 Sharing Fake News about Garlic Curing Baldness', 
+              '💼 MLM Scheme Pitch (Get Rich Quick!)',
+              '🤳 Out-of-focus Bathroom Selfie',
+              '🐈 Video of my cat sleeping'
+            ],
+            instagram: [
+              '🏎️ Flexing a Rented Supercar as My Own', 
+              '🔮 Cryptic Quote About My Enemies', 
+              '🦝 Showing Off my New Pet Raccoon', 
+              '💊 Spamming Sponsored Diet Gummies that cause Hair Loss',
+              '🏖️ Travel Photo with an Obvious Photoshop Filter',
+              '🍑 Aesthetic Thirst Trap'
+            ],
+            onlyfans: [
+              '👣 Feet Pics for Foot Sniffers', 
+              '🥒 ASMR Eating Pickles Loudly', 
+              '🧪 Selling My Used Bathwater', 
+              '🥖 Baking Cookies Completely Naked',
+              '🦖 Lingerie Fight with a Cardboard T-Rex',
+              '👙 Thirst Trap in a Sparkly Bikini',
+              '🔞 Explicit Custom Video Request'
+            ],
+            tiktok: [
+              '🌶️ Eating Ghost Peppers and Sobbing', 
+              '🕺 Cringe Dance in Public until Someone Screams', 
+              '🗿 Pretending to Be a Statue to Jump-Scare Pedestrians', 
+              '👄 Lip-Syncing a Politician\'s Live Meltdown',
+              '🛹 Doing a Backflip into a Garbage Can'
+            ],
+            youtube: [
+              '🎨 Reacting to Paint Drying (24-Hour Stream)', 
+              '📦 Unboxing a Mystical Occult Crate from the Deep Web', 
+              '🥫 Eating a 100-Year-Old Military Ration', 
+              '💼 Pranked My Supervisor by Selling Their Office Chair',
+              '🎤 10 Hours of Pure Static Noise (Lo-Fi Study Beats)'
+            ],
+            twitch: [
+              '🦖 Hot Tub Stream in a Dinosaur Costume', 
+              '🎮 Playing Dark Souls with a Voice-Activated Microwave', 
+              '💤 Stream Sleeping for Subscriber Donations', 
+              '🍕 Eating an Entire Extra Large Pizza in Under 3 Minutes',
+              '🚨 Faking a Swatting Prank (Extremely Dangerous)'
+            ],
+            twitter: [
+              '🥊 Threatening to Fight a Tech Billionaire in a Cage Match', 
+              '📂 Leaking Fake Declassified Alien Documents', 
+              '🤖 Arguing with an Obvious AI Bot for 12 Hours Straight', 
+              '👑 Declaring Myself the Supreme Emperor of a Backyard Micro-nation',
+              '🎭 Posting an AI-Generated Crying Apology Video'
+            ],
+            soundcloud: [
+              '🔥 Diss Track targeting my Supervisor', 
+              '😭 Sound effect of me sobbing to Lo-Fi piano chords', 
+              '💰 Mumble Rap song about Tax Evasion and Crypto scams',
+              '🛹 Aggressive Screamo Rap about my Dad\'s Lawnmower'
+            ],
+            podcast: [
+              '🦅 Conspiracy: Are Birds Actually Government Spy Drones?', 
+              '🐈 Interviewing My Ex-Partner\'s Confused Cat', 
+              '🍍 Explaining why Pineapple belongs on Pizza (4-Hour Debate)',
+              '👽 Debate: Is Earth just a Reality Show for Extraterrestrials?'
+            ]
           };
 
           const options = postOptions[channel as keyof typeof postOptions] || ['Selfie'];
@@ -8783,30 +8839,49 @@ export default function App() {
             const topic = selectedPostType || options[0];
 
             if (channel === 'onlyfans') {
-              // Adult themed posting
-              followerGained = Math.floor((Math.random() * 6000 + 1000) * (looksFactor * 2 + 0.3));
-              relationshipPenalty = 15; // Conservative relationships drop trust
-              outcomeText = `You uploaded a provocative "${topic}" to your OnlyFans. Fans rushed to subscribe!`;
-            } else {
-              if (topic.includes('Thirst Trap') || topic.includes('Workout Selfie') || topic.includes('Bikini')) {
-                followerGained = Math.floor((Math.random() * 2000 + 300) * (looksFactor + 0.2));
-                outcomeText = `You posted a spicy ${topic}. Your looks gathered plenty of likes!`;
-              } else if (topic.includes('Hot Take') || topic.includes('Political') || topic.includes('Opinion')) {
-                const roll = Math.random();
-                if (roll > 0.45) {
-                  followerGained = Math.floor(Math.random() * 4500) + 800;
-                  outcomeText = `You shared a controversial ${topic}. It generated massive debate and went viral!`;
-                } else {
-                  followerGained = -Math.floor(Math.random() * 2000) - 300;
-                  happinessChange = -15;
-                  outcomeText = `You shared a highly controversial ${topic}. You were completely canceled by the internet mob!`;
-                }
-              } else if (topic.includes('Tutorial') || topic.includes('Review') || topic.includes('DIY') || topic.includes('Conspiracy')) {
-                followerGained = Math.floor((Math.random() * 1500 + 200) * (smartsFactor + 0.2));
-                outcomeText = `You uploaded a detailed ${topic}. People appreciated your knowledge.`;
+              // OnlyFans unhinged items
+              relationshipPenalty = 15;
+              if (topic.includes('Bathwater') || topic.includes('Feet') || topic.includes('ASMR')) {
+                followerGained = Math.floor((Math.random() * 4000 + 500) * (looksFactor + 0.5));
+                outcomeText = `You posted your "${topic}" on OnlyFans. Simps bought everything immediately!`;
+              } else if (topic.includes('Lingerie') || topic.includes('Nude') || topic.includes('Bikini')) {
+                followerGained = Math.floor((Math.random() * 8000 + 1500) * (looksFactor * 2.2 + 0.4));
+                outcomeText = `Your provocative "${topic}" went absolutely wild among subscribers. Subs skyrocketed!`;
               } else {
-                followerGained = Math.floor(Math.random() * 1000) + 100;
-                outcomeText = `You shared a standard ${topic} on your account.`;
+                followerGained = Math.floor((Math.random() * 3000 + 400));
+                outcomeText = `You uploaded your custom "${topic}" video. The OnlyFans community was highly pleased.`;
+              }
+            } else {
+              // Other platforms unhinged items
+              if (topic.includes('Flexing') || topic.includes('Thirst Trap') || topic.includes('Bikini')) {
+                followerGained = Math.floor((Math.random() * 2500 + 400) * (looksFactor + 0.3));
+                outcomeText = `You shared your "${topic}". You looked absolutely stunning, earning thousands of likes!`;
+              } else if (topic.includes('Leaking') || topic.includes('Conspiracy') || topic.includes('MLM') || topic.includes('Threatening') || topic.includes('Arguing')) {
+                const roll = Math.random();
+                if (roll > 0.5) {
+                  followerGained = Math.floor(Math.random() * 6000) + 1000;
+                  outcomeText = `Your unhinged post "${topic}" was shared everywhere as a meme. You gained massive notoriety!`;
+                } else {
+                  followerGained = -Math.floor(Math.random() * 3000) - 500;
+                  happinessChange = -20;
+                  outcomeText = `Your post "${topic}" caused an absolute disaster! You got ratio'd, canceled, and harassed by angry mobs.`;
+                }
+              } else if (topic.includes('Diss Track') || topic.includes('Pranked')) {
+                const roll = Math.random();
+                if (roll > 0.4) {
+                  followerGained = Math.floor(Math.random() * 5000) + 800;
+                  outcomeText = `Your savage "${topic}" targeted your boss. Everyone thought it was legendary!`;
+                } else {
+                  followerGained = -Math.floor(Math.random() * 1000);
+                  happinessChange = -15;
+                  outcomeText = `Your "${topic}" failed miserably. Your supervisor called HR, and you were heavily reprimanded.`;
+                }
+              } else if (topic.includes('Paint') || topic.includes('10 Hours') || topic.includes('Raccoon') || topic.includes('Static')) {
+                followerGained = Math.floor(Math.random() * 1200) + 100;
+                outcomeText = `Your weird video about "${topic}" acquired a dedicated cult following.`;
+              } else {
+                followerGained = Math.floor(Math.random() * 800) + 50;
+                outcomeText = `You posted your "${topic}" update. Your core fan base liked it.`;
               }
             }
 
