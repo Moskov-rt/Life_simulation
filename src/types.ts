@@ -156,6 +156,9 @@ export interface SocialMediaAccount {
   postsCount: number;
   subscribers?: number; // OnlyFans specific
   subscriptionPrice?: number; // OnlyFans specific
+  monetized?: boolean; // YouTube, Twitch, TikTok specific
+  tipsCollected?: boolean; // OnlyFans specific (resets yearly)
+  wishlistPosted?: boolean; // OnlyFans specific (resets yearly)
 }
 
 export interface GameState {

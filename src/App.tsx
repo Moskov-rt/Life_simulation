@@ -795,6 +795,10 @@ export default function App() {
   const [selectedCelebrity, setSelectedCelebrity] = useState<string>('');
   const [celebrityInteractionType, setCelebrityInteractionType] = useState<'reply' | 'flirt' | 'insult'>('reply');
   const [showVerifyRejection, setShowVerifyRejection] = useState<boolean>(false);
+  const [showSubscriptionFeeModal, setShowSubscriptionFeeModal] = useState<boolean>(false);
+  const [showWishlistModal, setShowWishlistModal] = useState<boolean>(false);
+  const [wishlistGifts, setWishlistGifts] = useState<string[]>(['Shoes', 'Designer Bag', 'Lingerie']);
+  const [tempSubscriptionPrice, setTempSubscriptionPrice] = useState<number>(10);
   const [selectedSocialChannel, setSelectedSocialChannel] = useState<string | null>(null);
 
   // Sleep Popup state
@@ -1231,13 +1235,13 @@ export default function App() {
       socialMedia: {
         facebook: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
         instagram: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
-        onlyfans: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0, subscribers: 0, subscriptionPrice: 10 },
-        tiktok: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
-        twitch: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
+        onlyfans: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0, subscribers: 0, subscriptionPrice: 10, tipsCollected: false, wishlistPosted: false },
+        tiktok: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0, monetized: false },
+        twitch: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0, monetized: false },
         twitter: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
         soundcloud: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
         podcast: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
-        youtube: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 }
+        youtube: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0, monetized: false }
       },
     };
 
@@ -2142,15 +2146,15 @@ export default function App() {
             earnedCash += payout;
             socialLogs.push(`🍑 OnlyFans: Earned $${payout.toLocaleString()} from your subscribers this year!`);
           }
-        } else if (channel === 'youtube' && data.followers >= 10000) {
+        } else if (channel === 'youtube' && data.monetized && data.followers >= 10000) {
           const payout = Math.floor(data.followers * 0.05);
           earnedCash += payout;
           socialLogs.push(`🎥 YouTube: Earned $${payout.toLocaleString()} from ad revenue this year!`);
-        } else if (channel === 'twitch' && data.followers >= 5000) {
+        } else if (channel === 'twitch' && data.monetized && data.followers >= 5000) {
           const payout = Math.floor(data.followers * 0.08);
           earnedCash += payout;
           socialLogs.push(`🔮 Twitch: Earned $${payout.toLocaleString()} from subscriptions and donations!`);
-        } else if (channel === 'tiktok' && data.followers >= 50000) {
+        } else if (channel === 'tiktok' && data.monetized && data.followers >= 50000) {
           const payout = Math.floor(data.followers * 0.02);
           earnedCash += payout;
           socialLogs.push(`🎵 TikTok: Earned $${payout.toLocaleString()} from the Creator Fund!`);
@@ -8528,6 +8532,210 @@ export default function App() {
                   </div>
                 </div>
 
+              </div>
+            </div>
+          );
+        })()
+      )}
+
+
+      {/* SUBSCRIPTION FEE MODAL */}
+      {showSubscriptionFeeModal && selectedSocialChannel === 'onlyfans' && gameState.socialMedia?.onlyfans && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative border-4 border-slate-300 flex flex-col">
+            
+            <button 
+              onClick={() => { triggerSound('click'); setShowSubscriptionFeeModal(false); }}
+              className="absolute -top-3 -left-3 z-10 bg-white rounded-full p-1 shadow-lg border border-slate-200 hover:scale-110 transition active:scale-95 cursor-pointer"
+            >
+              <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-extrabold text-sm select-none">✕</div>
+            </button>
+
+            <div className="bg-gradient-to-r from-[#d75024] to-[#f55928] py-4 px-6 text-white border-b-4 border-white/20 flex justify-between items-center">
+              <h3 className="font-black text-xl tracking-tight drop-shadow-md">
+                Subscription Fee
+              </h3>
+              <span className="text-white/70 font-black tracking-widest text-xs uppercase font-mono">Social</span>
+            </div>
+
+            <div className="p-6 space-y-6 text-left">
+              <p className="text-sm font-extrabold text-slate-700 text-center">
+                Decide how much you'll charge your subscribers each month today!
+              </p>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-center shadow-inner">
+                <span className="text-slate-400 font-bold text-[10px] uppercase block">Current Monthly Fee</span>
+                <span className="font-black text-[#5d4037] text-xl">${gameState.socialMedia.onlyfans.subscriptionPrice || 10}</span>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-bold text-slate-500">
+                  <span>Subscription Fee</span>
+                  <span>${tempSubscriptionPrice}</span>
+                </div>
+                <input 
+                  type="range"
+                  min="5"
+                  max="100"
+                  value={tempSubscriptionPrice}
+                  onChange={(e) => setTempSubscriptionPrice(parseInt(e.target.value))}
+                  className="w-full accent-[#d75024] cursor-pointer"
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  triggerSound('click');
+                  setGameState({
+                    ...gameState,
+                    socialMedia: {
+                      ...gameState.socialMedia,
+                      onlyfans: {
+                        ...gameState.socialMedia.onlyfans,
+                        subscriptionPrice: tempSubscriptionPrice
+                      }
+                    },
+                    log: [...gameState.log, `🍑 Set OnlyFans subscription price to $${tempSubscriptionPrice}/month.`]
+                  });
+                  setShowSubscriptionFeeModal(false);
+                  setActionPopup({ isOpen: true, title: 'Price Updated', message: `Subscription price set to $${tempSubscriptionPrice}/mo.` });
+                }}
+                className="w-full bg-[#0f4a8a] hover:bg-[#093566] text-white font-black py-3 rounded-xl transition cursor-pointer text-center text-sm shadow-md"
+              >
+                OK
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* WISHLIST MODAL */}
+      {showWishlistModal && selectedSocialChannel === 'onlyfans' && gameState.socialMedia?.onlyfans && (
+        (() => {
+          const gifts = ['Designer Bag', 'Diamond Ring', 'Sports Car', 'Airplane', 'Jet Skis', 'Mansion', 'Luxury Watch', 'Designer Shoes'];
+          
+          const handlePostWishlist = () => {
+            triggerSound('click');
+            const data = gameState.socialMedia.onlyfans;
+            
+            const buyChance = Math.min(35, Math.floor((data.subscribers || 0) * 0.005));
+            const roll = Math.random() * 100;
+            
+            let obtainedGift = null;
+            let logText = "";
+            let outcomeText = "";
+            let nextCash = gameState.cash;
+            
+            if (roll < buyChance && data.subscribers > 0) {
+              triggerSound('success');
+              obtainedGift = wishlistGifts[Math.floor(Math.random() * wishlistGifts.length)];
+              
+              const giftValues = {
+                'Designer Bag': 3500,
+                'Diamond Ring': 12000,
+                'Sports Car': 85000,
+                'Airplane': 2500000,
+                'Jet Skis': 15000,
+                'Mansion': 4500000,
+                'Luxury Watch': 25000,
+                'Designer Shoes': 1200
+              };
+              const value = giftValues[obtainedGift as keyof typeof giftValues] || 1000;
+              nextCash += value;
+              
+              logText = `🎁 A generous OnlyFans subscriber purchased a ${obtainedGift} from your wishlist! You pocketed the value of $${value.toLocaleString()}.`;
+              outcomeText = `An incredibly wealthy subscriber bought a ${obtainedGift} off your wishlist!\n\nYou received the cash value of $${value.toLocaleString()}!`;
+            } else {
+              triggerSound('error');
+              logText = `🎁 You posted your wishlist on OnlyFans, but no subscribers purchased anything this time.`;
+              outcomeText = "You shared your wishlist link, but none of your subscribers bought you a gift this time.";
+            }
+
+            setGameState({
+              ...gameState,
+              cash: nextCash,
+              socialMedia: {
+                ...gameState.socialMedia,
+                onlyfans: { ...data, wishlistPosted: true }
+              },
+              log: [...gameState.log, logText]
+            });
+            
+            setShowWishlistModal(false);
+            setActionPopup({ isOpen: true, title: obtainedGift ? 'Gift Received!' : 'Wishlist Shared', message: outcomeText });
+          };
+
+          return (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative border-4 border-slate-300 flex flex-col">
+                
+                <button 
+                  onClick={() => { triggerSound('click'); setShowWishlistModal(false); }}
+                  className="absolute -top-3 -left-3 z-10 bg-white rounded-full p-1 shadow-lg border border-slate-200 hover:scale-110 transition active:scale-95 cursor-pointer"
+                >
+                  <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-white font-extrabold text-sm select-none">✕</div>
+                </button>
+
+                <div className="bg-gradient-to-r from-[#d75024] to-[#f55928] py-4 px-6 text-white border-b-4 border-white/20 flex justify-between items-center">
+                  <h3 className="font-black text-xl tracking-tight drop-shadow-md flex items-center gap-2">
+                    🎁 Wish
+                  </h3>
+                  <span className="text-white/70 font-black tracking-widest text-xs uppercase font-mono">Social</span>
+                </div>
+
+                <div className="p-6 space-y-4 text-left">
+                  <p className="text-sm font-bold text-slate-700 text-center font-semibold">Manage your OnlyFans wishlist today.</p>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 font-mono">Pick a gift preference:</label>
+                    <div className="relative">
+                      <select 
+                        value={wishlistGifts[0]}
+                        onChange={(e) => setWishlistGifts([e.target.value, wishlistGifts[1], wishlistGifts[2]])}
+                        className="w-full bg-[#f4f3f0] border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold text-xs outline-none focus:border-indigo-600 transition cursor-pointer appearance-none"
+                      >
+                        {gifts.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-[10px]">▼</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 font-mono">Pick a second gift preference:</label>
+                    <div className="relative">
+                      <select 
+                        value={wishlistGifts[1]}
+                        onChange={(e) => setWishlistGifts([wishlistGifts[0], e.target.value, wishlistGifts[2]])}
+                        className="w-full bg-[#f4f3f0] border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold text-xs outline-none focus:border-indigo-600 transition cursor-pointer appearance-none"
+                      >
+                        {gifts.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-[10px]">▼</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 font-mono">Pick a third gift preference:</label>
+                    <div className="relative">
+                      <select 
+                        value={wishlistGifts[2]}
+                        onChange={(e) => setWishlistGifts([wishlistGifts[0], wishlistGifts[1], e.target.value])}
+                        className="w-full bg-[#f4f3f0] border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold text-xs outline-none focus:border-indigo-600 transition cursor-pointer appearance-none"
+                      >
+                        {gifts.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-[10px]">▼</div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handlePostWishlist}
+                    className="w-full bg-[#0f4a8a] hover:bg-[#093566] text-white font-black py-3 rounded-xl transition cursor-pointer text-center text-sm shadow-md mt-2"
+                  >
+                    Post
+                  </button>
+                </div>
               </div>
             </div>
           );
