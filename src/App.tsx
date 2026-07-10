@@ -2223,9 +2223,10 @@ export default function App() {
       if (socialLogs.length > 0) {
         newLogs.push(...socialLogs);
       }
-      
-      // Update state
-      nextCareer.workHarderCount = 0;
+    }
+
+    // Update state
+    nextCareer.workHarderCount = 0;
 
       
       // Handle weekly hours effects
@@ -3570,7 +3571,7 @@ export default function App() {
     setJobInterview({ job, questionData: randomQuestion });
   };
 
-  const resolveInterview = (option: typeof JOB_INTERVIEWS[0]['options'][0]) => {
+  const resolveInterview = (option: JobInterviewOption) => {
     if (!gameState || !jobInterview) return;
     
     let nextStats = { ...gameState.stats };
@@ -9768,6 +9769,4 @@ export default function App() {
       </div>
     </div>
   );
-}
-
 }
