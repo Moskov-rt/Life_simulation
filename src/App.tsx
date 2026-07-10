@@ -45,7 +45,8 @@ import {
   ChevronDown,
   Skull, Plane, Mountain, Star, Dices, Laptop, UserCircle, Scale, Ticket, Wine, Dog, Sun, Smartphone, Palmtree, HandHeart, FileText, Flag
 } from 'lucide-react';
-import { GameState, Stats, Reputation, Relationship, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig } from './types';
+import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig } from './types';
+import { relationshipToNPC } from './utils/saveMigration';
 import { EVENTS_POOL } from './events';
 import { SICKNESS_TITLES, SICKNESS_DESCRIPTIONS, IGNORE_TEXTS, PRAY_TEXTS, WATER_TEXTS } from './healthTexts';
 import { playClick, playSuccess, playError, playAgeUp } from './utils/audio';
@@ -968,7 +969,7 @@ export default function App() {
     }
   }, [socialPostResult]);
 
-  const relTrustString = gameState?.relationships ? JSON.stringify(gameState.relationships.map(r => r.trust)) : '';
+  const relTrustString = gameState?.relationships ? JSON.stringify((Object.values(gameState.npcs || {}) as NPC[]).map(r => r.trust)) : '';
   const illnessesCuredString = gameState?.illnesses ? JSON.stringify(gameState.illnesses.map(i => i.cured)) : '';
   const purchasedAssetsCount = purchasedAssets.length;
 
@@ -1026,7 +1027,7 @@ export default function App() {
             met = purchasedAssets.length >= 3;
             break;
           case 'perfect_relation':
-            met = gameState.relationships.some(rel => rel.trust >= 100);
+            met = (Object.values(gameState.npcs || {}) as NPC[]).some(rel => rel.trust >= 100);
             break;
           case 'overcome_terminal':
             met = gameState.illnesses.some(ill => ill.type === 'terminal' && ill.cured);
@@ -1269,7 +1270,8 @@ export default function App() {
       cash: customSetup?.startingCash || 0,
       stats,
       reputation,
-      relationships: parents,
+      relationships: [],
+      npcs: Object.fromEntries(parents.map(p => [p.id, relationshipToNPC(p)])),
       illnesses: activeIllnesses,
       flags,
       delayedEvents: [],
@@ -1411,7 +1413,7 @@ export default function App() {
     if (!effect) return; // Failsafe
     let nextStats = { ...gameState.stats };
     let nextRep = { ...gameState.reputation };
-    let nextRelationships = gameState.relationships.map(r => ({ ...r }));
+    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => ({ ...r }));
     let nextFlags = { ...gameState.flags };
     let nextDelayed = [...gameState.delayedEvents];
     let nextCash = gameState.cash + (effect.cashChange || 0);
@@ -1679,7 +1681,7 @@ export default function App() {
       cash: nextCash,
       stats: nextStats,
       reputation: nextRep,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: nextFlags,
       delayedEvents: nextDelayed,
       illnesses: nextIllnesses,
@@ -1776,9 +1778,9 @@ export default function App() {
     };
 
     // If opponent is a relationship, adjust their stats too!
-    let nextRelationships = gameState.relationships;
+    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]);
     if (activeFight.opponentId && activeFight.opponentId !== 'bully_marcus') {
-      nextRelationships = gameState.relationships.map(r => {
+      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.id === activeFight.opponentId) {
           return {
             ...r,
@@ -1808,7 +1810,7 @@ export default function App() {
       alive: isAlive,
       deathReason,
       stats: nextStats,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: updatedFlags,
       currentEvent: null,
       log: [...gameState.log, logMsg, `✨ Fight Result: ${text}`]
@@ -2121,7 +2123,7 @@ export default function App() {
     let nextStats = { ...gameState.stats };
     let nextRep = { ...gameState.reputation };
     let nextCash = gameState.cash;
-    let nextRelationships = gameState.relationships.map(r => ({
+    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => ({
       ...r,
       age: r.age + 1
     }));
@@ -2288,7 +2290,7 @@ export default function App() {
       // Clear previous and generate fresh ones
       nextRelationships = nextRelationships.filter(r => r.relation !== 'classmate' && r.relation !== 'teacher');
       const schoolmates = generateSchoolContacts(false);
-      nextRelationships.push(...schoolmates);
+      nextRelationships.push(...(schoolmates as any));
     } else if (nextAge === 12) {
       nextCareer = { title: 'High School Student', salary: 0, type: 'school' };
       newLogs.push('🎒 I started attending Secondary High School.');
@@ -2297,7 +2299,7 @@ export default function App() {
       // Clear previous and generate fresh ones
       nextRelationships = nextRelationships.filter(r => r.relation !== 'classmate' && r.relation !== 'teacher');
       const schoolmates = generateSchoolContacts(true);
-      nextRelationships.push(...schoolmates);
+      nextRelationships.push(...(schoolmates as any));
     } else if (nextAge === 18) {
       nextCareer = { title: 'Unemployed High School Graduate', salary: 0, type: 'unemployed' };
       newLogs.push('🎓 I graduated from High School! I am now looking for career opportunities.');
@@ -2308,7 +2310,7 @@ export default function App() {
     // Lazy load school contacts fallback
     if (nextCareer.type === 'school' && !nextRelationships.some(r => r.relation === 'classmate')) {
       const schoolmates = generateSchoolContacts(nextAge >= 12);
-      nextRelationships.push(...schoolmates);
+      nextRelationships.push(...(schoolmates as any));
       if (nextFlags.schoolGrades === undefined) nextFlags.schoolGrades = 80;
       if (nextFlags.schoolPopularity === undefined) nextFlags.schoolPopularity = 50;
       if (nextFlags.schoolType === undefined) nextFlags.schoolType = 'public';
@@ -2656,7 +2658,7 @@ export default function App() {
       cash: nextCash,
       stats: nextStats,
       reputation: nextRep,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       illnesses: currentIllnesses,
       career: nextCareer,
       completedEducation: nextCompletedEducation,
@@ -2687,7 +2689,7 @@ export default function App() {
     }
 
     if (isUnderage) {
-      const parents = gameState.relationships.filter(r => r.relation === 'parent');
+      const parents = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'parent');
       const parentsCount = parents.length;
       const avgTrust = parentsCount > 0 
         ? parents.reduce((sum, p) => sum + p.trust, 0) / parentsCount 
@@ -2703,7 +2705,7 @@ export default function App() {
           ...gameState.stats,
           happiness: Math.max(0, gameState.stats.happiness - 5)
         };
-        const nextRelationships = gameState.relationships.map(r => {
+        const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
           if (r.relation === 'parent') {
             return { ...r, resentment: Math.min(100, r.resentment + 2) };
           }
@@ -2713,7 +2715,7 @@ export default function App() {
         setGameState({
           ...gameState,
           stats: nextStats,
-          relationships: nextRelationships,
+          npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
           log: [
             ...gameState.log,
             `😢 Asked my parents to let me join the gym, but they refused! "You can exercise by running around the backyard for free!"`,
@@ -2992,7 +2994,7 @@ export default function App() {
     triggerSound('error');
 
     // Reduce relationship with parents
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.relation === 'parent') {
         return {
           ...r,
@@ -3006,7 +3008,7 @@ export default function App() {
     setGameState({
       ...gameState,
       career: { title: 'High School Dropout', salary: 0, type: 'unemployed' },
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       reputation: {
         ...gameState.reputation,
         family: Math.max(0, gameState.reputation.family - 45)
@@ -3022,8 +3024,8 @@ export default function App() {
 
   const handleAskPrivateSchool = () => {
     if (!gameState) return;
-    const dad = gameState.relationships.find(r => r.id === 'dad');
-    const mom = gameState.relationships.find(r => r.id === 'mom');
+    const dad = (Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === 'dad');
+    const mom = (Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === 'mom');
     const trustScore = ((dad?.trust || 50) + (mom?.trust || 50)) / 2;
     
     // Success chance scales with parental trust
@@ -3033,7 +3035,7 @@ export default function App() {
     let happinessChange = 0;
     let smartsChange = 0;
     let styleChange = 0;
-    let nextRelationships = gameState.relationships;
+    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]);
     let schoolType = 'public';
 
     if (isSuccess) {
@@ -3045,7 +3047,7 @@ export default function App() {
       outcomeText = `Your parents agreed! They decided your intellectual genius is wasted on public school and enrolled you in "St. Jude's Unhinged Academy for Academic Mischief." However, they force you to wear a giant velvet bow-tie and a blazer with gold buttons.`;
       logMsg = `🏫 Successfully convinced parents to send me to Private School!`;
       
-      nextRelationships = gameState.relationships.map(r => {
+      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, trust: Math.max(0, r.trust - 5) }; // cost them money!
         }
@@ -3057,7 +3059,7 @@ export default function App() {
       outcomeText = `Your father laughed so hard he choked on his coffee. "Do you think I'm made of solid gold?! Go sell a kidney if you want private tutoring!" Your mother nodded in agreement.`;
       logMsg = `🏫 Asked parents to go to Private School, but they laughed in my face.`;
       
-      nextRelationships = gameState.relationships.map(r => {
+      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, resentment: Math.min(100, r.resentment + 5) };
         }
@@ -3073,7 +3075,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         happiness: Math.max(0, Math.min(100, gameState.stats.happiness + happinessChange)),
@@ -3198,12 +3200,12 @@ export default function App() {
     let logText = '';
     let effectText = '';
     const nextStats = { ...gameState.stats };
-    let nextRelationships = [...gameState.relationships];
+    let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as NPC[])];
 
     if (roll < 0.4) {
       // Cuddled
       nextStats.happiness = Math.min(100, nextStats.happiness + 6);
-      nextRelationships = gameState.relationships.map(r => r.relation === 'parent' ? { ...r, trust: Math.min(100, r.trust + 4) } : r);
+      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => r.relation === 'parent' ? { ...r, trust: Math.min(100, r.trust + 4) } : r);
       const cuddleResponses = [
         "Cried out loud! Mama rushed in, scooped me up, and gave me a warm, gentle cuddle.",
         "Let out a big wail! Papa came running and rocked me gently until I calmed down.",
@@ -3240,7 +3242,7 @@ export default function App() {
     setGameState({
       ...gameState,
       stats: nextStats,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: [
         ...gameState.log,
         `😭 ${logText}`,
@@ -3261,7 +3263,7 @@ export default function App() {
     const happinessGain = Math.floor(Math.random() * 4) + 3;
     const trustGain = Math.floor(Math.random() * 5) + 5;
 
-    const nextRelationships = gameState.relationships.map(r => 
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
       r.relation === 'parent' ? { ...r, trust: Math.min(100, r.trust + trustGain) } : r
     );
 
@@ -3283,7 +3285,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         happiness: Math.min(100, gameState.stats.happiness + happinessGain)
@@ -3438,7 +3440,7 @@ export default function App() {
     const statusGain = Math.floor(Math.random() * 10) + 5;
 
     if (isUnderage) {
-      const parents = gameState.relationships.filter(r => r.relation === 'parent');
+      const parents = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'parent');
       const parentsCount = parents.length;
       const avgTrust = parentsCount > 0 
         ? parents.reduce((sum, p) => sum + p.trust, 0) / parentsCount 
@@ -3454,7 +3456,7 @@ export default function App() {
           ...gameState.stats,
           happiness: Math.max(0, gameState.stats.happiness - 5)
         };
-        const nextRelationships = gameState.relationships.map(r => {
+        const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
           if (r.relation === 'parent') {
             return { ...r, resentment: Math.min(100, r.resentment + 2) };
           }
@@ -3464,7 +3466,7 @@ export default function App() {
         setGameState({
           ...gameState,
           stats: nextStats,
-          relationships: nextRelationships,
+          npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
           log: [
             ...gameState.log,
             `😢 Asked my parents for money to upgrade my wardrobe, but they said NO! "You still fit perfectly fine in your older sibling's hand-me-downs!"`,
@@ -3483,7 +3485,7 @@ export default function App() {
         status: Math.min(100, gameState.stats.status + statusGain),
         happiness: Math.min(100, gameState.stats.happiness + 5)
       };
-      const nextRelationships = gameState.relationships.map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, trust: Math.min(100, r.trust + 2) };
         }
@@ -3493,7 +3495,7 @@ export default function App() {
       setGameState({
         ...gameState,
         stats: nextStats,
-        relationships: nextRelationships,
+        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: [
           ...gameState.log,
           `👗 Asked my parents for money to buy stylish new clothes. They agreed and paid the $150!`,
@@ -3648,7 +3650,7 @@ export default function App() {
         });
       }
       
-      const filteredRels = gameState.relationships.filter(r => r.relation !== 'colleague' && r.relation !== 'supervisor');
+      const filteredRels = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation !== 'colleague' && r.relation !== 'supervisor');
       const nextRelationships = [...filteredRels, ...newColleagues];
       
       setGameState({
@@ -3656,7 +3658,7 @@ export default function App() {
         stats: nextStats,
         log: nextLog,
         career: nextCareer as any,
-        relationships: nextRelationships as any
+        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       });
       
       setActionPopup({
@@ -3699,7 +3701,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 8) + 5;
     const resentmentDec = Math.floor(Math.random() * 10) + 5;
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3718,7 +3720,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3743,7 +3745,7 @@ export default function App() {
       outcomeText = `The conversation took an awkward turn, hitting a sore spot and creating tension.`;
     }
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3762,7 +3764,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3780,7 +3782,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 10) + baseGain;
     const resentmentDec = Math.floor(Math.random() * 15) + baseGain;
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3801,7 +3803,7 @@ export default function App() {
     setGameState({
       ...gameState,
       cash: gameState.cash - cost,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3814,7 +3816,7 @@ export default function App() {
     const trustDec = Math.floor(Math.random() * 20) + 15;
     const resentmentInc = Math.floor(Math.random() * 25) + 15;
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3833,7 +3835,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3889,13 +3891,13 @@ export default function App() {
     const newSalary = Math.floor(gameState.career.salary * 1.25);
     const newTitle = "Senior " + gameState.career.title.replace("Senior ", "").replace("Junior ", "");
     
-    const nextRelationships = gameState.relationships.map(r => 
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
       r.id === rel.id ? { ...r, trust: Math.min(100, r.trust + 10) } : r
     );
     
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       career: { ...gameState.career, title: newTitle, salary: newSalary, yearsInRole: 0 },
       log: [...gameState.log, `📈 You asked your supervisor for a promotion and got it! You are now a ${newTitle} making $${newSalary.toLocaleString()}/yr.`]
     });
@@ -3917,23 +3919,23 @@ export default function App() {
     if (perf < 60 || rel.trust < 40) {
       triggerSound('error');
       setActionPopup({ isOpen: true, title: 'Raise Denied', message: 'Your supervisor laughed at your request for a raise. Your performance and relationship need to be better.' });
-      const nextRelationships = gameState.relationships.map(r => 
+      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
         r.id === rel.id ? { ...r, resentment: Math.min(100, r.resentment + 5) } : r
       );
-      setGameState({ ...gameState, relationships: nextRelationships, log: [...gameState.log, `❌ Your request for a raise was denied.`] });
+      setGameState({ ...gameState, npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])), log: [...gameState.log, `❌ Your request for a raise was denied.`] });
       return;
     }
     
     triggerSound('success');
     const newSalary = Math.floor(gameState.career.salary * 1.08); // 8% raise
     
-    const nextRelationships = gameState.relationships.map(r => 
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
       r.id === rel.id ? { ...r, trust: Math.min(100, r.trust + 5) } : r
     );
     
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       career: { ...gameState.career, salary: newSalary },
       log: [...gameState.log, `💰 You negotiated a raise! Your new salary is $${newSalary.toLocaleString()}/yr.`]
     });
@@ -3970,7 +3972,7 @@ export default function App() {
       logMsg = `💔 Failed miserably trying to flirt with classmate ${rel.name}.`;
     }
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3988,7 +3990,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         happiness: Math.max(0, Math.min(100, gameState.stats.happiness + happinessChange))
@@ -4020,7 +4022,7 @@ export default function App() {
     const resentmentChange = 30;
     const popularityChange = Math.floor(Math.random() * 12) + 6;
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4038,7 +4040,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: nextFlags,
       log: [
         ...gameState.log,
@@ -4076,7 +4078,7 @@ export default function App() {
       logMsg = `❌ My prank on classmate ${rel.name} backfired catastrophically!`;
     }
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4094,7 +4096,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         health: Math.max(0, gameState.stats.health + healthChange)
@@ -4115,7 +4117,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 12) + 8;
     const smartsGain = Math.floor(Math.random() * 5) + 2;
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4127,7 +4129,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         smarts: Math.min(100, gameState.stats.smarts + smartsGain)
@@ -4205,7 +4207,7 @@ export default function App() {
       logMsg = `❌ Got caught pranking teacher ${rel.name}.`;
     }
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4223,7 +4225,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       reputation: {
         ...gameState.reputation,
         family: Math.max(0, gameState.reputation.family + familyRepChange)
@@ -4245,7 +4247,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 8) + 6;
     const resentmentDec = Math.floor(Math.random() * 8) + 4;
 
-    const nextRelationships = gameState.relationships.map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4273,7 +4275,7 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      relationships: nextRelationships,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -4306,7 +4308,7 @@ export default function App() {
         ? Math.floor(Math.random() * 50) + 20  // $20-$70
         : Math.floor(Math.random() * 150) + 50; // $50-$200
 
-      const nextRelationships = gameState.relationships.map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.id === rel.id) {
           return {
             ...r,
@@ -4325,7 +4327,7 @@ export default function App() {
       setGameState({
         ...gameState,
         cash: gameState.cash + amount,
-        relationships: nextRelationships,
+        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: updatedLog
       });
     } else {
@@ -4334,7 +4336,7 @@ export default function App() {
       const trustDec = Math.floor(Math.random() * 5) + 3;
       const resentmentInc = Math.floor(Math.random() * 6) + 4;
 
-      const nextRelationships = gameState.relationships.map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.id === rel.id) {
           return {
             ...r,
@@ -4353,7 +4355,7 @@ export default function App() {
 
       setGameState({
         ...gameState,
-        relationships: nextRelationships,
+        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: updatedLog
       });
     }
@@ -4484,7 +4486,7 @@ export default function App() {
       triggerSound('success');
       
       // Filter out any prior partner relationship to represent dating monogamously (standard in BitLife)
-      const nextRelationships = gameState.relationships.filter(r => r.relation !== 'partner');
+      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation !== 'partner');
       nextRelationships.push(datingAppMatch);
 
       const nextRep = {
@@ -4495,7 +4497,7 @@ export default function App() {
       setGameState({
         ...gameState,
         cash: gameState.cash - 50,
-        relationships: nextRelationships,
+        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         reputation: nextRep,
         log: [
           ...gameState.log,
@@ -4549,7 +4551,7 @@ export default function App() {
       return;
     }
 
-    const parents = gameState.relationships.filter(r => r.relation === 'parent');
+    const parents = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'parent');
     const parentsCount = parents.length;
     const avgTrust = parentsCount > 0 
       ? parents.reduce((sum, p) => sum + p.trust, 0) / parentsCount 
@@ -4583,7 +4585,7 @@ export default function App() {
       };
 
       // Boost relationship trust slightly
-      const nextRelationships = gameState.relationships.map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, trust: Math.min(100, r.trust + 3) };
         }
@@ -4593,7 +4595,7 @@ export default function App() {
       setGameState({
         ...gameState,
         stats: nextStats,
-        relationships: nextRelationships,
+        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: [
           ...gameState.log,
           `🎁 Asked my parents to buy me: "${asset.name}". They smiled and bought it for me!`,
@@ -4609,7 +4611,7 @@ export default function App() {
       };
 
       // Slight resentment / tension boost
-      const nextRelationships = gameState.relationships.map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, resentment: Math.min(100, r.resentment + 2) };
         }
@@ -4619,7 +4621,7 @@ export default function App() {
       setGameState({
         ...gameState,
         stats: nextStats,
-        relationships: nextRelationships,
+        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: [
           ...gameState.log,
           `😢 Asked my parents to buy me: "${asset.name}". They flatly refused! "We are not made of money."`,
@@ -4745,9 +4747,9 @@ export default function App() {
 
                 {gameState.activeRelationshipContextId && (
                   <div className="mt-3 px-3 py-2 bg-slate-50 border border-slate-100 text-xs text-slate-500 rounded-2xl flex items-center justify-between">
-                    <span>Involved: <strong className="text-slate-800">{gameState.relationships.find(r => r.id === gameState.activeRelationshipContextId)?.name}</strong></span>
+                    <span>Involved: <strong className="text-slate-800">{(Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === gameState.activeRelationshipContextId)?.name}</strong></span>
                     <span className="uppercase text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                      {gameState.relationships.find(r => r.id === gameState.activeRelationshipContextId)?.archetype}
+                      {(Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === gameState.activeRelationshipContextId)?.archetype}
                     </span>
                   </div>
                 )}
@@ -5891,10 +5893,10 @@ export default function App() {
 
                         {/* Classmates List */}
                         <div className="space-y-2 flex-1 pb-6 overflow-y-auto pr-1">
-                          {gameState.relationships.filter(r => r.relation === 'classmate').length === 0 ? (
+                          {(Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'classmate').length === 0 ? (
                             <p className="text-xs text-slate-400 italic text-center py-8">No classmates generated yet. Advance your age to populate your class!</p>
                           ) : (
-                            gameState.relationships.filter(r => r.relation === 'classmate').map((classmate) => {
+                            (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'classmate').map((classmate) => {
                               return (
                                 <button
                                   key={classmate.id}
@@ -5946,10 +5948,10 @@ export default function App() {
 
                         {/* Faculty list */}
                         <div className="space-y-2 flex-1 pb-6 overflow-y-auto pr-1">
-                          {gameState.relationships.filter(r => r.relation === 'teacher').length === 0 ? (
+                          {(Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'teacher').length === 0 ? (
                             <p className="text-xs text-slate-400 italic text-center py-8">No teachers generated yet. Advance your age to hire school faculty!</p>
                           ) : (
-                            gameState.relationships.filter(r => r.relation === 'teacher').map((teacher) => {
+                            (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'teacher').map((teacher) => {
                               return (
                                 <button
                                   key={teacher.id}
@@ -7009,7 +7011,7 @@ export default function App() {
                           onClick={() => {
                             triggerSound('click');
                             // Pick first available relative/friend, otherwise fallback to celebrity
-                            const contacts = gameState.relationships.filter(r => !r.isDeceased);
+                            const contacts = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => !r.isDeceased);
                             if (contacts.length > 0) {
                               setSelectedVictim(contacts[0].name);
                             } else {
@@ -7359,7 +7361,7 @@ export default function App() {
                   };
 
                   if (showExes) {
-                    const exes = gameState.relationships.filter(r => r.isEx);
+                    const exes = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.isEx);
                     return (
                       <div className="space-y-0 pb-6 -mt-4">
                         <div className="flex items-center justify-between bg-[#0f4a8a] text-white p-3 cursor-pointer select-none" onClick={() => { triggerSound('click'); setShowExes(false); }}>
@@ -7380,13 +7382,13 @@ export default function App() {
                     );
                   }
 
-                  const activeRels = gameState.relationships.filter(r => !r.isDeceased && !r.isEx);
-                  const deceasedRels = gameState.relationships.filter(r => r.isDeceased);
+                  const activeRels = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => !r.isDeceased && !r.isEx);
+                  const deceasedRels = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.isDeceased);
                   
                   const family = activeRels.filter(r => ['parent', 'sibling', 'cousin'].includes(r.relation));
                   const friends = activeRels.filter(r => ['friend', 'best_friend', 'pet'].includes(r.relation));
                   const love = activeRels.filter(r => ['partner', 'spouse', 'affair'].includes(r.relation));
-                  const exesCount = gameState.relationships.filter(r => r.isEx).length;
+                  const exesCount = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.isEx).length;
 
                   const groups = [
                     { title: 'Family', list: family, key: 'family' },
@@ -8886,9 +8888,9 @@ export default function App() {
             nextFlags.leakRisk = Math.max(0, Math.min(100, (nextFlags.leakRisk || 0) + (res.statChanges.leakRisk || 0)));
 
             // Apply Family Relations change
-            let nextRelationships = [...gameState.relationships];
+            let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as NPC[])];
             if (res.statChanges.family && res.statChanges.family !== 0) {
-              nextRelationships = gameState.relationships.map(r => {
+              nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
                 if (r.relation === 'parent' || r.relation === 'sibling') {
                   return { ...r, trust: Math.max(0, r.trust + res.statChanges.family) };
                 }
@@ -8953,7 +8955,7 @@ export default function App() {
               stats: nextStats,
               cash: nextCash,
               flags: nextFlags,
-              relationships: nextRelationships,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
               socialMedia: {
                 ...gameState.socialMedia,
                 [res.channel]: {
@@ -9450,7 +9452,7 @@ export default function App() {
           };
 
           const celebrities = ['Usher', 'Kesha', 'Olivia Rodrigo', '@BitLifeApp', 'Taylor Swift'];
-          const relatives = gameState.relationships.filter(r => !r.isDeceased).map(r => r.name);
+          const relatives = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => !r.isDeceased).map(r => r.name);
           const victims = [...celebrities, ...relatives];
 
           const executeTroll = () => {
@@ -9496,9 +9498,9 @@ export default function App() {
             const nextStats = { ...gameState.stats };
             if (happinessChange !== 0) nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + happinessChange));
 
-            let nextRelationships = [...gameState.relationships];
+            let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as NPC[])];
             if (!isCelebrity) {
-              nextRelationships = gameState.relationships.map(r => {
+              nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
                 if (r.name === target) {
                   return {
                     ...r,
@@ -9513,7 +9515,7 @@ export default function App() {
             setGameState({
               ...gameState,
               stats: nextStats,
-              relationships: nextRelationships,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
               socialMedia: {
                 ...gameState.socialMedia,
                 [channel]: { ...data, followers: Math.max(0, data.followers + followerChange) }

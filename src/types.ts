@@ -4,6 +4,12 @@
  */
 
 export interface Stats {
+  karma?: number;
+  willpower?: number;
+  family?: number;
+  leakRisk?: number;
+  cashChange?: number;
+  confidence?: number;
   health: number;
   smarts: number;
   looks: number;
@@ -46,6 +52,93 @@ export interface Relationship {
   isDeceased?: boolean;
   yearsDeceased?: number;
   isEx?: boolean;
+}
+
+
+export interface NPCTraits {
+  confidence: number;
+  kindness: number;
+  intelligence: number;
+  ambition: number;
+  greed: number;
+  honesty: number;
+  loyalty: number;
+  jealousy: number;
+  patience: number;
+  romanticInterest: number;
+  aggressiveness: number;
+  humor: number;
+  responsibility: number;
+  emotionalStability: number;
+  generosity: number;
+  riskTaking: number;
+}
+
+export interface NPCLifeState {
+  happiness: number;
+  stress: number;
+  energy: number;
+  health: number;
+  confidence: number;
+  socialSatisfaction: number;
+  careerSatisfaction: number;
+}
+
+export interface NPCGoal {
+  id: string;
+  type: string;
+  progress: number;
+  active: boolean;
+}
+
+export interface NPCMemory {
+  id: string;
+  type: string;
+  sourceId: string;
+  targetId: string;
+  tick: number;
+  intensity: number;
+  emotionalValue: number;
+  decayRate: number;
+  permanent: boolean;
+}
+
+export interface NPCLifestyle {
+  home: string;
+  car: string;
+  savings: number;
+  debt: number;
+  netWorth: number;
+  hobbies: string[];
+  favoriteActivities: string[];
+  shoppingHabits: 'frugal' | 'average' | 'luxurious';
+  vacationFrequency: 'rare' | 'average' | 'frequent';
+  exerciseHabits: 'none' | 'occasional' | 'frequent';
+  smoking: boolean;
+  alcoholUse: 'none' | 'social' | 'frequent' | 'addicted';
+}
+
+export interface NPCRelationLink {
+  type: RelationType;
+  closeness: number;
+  trust: number;
+  respect: number;
+  attraction: number;
+  resentment: number;
+  compatibility: number;
+}
+
+export interface NPC extends Relationship {
+  orientation: 'straight' | 'gay' | 'bisexual' | 'asexual';
+  nationality: string;
+  education: string;
+  income: number;
+  traits: NPCTraits;
+  lifeState: NPCLifeState;
+  goals: NPCGoal[];
+  memories: NPCMemory[];
+  lifestyle: NPCLifestyle;
+  npcRelations: Record<string, NPCRelationLink>;
 }
 
 export interface DelayedEvent {
@@ -173,6 +266,8 @@ export interface GameState {
   cash: number;
   stats: Stats;
   reputation: Reputation;
+  saveVersion?: number;
+  npcs: Record<string, NPC>;
   relationships: Relationship[];
   illnesses: Illness[];
   flags: Record<string, any>;
