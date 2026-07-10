@@ -1502,4 +1502,1325 @@ export const EVENTS_POOL: Event[] = [
       { id: 'bird_bribe', text: 'Throw your expensive sandwich at it.', effect: { statChanges: { happiness: -5 }, cashChange: -15, outcomeText: 'You sacrifice your delicious $15 artisanal sandwich to appease the beast. The goose devours it and spares your life. You are safe, but hungry.', logText: 'Bribed an attacking goose with a $15 sandwich to spare my life.' } }
     ]
   }
+,
+  // --- GDD SOCIAL MEDIA & RANDOM ADULT EVENTS ---
+  {
+    id: 'gdd_event_1_algo',
+    title: 'THE ALGORITHM SHIFT',
+    text: 'FanZone has rolled out a strict new algorithm. Posting multiple times daily is now penalized, while premium weekly long-form content receives double reach. What is your strategy?',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_algo_daily',
+        text: '📅 Post Daily Anyway',
+        effect: {
+          statChanges: { happiness: -5 },
+          outcomeText: 'You stick to your grinding schedule. Your views are flat, you get buried by the new algorithm, and you feel completely exhausted.',
+          logText: 'Chose to grind posts daily despite the negative algorithm shift.'
+        }
+      },
+      {
+        id: 'gdd_algo_weekly',
+        text: '🎥 Switch to Weekly',
+        effect: {
+          statChanges: { happiness: 5 },
+          outcomeText: 'Your fans complain about the lack of content, but your new weekly uploads look incredibly professional and get double reach.',
+          logText: 'Pivoted to weekly high-quality uploads following the algorithm update.'
+        }
+      },
+      {
+        id: 'gdd_algo_boost',
+        text: '💰 Pay for Algorithm Boost ($500)',
+        effect: {
+          cashChange: -500,
+          outcomeText: 'The algorithm boost delivers thousands of bot views, but your organic reach modifier drops permanently.',
+          logText: 'Paid $500 for a temporary algorithm traffic boost.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_2_ban',
+    title: 'FLAGGED FOR EXPLICIT CONTENT',
+    text: 'Your latest SpicyChat post has been flagged by automated filters for violating Terms of Service. One more strike triggers a permanent ban. How do you respond?',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_ban_appeal',
+        text: 'appeal the Strike',
+        effect: {
+          outcomeText: 'Appeal rejected! The moderators warn you to keep it clean. Your stress level is through the roof.',
+          logText: 'Unsuccessfully appealed a SpicyChat content strike.'
+        }
+      },
+      {
+        id: 'gdd_ban_delete',
+        text: '🗑️ Delete Flagged Post ($200 loss)',
+        effect: {
+          cashChange: -200,
+          outcomeText: 'You deleted the evidence. The warning strike is removed, but your fans are disappointed that you folded.',
+          logText: 'Deleted flagged post, taking a temporary PPV refund hit.'
+        }
+      },
+      {
+        id: 'gdd_ban_migrate',
+        text: 'Move to RedStage',
+        effect: {
+          outcomeText: 'You announce your migration. Your RedStage subscriber count jumps, but your cashflow takes a temporary hit.',
+          logText: 'Announced migration to RedStage to avoid permanent SpicyChat ban.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_3_verify',
+    title: 'THE VERIFICATION CONTRACT',
+    text: 'FanZone offers you a blue checkmark to protect your identity, but they require you to submit your legal ID linked to your public profile page. Will you verify?',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_verify_real',
+        text: '✔️ Verify with Real ID',
+        effect: {
+          statChanges: { status: 15 },
+          outcomeText: 'You are verified! Growth explodes, but a local forum leaks your government name.',
+          logText: 'Verified creator profile with real ID, losing anonymity.'
+        }
+      },
+      {
+        id: 'gdd_verify_fake',
+        text: '🆔 Buy Fake ID Verification ($200)',
+        effect: {
+          cashChange: -200,
+          outcomeText: 'The black-market ID works! Your profile looks official, and nobody knows who you really are.',
+          logText: 'Purchased a fake ID to obtain verification status anonymously.'
+        }
+      },
+      {
+        id: 'gdd_verify_reject',
+        text: '❌ Reject the Badge',
+        effect: {
+          outcomeText: 'You value your privacy. Your follower growth slows down, but you sleep easily.',
+          logText: 'Rejected the profile verification badge to preserve anonymity.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_4_copycat',
+    title: 'THE CARBON COPY',
+    text: 'A rising star has copied your logo, your exact cosplay designs, and even uses your captions word-for-word. They are gaining fast. What is your play?',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_copycat_expose',
+        text: '📢 Expose Them Publicly',
+        effect: {
+          outcomeText: 'You start a massive internet war. Fans flood their comments, but other creators call you toxic.',
+          logText: 'Publicly exposed a copycat creator on social channels.'
+        }
+      },
+      {
+        id: 'gdd_copycat_collab',
+        text: '🤝 Propose a Duet / Collab',
+        effect: {
+          cashChange: 1000,
+          outcomeText: 'The crossover video is a hit! You convert their audience and double your average views.',
+          logText: 'Co-opted copycat creator into a collaborative project.'
+        }
+      },
+      {
+        id: 'gdd_copycat_ignore',
+        text: '🤫 Ignore & Change Styles',
+        effect: {
+          statChanges: { smarts: 15 },
+          outcomeText: 'You quietly update your wardrobe. Your new high-fashion look leaves the copycat looking outdated.',
+          logText: 'Ignored copycat and innovated new fashion content.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_5_sabotage',
+    title: 'THE FORBIDDEN CLIP',
+    text: 'A user in your Live chat claims they will drop a $5,000 tip right now if you ingest a bottle of prescription pills on camera.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_sabotage_fake',
+        text: '💊 Fake It with Candy (Risky)',
+        effect: {
+          cashChange: 5000,
+          outcomeText: 'You pulled it off! The cash lands in your account, but viewers clip it and report you to the moderators.',
+          logText: 'Faked pill ingestion for a $5,000 live stream tip.'
+        }
+      },
+      {
+        id: 'gdd_sabotage_ban',
+        text: '🚫 Ban the Troll',
+        effect: {
+          outcomeText: 'You delete their account. The stream cools off, but your moderators praise your morals.',
+          logText: 'Banned stream troll who demanded self-harm for tips.'
+        }
+      },
+      {
+        id: 'gdd_sabotage_laugh',
+        text: '😜 Laugh It Off',
+        effect: {
+          cashChange: 200,
+          outcomeText: 'You joke about it. The chat laughs and dumps smaller tips to keep the stream positive.',
+          logText: 'Laughed off self-harm tip request on live stream.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_6_stalker',
+    title: 'THE HOME DELIVERY',
+    text: 'An obsessive subscriber has tracked your real address. You receive a package containing roses, a card, and a Polaroid of your front gate.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_stalker_move',
+        text: '🏢 Sign New Lease & Move ($5,000)',
+        effect: {
+          cashChange: -5000,
+          outcomeText: 'You packed your bags and moved. Your wallet is light, but you finally feel safe again.',
+          logText: 'Relocated apartment quickly to escape stalker tracking.'
+        }
+      },
+      {
+        id: 'gdd_stalker_police',
+        text: '👮 Report to Police',
+        effect: {
+          outcomeText: 'The officer takes your statement and says "stay off the internet." Nothing is resolved.',
+          logText: 'Reported stalker to police, with no immediate action taken.'
+        }
+      },
+      {
+        id: 'gdd_stalker_expose',
+        text: '📢 Expose Them Online',
+        effect: {
+          outcomeText: 'Your post goes viral. The community rallies to identify them, but you get a creepy anonymous DM.',
+          logText: 'Exposed stalker publicly on social channels.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_7_partner_collab',
+    title: 'THE REVENUE STEAL',
+    text: 'Your collab partner uploaded your joint video on their page early, withdrew all the earnings ($10K), and blocked your phone number.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_partner_feud',
+        text: '🔥 Launch Diss Track & Feud',
+        effect: {
+          outcomeText: 'Your diss track is fire! You get massive clout, but the industry brands you as toxic.',
+          logText: 'Launched public online war against partner thief.'
+        }
+      },
+      {
+        id: 'gdd_partner_sue',
+        text: '⚖️ Hire Attorney to Sue ($3,000)',
+        effect: {
+          cashChange: 2000,
+          outcomeText: 'The lawyer sends a letter. Your ex-partner panics and agrees to settle out of court for a partial return.',
+          logText: 'Retained attorney to recover stolen collab revenue.'
+        }
+      },
+      {
+        id: 'gdd_partner_forgive',
+        text: '🧘 Accept the Loss & Move On',
+        effect: {
+          statChanges: { happiness: 5 },
+          outcomeText: 'You take a deep breath and ignore it. You focus on your own work and feel lighter.',
+          logText: 'Accepted the loss of collab revenue to avoid drama.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_8_sugar_date',
+    title: 'THE SUGAR OFFER',
+    text: 'A top-tier fan who has spent $20K on your custom messages offers to fully pay your lease for a year if you fly out for a real dinner date.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_sugar_date_yes',
+        text: '✈️ Accept the Date',
+        effect: {
+          cashChange: 15000,
+          outcomeText: 'You went on the trip. They paid the cash, but kept trying to touch your arm. You feel dirty and unsafe.',
+          logText: 'Accepted sugar date, earning $15,000 but losing boundaries.'
+        }
+      },
+      {
+        id: 'gdd_sugar_date_no',
+        text: '❌ Decline the Offer',
+        effect: {
+          outcomeText: 'You declined. The fan calls you ungrateful and deletes their account, costing you monthly tip income.',
+          logText: 'Declined sugar date, resulting in fan unsubscribing.'
+        }
+      },
+      {
+        id: 'gdd_sugar_date_virtual',
+        text: '💻 Offer Virtual Live Show',
+        effect: {
+          cashChange: 3000,
+          outcomeText: 'They agree to the virtual show! They tip you heavily on stream and respect your rules.',
+          logText: 'Negotiated virtual show alternative with sugar fan.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_9_beef',
+    title: 'THE DISS VIDEO',
+    text: 'A massive creator with 5 million subscribers has posted a review mocking your acting skills and looks. Your comments are flooded.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_beef_savage',
+        text: '🤬 Attack Them Savage style',
+        effect: {
+          outcomeText: 'You drag them in a response video. Your follower count grows, but the constant hate DMs stress you out.',
+          logText: 'Fought back with aggressive drama response video.'
+        }
+      },
+      {
+        id: 'gdd_beef_mature',
+        text: '🕊️ Send Mature Response',
+        effect: {
+          outcomeText: 'Your mature reply gets praised by major channels. You look like the bigger person.',
+          logText: 'Released poised response to creator beef invitation.'
+        }
+      },
+      {
+        id: 'gdd_beef_collab',
+        text: '💼 Ask to Collab (Truce)',
+        effect: {
+          outcomeText: 'They post your collab request to Twitter with the caption "Desperate for views." You are humiliated.',
+          logText: 'Rejected collab suggestion and publicly roasted by beef instigator.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_10_gift',
+    title: 'THE TROLL PACKAGE',
+    text: 'A follower sends you a beautiful $3,000 designer handbag. When examining the seams, you discover a tiny, active spy camera inside.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_gift_wear',
+        text: '📸 Pose with it for Content',
+        effect: {
+          cashChange: 500,
+          outcomeText: 'You kept it. A week later, your bedroom photos are leaked on an anonymous forum.',
+          logText: 'Posed with a gifted bag containing a spy camera.'
+        }
+      },
+      {
+        id: 'gdd_gift_destroy',
+        text: '🔥 Destroy & Report to Police',
+        effect: {
+          outcomeText: 'You smashed the bag and gave it to the police. They run a scan on the camera IP address.',
+          logText: 'Destroyed spy camera gift and reported it to police.'
+        }
+      },
+      {
+        id: 'gdd_gift_sell',
+        text: '💲 Sell it Online',
+        effect: {
+          cashChange: 800,
+          outcomeText: 'You sold it. The spy camera was wiped, but the sender sends a furious anonymous email.',
+          logText: 'Wiped spy camera gift and resold it online.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_11_tax',
+    title: 'THE TAX INSPECTION',
+    text: 'The IRS has flagged your large cash withdrawals and FanZone income. They demand receipts for the last three tax years. You have none.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_tax_lawyer',
+        text: '💼 Hire Tax Attorney ($15,000)',
+        effect: {
+          cashChange: -17000,
+          outcomeText: 'Your attorney finds a loophole. The fine is dropped to $2,000. You are cleared.',
+          logText: 'Retained attorney to settle IRS audit.'
+        }
+      },
+      {
+        id: 'gdd_tax_fine',
+        text: '💸 Pay the Fine Instantly ($25,000)',
+        effect: {
+          cashChange: -25000,
+          outcomeText: 'You paid the full bill. Your savings are empty, but the government leaves you alone.',
+          logText: 'Paid $25,000 penalty fine to settle audit case.'
+        }
+      },
+      {
+        id: 'gdd_tax_ignore',
+        text: '🤫 Ignore & Hide Cash',
+        effect: {
+          outcomeText: 'You ignored the warnings. A week later, you receive a formal court summons.',
+          logText: 'Ignored IRS notices, attempting to hide cash reserves.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_12_refunds',
+    title: 'THE MASS REFUNDS',
+    text: 'A gang of scammers used stolen cards to buy $3,200 of your video customs. The bank processed chargebacks, freezing your account.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_refund_id',
+        text: '🔒 Lock Account Behind ID Check',
+        effect: {
+          outcomeText: 'The extra ID step annoys standard fans, but your refund rate drops to zero.',
+          logText: 'Enabled strict client ID verification protocols.'
+        }
+      },
+      {
+        id: 'gdd_refund_crypto',
+        text: '🪙 Switch to Crypto Payments',
+        effect: {
+          outcomeText: 'Most of your fans don\'t understand wallets. Income drops, but payments are final.',
+          logText: 'Switched platform store to crypto-only processing.'
+        }
+      },
+      {
+        id: 'gdd_refund_accept',
+        text: '🤷 Accept the Loss ($3,200)',
+        effect: {
+          cashChange: -3500,
+          outcomeText: 'You wrote it off. Your bank charges you an extra processing penalty fee.',
+          logText: 'Wrote off scam chargeback losses, taking a fee hit.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_13_camera',
+    title: 'CAMERA CRASH',
+    text: 'Your expensive studio camera falls off its tripod and breaks. You have three paid custom orders due by tomorrow morning.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_camera_buy',
+        text: '📸 Buy Same-Day DSLR Gear ($1,500)',
+        effect: {
+          cashChange: -1500,
+          outcomeText: 'You bought the new gear. The shots look amazing and you hit your deadlines.',
+          logText: 'Purchased emergency camera equipment to hit deadlines.'
+        }
+      },
+      {
+        id: 'gdd_camera_phone',
+        text: '📱 Filming on Your Phone',
+        effect: {
+          outcomeText: 'The phone quality was terrible. Two clients demand their money back.',
+          logText: 'Filmed custom videos on phone to avoid buying new gear.'
+        }
+      },
+      {
+        id: 'gdd_camera_delay',
+        text: '✉️ Message Fans for Delay ($500 loss)',
+        effect: {
+          cashChange: -500,
+          outcomeText: 'Your fans appreciate the honesty, but one cancels their subscription out of anger.',
+          logText: 'Requested video custom extensions due to equipment failures.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_14_sponsor',
+    title: 'THE SHADY SPONSOR',
+    text: 'A supplement brand offers you $50K to promote a "fat burner" pill. You read reports that the pill has caused liver damage in tests.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_sponsor_yes',
+        text: '💲 Accept the Deal ($50K)',
+        effect: {
+          cashChange: 50000,
+          outcomeText: 'The money is in the bank! However, three major drama channels upload call-out videos.',
+          logText: 'Promoted hazardous supplements for a $50,000 fee.'
+        }
+      },
+      {
+        id: 'gdd_sponsor_negotiate',
+        text: '⚖️ Negotiate Safe Alternative ($30K)',
+        effect: {
+          cashChange: 30000,
+          outcomeText: 'They agree to promote their new multivitamin instead. Your fans respect you.',
+          logText: 'Negotiated multivitamin sponsorship alternative.'
+        }
+      },
+      {
+        id: 'gdd_sponsor_no',
+        text: '❌ Reject the Deal',
+        effect: {
+          outcomeText: 'You refused. The company blacklists you from their network, but your fan respect rises.',
+          logText: 'Rejected supplement sponsor deal on safety grounds.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_15_sugar',
+    title: 'THE HIGH-ROLLER COMPANION',
+    text: 'A verified billionaire DMs you: "I will send you $10,000 every month if you agree to text me goodnight and send one selfie daily."',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_sugar_yes',
+        text: '🤝 Accept the Allowance',
+        effect: {
+          cashChange: 10000,
+          outcomeText: 'The payments land on time. However, they start calling you at 3 AM demanding video chats.',
+          logText: 'Accepted billionaire companion contract for monthly payouts.'
+        }
+      },
+      {
+        id: 'gdd_sugar_negotiate',
+        text: '🔒 Set Strict Text Rules ($5K)',
+        effect: {
+          cashChange: 5000,
+          outcomeText: 'They agree to the boundaries! You get a steady cash stream with zero physical risk.',
+          logText: 'Agreed companion contract with strict safety boundaries.'
+        }
+      },
+      {
+        id: 'gdd_sugar_no',
+        text: '❌ Decline the Cash',
+        effect: {
+          cashChange: 500,
+          outcomeText: 'You decline. The user tips you $500 on your next post anyway out of respect.',
+          logText: 'Declined sugar allowance contract.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_16_std',
+    title: 'THE POSITIVE RESULTS',
+    text: 'Your bi-weekly clinic test comes back POSITIVE for Chlamydia. You filmed collab scenes with three other creators last Tuesday.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_std_inform',
+        text: '📢 Inform Partners Immediately',
+        effect: {
+          cashChange: -2000,
+          outcomeText: 'Your partners are upset but appreciate the warning. They get treated. The incident stays private.',
+          logText: 'Disclosed clinic test results to collaborators, taking down scenes.'
+        }
+      },
+      {
+        id: 'gdd_std_hide',
+        text: '🤫 Treat Quietly & Ignore',
+        effect: {
+          outcomeText: 'You took the pills and said nothing. A week later, one of the partners tests positive and blames you on Twitter.',
+          logText: 'Attempted to resolve infection quietly without notifying scene partners.'
+        }
+      },
+      {
+        id: 'gdd_std_pivot',
+        text: '🛑 Stop Performing & Pivot',
+        effect: {
+          outcomeText: 'You cancel your upcoming gigs. You take time to recover, and your health returns to normal.',
+          logText: 'Stopped active studio filming following clinic test results.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_17_burnout',
+    title: 'THE CRASH',
+    text: 'You have been editing videos and replying to DMs for 36 hours straight. You are crying at your desk and your chest feels tight.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_burnout_vacation',
+        text: '🛌 Take a 2-Week Vacation ($1,000)',
+        effect: {
+          cashChange: -1000,
+          outcomeText: 'You unplugged your router and went to the beach. Your mind is clear, but your subscriber count dipped.',
+          logText: 'Took emergency mental health vacation.'
+        }
+      },
+      {
+        id: 'gdd_burnout_assistant',
+        text: '🤖 Hire Content Assistant ($1,500/mo)',
+        effect: {
+          outcomeText: 'Your new assistant handles the boring tasks. You get to sleep and keep posting.',
+          logText: 'Hired business assistant to manage messaging channels.'
+        }
+      },
+      {
+        id: 'gdd_burnout_push',
+        text: '☕ Take Caffeine & Push On',
+        effect: {
+          statChanges: { health: -15 },
+          outcomeText: 'Your heart starts racing mid-stream. You collapse and wake up in an ambulance.',
+          logText: 'Collapsed from work exhaustion during live stream.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_18_addiction',
+    title: 'THE ENERGY INCENTIVE',
+    text: 'During a long night shoot, another performer offers you a line of cocaine: "This is the only way we get through these late-night sets."',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_addiction_snort',
+        text: '👃 Snort It (Energy Boost)',
+        effect: {
+          statChanges: { health: -15 },
+          outcomeText: 'You finish the shoot with crazy energy, but the next morning you wake up craving another hit.',
+          logText: 'Accepted cocaine line on set to boost energy.'
+        }
+      },
+      {
+        id: 'gdd_addiction_refuse',
+        text: '❌ Refuse & Walk Off Set ($1,000 loss)',
+        effect: {
+          cashChange: -1000,
+          outcomeText: 'You packed your bags. You lost the gig fee, but you protected your body and your sobriety.',
+          logText: 'Walked off late-night film set to protect sobriety.'
+        }
+      },
+      {
+        id: 'gdd_addiction_report',
+        text: '📢 File Report to Producer',
+        effect: {
+          outcomeText: 'The producer fires the other actor, but the community brands you as a tattle-tale.',
+          logText: 'Reported drug usage on set to studio producers.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_19_upgrade',
+    title: 'THE UPGRADE OFFER',
+    text: 'Your agency suggests a breast or butt augmentation surgery ($15K) to double your booking rate. Your fans love your current natural look.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_upgrade_yes',
+        text: '🏥 Get Augmentation Surgery ($15,000)',
+        effect: {
+          cashChange: -15000,
+          statChanges: { looks: 20 },
+          outcomeText: 'The surgery goes well. Your bookings increase, but some long-term fans unsubscribe.',
+          logText: 'Completed augmentative surgery procedure.'
+        }
+      },
+      {
+        id: 'gdd_upgrade_budget',
+        text: '🩺 Use Budget Overseas Doctor ($4,500)',
+        effect: {
+          cashChange: -4500,
+          statChanges: { looks: -30, health: -40 },
+          outcomeText: 'The doctor made a huge error. You get a massive infection and your chest looks deformed.',
+          logText: 'Completed augmentative surgery under budget clinic.'
+        }
+      },
+      {
+        id: 'gdd_upgrade_no',
+        text: '❌ Reject Augmentation',
+        effect: {
+          outcomeText: 'You stay natural. Your fans launch a supportive hashtag praising your body.',
+          logText: 'Rejected agency suggestions for augmentative surgery.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_20_meltdown',
+    title: 'THE STREAM MELTDOWN',
+    text: 'You suffer a severe panic attack live on camera in front of 8,000 viewers. You are hyperventilating and sobbing.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_meltdown_apology',
+        text: '📢 Post Honest Apology Video',
+        effect: {
+          outcomeText: 'Your honesty goes viral. Fans support you and send gifts.',
+          logText: 'Released explanation video regarding live panic attack.'
+        }
+      },
+      {
+        id: 'gdd_meltdown_art',
+        text: '🎭 Claim it was Performance Art',
+        effect: {
+          outcomeText: 'No one believes it was acting. You look crazy and fake.',
+          logText: 'Claimed panic attack was performance art.'
+        }
+      },
+      {
+        id: 'gdd_meltdown_delete',
+        text: '🗑️ Delete the Stream Archives ($300 loss)',
+        effect: {
+          cashChange: -300,
+          outcomeText: 'You scrub the archives, but viewers already posted clips on Reddit.',
+          logText: 'Scrubbed stream archives following panic attack.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_21_phone',
+    title: 'THE UNLOCKED PHONE',
+    text: 'Your mother borrowed your phone to call a relative and accidentally opened your active FanZone creator wallet showing $15,000 in payouts.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_phone_truth',
+        text: '🗣️ Tell Her the Truth',
+        effect: {
+          outcomeText: 'She is horrified and calls it "sinful money," but you feel relieved the secret is out.',
+          logText: 'Disclosed adult platform creator earnings directly to family.'
+        }
+      },
+      {
+        id: 'gdd_phone_lie',
+        text: '🤥 Lie and Say it is a Bug',
+        effect: {
+          outcomeText: 'She believes you for now, but she starts looking at you suspiciously.',
+          logText: 'Concealed phone earnings from parents, claiming UI bug.'
+        }
+      },
+      {
+        id: 'gdd_phone_cutoff',
+        text: '🛑 Cut Off Contact',
+        effect: {
+          outcomeText: 'You block her number. You are alone, but nobody can control you anymore.',
+          logText: 'Severed family ties following phone disclosure.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_22_ultimatum',
+    title: 'THE ULTIMATUM',
+    text: 'Your partner has discovered your OnlyFans page. They give you a choice: "Delete your accounts and quit, or I am leaving you tonight."',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_ultimatum_partner',
+        text: '❤️ Delete Accounts for Love',
+        effect: {
+          outcomeText: 'You deleted everything. You are broke but together. You feel a seed of resentment.',
+          logText: 'Deactivated platforms to resolve partner relationship ultimatum.'
+        }
+      },
+      {
+        id: 'gdd_ultimatum_career',
+        text: '🍑 Choose Your Career',
+        effect: {
+          outcomeText: 'They pack their bags. You cry alone, but your evening content session goes smoothly.',
+          logText: 'Ended relationship to maintain creator profile.'
+        }
+      },
+      {
+        id: 'gdd_ultimatum_open',
+        text: '💬 Negotiate Open Boundary',
+        effect: {
+          outcomeText: 'Negotiation failed! They throw their key at you and block your number.',
+          logText: 'Unsuccessfully suggested open relationship boundary alternative.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_23_blackmail',
+    title: 'THE SIBLING BLACKMAIL',
+    text: 'Your brother found your profile. He demands $2,000 every month to keep quiet, or he\'ll send the links to your strict parents.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_blackmail_pay',
+        text: '💵 Pay the Hush Money ($2,000/mo)',
+        effect: {
+          cashChange: -2000,
+          outcomeText: 'You send him the cash. You feel sick knowing your brother is extorting you.',
+          logText: 'Submitted to sibling blackmail payment demands.'
+        }
+      },
+      {
+        id: 'gdd_blackmail_parents',
+        text: '📣 Tell Parents Yourself First',
+        effect: {
+          outcomeText: 'You call Mom and tell her. She cries, but your brother is grounded and has no power.',
+          logText: 'Self-disclosed profile to parents to preempt blackmail.'
+        }
+      },
+      {
+        id: 'gdd_blackmail_ignore',
+        text: '🤫 Ignore & Dare Him',
+        effect: {
+          outcomeText: 'He calls your dad immediately. The phone starts ringing. It\'s your dad.',
+          logText: 'Ignored sibling blackmail threat, letting them link family.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_24_dating',
+    title: 'THE SCREENSHOT VIRAL',
+    text: 'A match on Tinder recognized your avatar, took screenshots of your profile, and posted them online saying: "Dating is dead in 2026."',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_dating_own',
+        text: '🔥 Own It and Pin the Post',
+        effect: {
+          statChanges: { status: 15 },
+          outcomeText: 'You reposted it. Your OnlyFans subs jump by 500. The Tinder match looks stupid.',
+          logText: 'Doxxed match back by pinning their Tinder call-out.'
+        }
+      },
+      {
+        id: 'gdd_dating_report',
+        text: '🚫 Report Tinder Account',
+        effect: {
+          outcomeText: 'Tinder support replies with a canned message. The screenshot keeps spreading.',
+          logText: 'Submitted platform report regarding Tinder screenshot sharing.'
+        }
+      },
+      {
+        id: 'gdd_dating_ignore',
+        text: '🤫 Ignore and Keep Swiping',
+        effect: {
+          outcomeText: 'You say nothing. Judgmental matches filter themselves out automatically.',
+          logText: 'Ignored Tinder doxx screenshot attempt.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_25_bbq',
+    title: 'THE CO-WORKER\'S EYE',
+    text: 'At a family dinner, your father\'s coworker pulls him aside and shows him a video on his phone. Dad returns to the table white-faced.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_bbq_meeting',
+        text: '🏛️ Request Private Meeting',
+        effect: {
+          outcomeText: 'You explained your finances in his study. He is disappointed but agrees to process the news.',
+          logText: 'Requested study meeting with father to clarify video links.'
+        }
+      },
+      {
+        id: 'gdd_bbq_run',
+        text: '🏃 Grab Your Keys and Run',
+        effect: {
+          outcomeText: 'You drove home in tears. The family group chat is blowing up.',
+          logText: 'Left family dinner abruptly after profile discovery.'
+        }
+      },
+      {
+        id: 'gdd_bbq_business',
+        text: '💼 Treat it as a Legal Business',
+        effect: {
+          outcomeText: 'You show him your tax filings. He is shocked by the numbers and respects the cashflow.',
+          logText: 'Exhibited tax filings to clarify profile as legal entity.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_26_sting',
+    title: 'THE UNDERCOVER CLIENT',
+    text: 'You arrive at a hotel for a private escort gig. The client locks the door, pulls out a badge, and says "You are under arrest for soliciting."',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_sting_lawyer',
+        text: '💼 Call Private Lawyer ($5,000)',
+        effect: {
+          cashChange: -5000,
+          outcomeText: 'Your lawyer gets the charges dropped due to illegal entrapment.',
+          logText: 'Hired private counsel to dismiss hotel solicitation arrest.'
+        }
+      },
+      {
+        id: 'gdd_sting_guilty',
+        text: '🙋 Plead Guilty & Take Fine ($2,000)',
+        effect: {
+          cashChange: -2000,
+          outcomeText: 'You plead out. You pay the fine, but you now have a solicitation record.',
+          logText: 'Plead guilty to solicitation, paying a $2,000 fine.'
+        }
+      },
+      {
+        id: 'gdd_sting_run',
+        text: '🏃 Run for the Window',
+        effect: {
+          statChanges: { health: -40 },
+          outcomeText: 'You fell through a canopy, breaking your leg. The police arrest you in the alley.',
+          logText: 'Attempted hotel escape window leap, breaking leg.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_27_revenge',
+    title: 'THE UNAPPROVED UPLOAD',
+    text: 'Your ex-boyfriend has posted your private Snapchat videos on major adult websites. Your real name and hometown are in the title.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_revenge_takedown',
+        text: '⚖️ Retain Legal Takedown Firm ($8,000)',
+        effect: {
+          cashChange: -8000,
+          outcomeText: 'The takedown letters work. The links are dead within 48 hours.',
+          logText: 'Retained takedown firm to purge Snapchat leaks.'
+        }
+      },
+      {
+        id: 'gdd_revenge_expose',
+        text: '📢 Make Public Post Exposing Him',
+        effect: {
+          outcomeText: 'Your statement goes viral. Followers support you, but you receive fresh spam comments.',
+          logText: 'Released public statement exposing revenge leak instigator.'
+        }
+      },
+      {
+        id: 'gdd_revenge_dox',
+        text: '👺 Leak His Private Info back',
+        effect: {
+          outcomeText: 'You doxed him. He contacts the police and you are charged with cyberstalking.',
+          logText: 'Leaked private details of ex-partner in retaliation.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_28_minor',
+    title: 'THE MINOR VISITOR',
+    text: 'A fan DMs you admitting they used their parent\'s credit card and are actually 16. They spent $800 on your premium content store.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_minor_refund',
+        text: '🛡️ Report & Refund Instantly ($800)',
+        effect: {
+          cashChange: -800,
+          outcomeText: 'You processed the refund. The platform records your compliance and flags the card.',
+          logText: 'Refunded $800 of minor transaction to maintain platform status.'
+        }
+      },
+      {
+        id: 'gdd_minor_block',
+        text: '🚫 Block Account & Ignore',
+        effect: {
+          outcomeText: 'You blocked them. They contact their bank, flagging your store for fraud.',
+          logText: 'Blocked minor buyer profile without refunding.'
+        }
+      },
+      {
+        id: 'gdd_minor_keep',
+        text: '🤫 Keep Chatting Quietly',
+        effect: {
+          outcomeText: 'The parents look at the statements and file a police report for grooming.',
+          logText: 'Continued messages with minor buyer profile.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_29_doxx',
+    title: 'THE FULL DOXX',
+    text: 'An anonymous board has published your real name, phone number, physical address, and parent\'s work address online. You are receiving spam.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_doxx_move',
+        text: '🏠 Pack Up & Move Tonight ($8,000)',
+        effect: {
+          cashChange: -8000,
+          outcomeText: 'You signed an emergency lease. You are safe, but your bank account is empty.',
+          logText: 'Relocated immediately to escape doxx threats.'
+        }
+      },
+      {
+        id: 'gdd_doxx_cyber',
+        text: '🕵️ Hire Cybersecurity Firm ($3,000)',
+        effect: {
+          cashChange: -3000,
+          outcomeText: 'The security firm traces the IP address and issues a cease & desist.',
+          logText: 'Hired cybersecurity firm to track doxx origin.'
+        }
+      },
+      {
+        id: 'gdd_doxx_expose',
+        text: '🗣️ Post Public Statement',
+        effect: {
+          outcomeText: 'Your video gets views, but weird cars start parking outside your house.',
+          logText: 'Released public video statement regarding doxx coordinates.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_event_30_contract',
+    title: 'THE studio TRAP',
+    text: 'You review your signed studio deal and find a clause: they own your stage name, social handles, and all videos permanently.',
+    category: 'random',
+    conditions: { minAge: 18 },
+    choices: [
+      {
+        id: 'gdd_contract_buyout',
+        text: '💸 Buy Out the Contract ($50,000)',
+        effect: {
+          cashChange: -50000,
+          outcomeText: 'You paid the fee. You are free to post independently, but you have no cash left.',
+          logText: 'Completed $50,000 contract buyout clause.'
+        }
+      },
+      {
+        id: 'gdd_contract_rebrand',
+        text: '🎒 Rebrand Completely (New Name)',
+        effect: {
+          outcomeText: 'You started a new profile under a different alias. Growth is slow, but you own it.',
+          logText: 'Abandoned handles and rebranded under new alias.'
+        }
+      },
+      {
+        id: 'gdd_contract_negotiate',
+        text: '🤝 Try to Re-Negotiate',
+        effect: {
+          outcomeText: 'The studio refuses to modify the terms. You must produce 10 more videos for them.',
+          logText: 'Unsuccessfully attempted to modify studio contract terms.'
+        }
+      }
+    ]
+  },
+
+  // --- DELAYED CONSEQUENCE EVENTS ---
+  {
+    id: 'gdd_chain_1_stalker_gate',
+    title: 'THE GATECRASHER',
+    text: 'You did not move apartments. The stalker you confronted online has sneaked past security and is knocking on your front door.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_gate_police',
+        text: '👮 Lock Door & Call Police',
+        effect: {
+          outcomeText: 'Police arrive and arrest him. You get a restraining order, but you are shaken.',
+          logText: 'Stalker arrested at door by police.'
+        }
+      },
+      {
+        id: 'gdd_gate_fight',
+        text: '🥊 Open Door & Fight Back',
+        effect: {
+          statChanges: { health: -50, looks: -20 },
+          outcomeText: 'You fought him off, but he punched you in the face. You have a black eye and need stitches.',
+          logText: 'Physically clashed with stalker at door.'
+        }
+      },
+      {
+        id: 'gdd_gate_flee',
+        text: '🏢 Flee to Fire Escape ($3,000 loss)',
+        effect: {
+          cashChange: -3000,
+          outcomeText: 'You ran out. He trashed your living room. You have to buy new filming equipment.',
+          logText: 'Fled home via fire escape while stalker ransacked property.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_2_tax_felony',
+    title: 'FELONY TAX EVASION',
+    text: 'The IRS investigators discovered your hidden accounts. You have been formally charged with tax fraud.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_tax_plea',
+        text: '🤝 Accept Plea Deal (1 Year Jail)',
+        effect: {
+          statChanges: { happiness: -40, status: -30 },
+          outcomeText: 'You report to federal prison. Your career is paused.',
+          logText: 'Accepted plea deal for tax evasion, serving jail sentence.'
+        }
+      },
+      {
+        id: 'gdd_tax_trial',
+        text: '💼 Hire Elite Attorney ($50,000)',
+        effect: {
+          cashChange: -50000,
+          outcomeText: 'You lost the case. The judge sentences you to 3 years in federal prison.',
+          logText: 'Lost tax fraud trial, receiving a prison sentence.'
+        }
+      },
+      {
+        id: 'gdd_tax_flee',
+        text: '✈️ Fly to Non-Extradition Country',
+        effect: {
+          cashChange: -20000,
+          outcomeText: 'You escape to Bali. You are safe, but you cannot return home and must start a new career.',
+          logText: 'Fled jurisdiction for Bali to avoid prison.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_3_resentment',
+    title: 'THE AMBITION DEBATE',
+    text: 'You deleted your social accounts for your partner. Now, they complain that you have no drive and expect them to pay for everything.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_resent_reopen',
+        text: '🍑 Re-open OnlyFans Account',
+        effect: {
+          outcomeText: 'You went back to work. Your partner leaves you, but your fans welcome you back.',
+          logText: 'Reopened OnlyFans profile, ending partner relationship.'
+        }
+      },
+      {
+        id: 'gdd_resent_unemployed',
+        text: '🧘 Stay Unemployed and Quiet',
+        effect: {
+          statChanges: { happiness: -20 },
+          outcomeText: 'You stay home. You feel depressed and useless.',
+          logText: 'Stayed unemployed, leading to deep depression.'
+        }
+      },
+      {
+        id: 'gdd_resent_breakup',
+        text: '💔 Break Up',
+        effect: {
+          outcomeText: 'You packed your bags. You are single, but free to build your empire.',
+          logText: 'Ended relationship over ambition differences.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_4_leak_bbq',
+    title: 'THE FAMILY LEAK',
+    text: 'Your brother sent your FanZone links to your parents\' email. Your dad has called an emergency family meeting at their house.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_leak_attend',
+        text: '🚗 Attend the Meeting',
+        effect: {
+          statChanges: { happiness: -20 },
+          outcomeText: 'They scream and call you a disgrace. You leave in tears.',
+          logText: 'Attended family leak summit, receiving reprimand.'
+        }
+      },
+      {
+        id: 'gdd_leak_block',
+        text: '📴 Block Entire Family',
+        effect: {
+          outcomeText: 'You cut them off. The silence is painful, but the family drama is over.',
+          logText: 'Severed communications with parents over link leaks.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_5_warrant',
+    title: 'THE ARREST WARRANT',
+    text: 'The video of you doing illegal acts on stream has been investigated by local police. Officers show up at your door with a warrant.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_warrant_surrender',
+        text: '🤝 Surrender Peacefully ($5,000 Bail)',
+        effect: {
+          cashChange: -5000,
+          outcomeText: 'You are booked. You pay bail, but your name is in local news crime logs.',
+          logText: 'Surrendered to arrest warrant, posting $5,000 bail.'
+        }
+      },
+      {
+        id: 'gdd_warrant_lawyer',
+        text: '💼 Call Lawyer Immediately ($10,000)',
+        effect: {
+          cashChange: -10000,
+          outcomeText: 'Your lawyer finds a procedural error in the warrant. You are released.',
+          logText: 'Hired counsel to void stream warrant execution.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_6_lawsuit',
+    title: 'BREACH OF CONTRACT',
+    text: 'You tried to post independently. The studio files a lawsuit against you for $100,000 for breach of contract and copyright theft.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_lawsuit_settle',
+        text: '💼 Settle for $30,000',
+        effect: {
+          cashChange: -30000,
+          outcomeText: 'You paid the settlement. You are officially free, but your savings are gone.',
+          logText: 'Settled studio contract dispute for $30,000.'
+        }
+      },
+      {
+        id: 'gdd_lawsuit_fight',
+        text: '⚖️ Fight in Court ($15,000)',
+        effect: {
+          cashChange: -15000,
+          outcomeText: 'You lost the lawsuit. The court orders you to pay the studio $100,000.',
+          logText: 'Lost studio lawsuit, receiving a $100,000 judgment.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_7_bots',
+    title: 'ACCOUNT SUSPENDED',
+    text: 'SpicyChat filters detected that 95% of your new followers are fake bot accounts. Your account has been suspended for 7 days.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_bots_rest',
+        text: '🧘 Take a Rest',
+        effect: {
+          outcomeText: 'The bots are deleted. Your follower count drops back to normal.',
+          logText: 'Waited out platform suspension.'
+        }
+      },
+      {
+        id: 'gdd_bots_apologize',
+        text: '📢 Apologize & Blame Sponsor',
+        effect: {
+          outcomeText: 'You blamed a marketing agency. The platform lifts the suspension early.',
+          logText: 'Released apology video blaming marketing agency.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_8_school',
+    title: 'THE HIGH SCHOOL REVEAL',
+    text: 'Someone from your old high school recognized your fake ID photo and leaked your address to your hometown Facebook group.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_school_explain',
+        text: '📢 Make a Video Explaining',
+        effect: {
+          statChanges: { happiness: 5 },
+          outcomeText: 'You explain your choices. Your fans defend you, and your old classmates look petty.',
+          logText: 'Defended identity doxx leak with viral explanation video.'
+        }
+      },
+      {
+        id: 'gdd_school_ignore',
+        text: '🤫 Ignore & Turn off Phone',
+        effect: {
+          statChanges: { happiness: -10 },
+          outcomeText: 'You hide. The notifications keep coming, and you feel isolated.',
+          logText: 'Ignored classmates hometown doxx leak.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_9_sick',
+    title: 'LIVER TOXICITY',
+    text: 'You took the pills you promoted to show they work. You wake up with yellow eyes and severe abdominal pain. You need to go to the hospital.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_sick_er',
+        text: '🏥 Emergency Room Admission ($10,000)',
+        effect: {
+          cashChange: -10000,
+          outcomeText: 'Doctors treat the poisoning. You recover, but you are weak.',
+          logText: 'Admitted to ER for supplement liver poisoning.'
+        }
+      },
+      {
+        id: 'gdd_sick_home',
+        text: '💊 Rest at Home & Drink Water',
+        effect: {
+          statChanges: { health: -30 },
+          outcomeText: 'Your condition worsens. You pass out and are rushed to the ICU.',
+          logText: 'Refused medical attention for liver toxicity.'
+        }
+      }
+    ]
+  },
+  {
+    id: 'gdd_chain_10_propose',
+    title: 'THE OBSESSION',
+    text: 'The fan who paid your rent has proposed to you via DM. They say they are flying to your city to marry you and have bought a ring.',
+    category: 'callback',
+    choices: [
+      {
+        id: 'gdd_propose_block',
+        text: '🚫 Block & Cancel Lease ($3,000 loss)',
+        effect: {
+          cashChange: -3000,
+          outcomeText: 'You block them and find a new place. You lose your deposit, but you are safe.',
+          logText: 'Canceled lease to escape obsessive proposal.'
+        }
+      },
+      {
+        id: 'gdd_propose_gentle',
+        text: '🕊️ Try to Let Them Down Gently',
+        effect: {
+          outcomeText: 'They call you a liar and leak your private messages out of anger.',
+          logText: 'Attempted to reject obsessive fan proposal gently.'
+        }
+      }
+    ]
+  }
 ];

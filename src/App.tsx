@@ -84,6 +84,8 @@ type JobInterview = {
   reqMajor?: string[];
   industry: string;
   tier: number;
+  minLooks?: number;
+  minSmarts?: number;
 };
 
 const JOB_INTERVIEWS: JobInterview[] = [
@@ -98,7 +100,14 @@ const JOB_INTERVIEWS: JobInterview[] = [
   { title: 'Corporate Vice President', salary: 240000, minAge: 30, req: 'Smarts >= 80, Business School', reqLevel: 'business_school', industry: 'corporate', tier: 3 },
   { title: 'Paranormal Investigator', salary: 45000, minAge: 21, req: 'University Degree (Occult or History)', reqLevel: 'university', reqMajor: ['Cryptid Zoology', 'Occult Sciences', 'History', 'Religious Studies'], industry: 'special', tier: 1 },
   { title: 'Space Colonist', salary: 250000, minAge: 24, req: 'Graduate School (Space or Science)', reqLevel: 'graduate_school', reqMajor: ['Astrobiology', 'Space Colonization', 'Physics', 'Quantum Engineering'], industry: 'special', tier: 2 },
-  { title: 'Adult Film Star', salary: 180000, minAge: 18, req: 'Happiness >= 50', industry: 'entertainment', tier: 1 }
+  
+  // --- ADULT INDUSTRY JOBS ---
+  { title: 'Exotic Dancer', salary: 35000, minAge: 18, req: 'Looks >= 60', industry: 'entertainment', tier: 1, minLooks: 60 },
+  { title: 'Webcam Model', salary: 65000, minAge: 18, req: 'Looks >= 70, Smarts >= 40', industry: 'entertainment', tier: 1, minLooks: 70, minSmarts: 40 },
+  { title: 'Adult Film Extra', salary: 40000, minAge: 18, req: 'Looks >= 50', industry: 'entertainment', tier: 1, minLooks: 50 },
+  { title: 'VIP Escort', salary: 110000, minAge: 18, req: 'Looks >= 80, Smarts >= 50', industry: 'entertainment', tier: 2, minLooks: 80, minSmarts: 50 },
+  { title: 'Adult Film Star', salary: 180000, minAge: 21, req: 'Looks >= 80', industry: 'entertainment', tier: 2, minLooks: 80 },
+  { title: 'Adult Studio Director', salary: 220000, minAge: 25, req: 'Smarts >= 75', industry: 'entertainment', tier: 3, minSmarts: 75 }
 ];
 
 const INTERVIEW_QUESTIONS: Record<string, {question: string, options: JobInterviewOption[]}[]> = {
@@ -175,6 +184,30 @@ const INTERVIEW_QUESTIONS: Record<string, {question: string, options: JobIntervi
         { text: 'Embrace the challenge enthusiastically and give it your all.', correct: true, feedback: 'The director loved your energy.', statChanges: { status: 15, happiness: 5 } },
         { text: 'Throw a tantrum and demand double pay before starting.', correct: false, feedback: 'You were labeled a diva.', statChanges: { status: -10, happiness: -5 } },
         { text: 'Awkwardly refuse and try to leave the set.', correct: false, feedback: 'They found a replacement instantly.', statChanges: { status: -5 } }
+      ]
+    },
+    {
+      question: 'A top VIP client asks you to attend their high school reunion as their fake sweetheart, pretending you are a nuclear physicist. What do you do?',
+      options: [
+        { text: 'Study basic nuclear physics terms overnight, dress elegantly, and play the role flawlessly.', correct: true, feedback: 'Amazing job! The client was thrilled and paid you a huge bonus.', statChanges: { smarts: 10, status: 15 } },
+        { text: 'Refuse the gig because physics sounds too boring and complicated.', correct: false, feedback: 'You missed a high-paying opportunity.', statChanges: { status: -5 } },
+        { text: 'Attend, get completely wasted, and tell everyone you are actually an adult worker.', correct: false, feedback: 'A total disaster. You ruined the client\'s reputation.', statChanges: { status: -20, happiness: -10 } }
+      ]
+    },
+    {
+      question: 'A webcam viewer offers to pay your rent for the next six months in exchange for your sweaty gym socks. What is your response?',
+      options: [
+        { text: 'Politely accept the offer, package the socks nicely, and mail them with tracking.', correct: true, feedback: 'Easiest money ever! The whale is extremely happy.', statChanges: { smarts: 5, status: 5 } },
+        { text: 'Get offended, scream at them in chat, and ban them immediately.', correct: false, feedback: 'You lost your biggest financial supporter.', statChanges: { status: -10 } },
+        { text: 'Send them clean socks from the store and hope they don\'t notice.', correct: false, feedback: 'They noticed, filed a chargeback, and left a bad review.', statChanges: { smarts: -5 } }
+      ]
+    },
+    {
+      question: 'During a live filming session, a heavy overhead lighting rig collapses and sparks fly near the set. The director yells "Keep rolling!" What do you do?',
+      options: [
+        { text: 'Step back safely, call for a technical pause, and wait for the crew to fix it.', correct: true, feedback: 'Safety first. The crew appreciates your professionalism.', statChanges: { smarts: 10, status: 10 } },
+        { text: 'Pose dramatically next to the sparks to make the shot look more intense.', correct: false, feedback: 'You got a minor shock and had to be treated by the set medic.', statChanges: { status: -10 } },
+        { text: 'Scream, run off set crying, and sue the studio immediately.', correct: false, feedback: 'You were blacklisted from future studio projects.', statChanges: { status: -25 } }
       ]
     }
   ]
@@ -800,6 +833,8 @@ export default function App() {
   const [wishlistGifts, setWishlistGifts] = useState<string[]>(['Shoes', 'Designer Bag', 'Lingerie']);
   const [tempSubscriptionPrice, setTempSubscriptionPrice] = useState<number>(10);
   const [selectedSocialChannel, setSelectedSocialChannel] = useState<string | null>(null);
+  const [socialPostResult, setSocialPostResult] = useState<any | null>(null);
+  const [animProgress, setAnimProgress] = useState<number>(0);
 
   // Sleep Popup state
   const [actionPopup, setActionPopup] = useState<{
@@ -911,6 +946,27 @@ export default function App() {
   useEffect(() => {
     setIsCreatingCharacter(true);
   }, []);
+
+  // Animate social post result counters over 1.2 seconds
+  useEffect(() => {
+    if (socialPostResult) {
+      setAnimProgress(0);
+      let start = null;
+      const duration = 1200;
+      let animFrame;
+      const animate = (timestamp) => {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        const percent = Math.min(1, progress / duration);
+        setAnimProgress(percent);
+        if (percent < 1) {
+          animFrame = requestAnimationFrame(animate);
+        }
+      };
+      animFrame = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animFrame);
+    }
+  }, [socialPostResult]);
 
   const relTrustString = gameState?.relationships ? JSON.stringify(gameState.relationships.map(r => r.trust)) : '';
   const illnessesCuredString = gameState?.illnesses ? JSON.stringify(gameState.illnesses.map(i => i.cured)) : '';
@@ -3077,7 +3133,7 @@ export default function App() {
     });
   };
 
-  const handleDropOut = () => {
+  const handleUniversityDropOut = () => {
     if (!gameState) return;
     triggerSound('click');
     const oldTitle = gameState.career.title;
@@ -3471,6 +3527,27 @@ export default function App() {
     if (!gameState) return;
     triggerSound('click');
     
+    // Check Looks and Smarts minimum stats for qualification
+    if (job.minLooks && gameState.stats.looks < job.minLooks) {
+      triggerSound('error');
+      setActionPopup({
+        isOpen: true,
+        title: 'Not Qualified',
+        message: `You don't meet the physical appearance requirements for this job. You need at least ${job.minLooks}% Looks.`
+      });
+      return;
+    }
+    
+    if (job.minSmarts && gameState.stats.smarts < job.minSmarts) {
+      triggerSound('error');
+      setActionPopup({
+        isOpen: true,
+        title: 'Not Qualified',
+        message: `You don't meet the intelligence requirements for this job. You need at least ${job.minSmarts}% Smarts.`
+      });
+      return;
+    }
+
     if (job.reqLevel || job.reqMajor) {
       const history = gameState.completedEducation || [];
       const meetsLevel = job.reqLevel ? history.some(ed => ed.level === job.reqLevel) : true;
@@ -6034,7 +6111,7 @@ export default function App() {
                         </div>
                         <div className="flex items-center gap-2">
                           {gameState.career.type === 'school' && gameState.career.title !== 'Primary School Student' && gameState.career.title !== 'High School Student' && gameState.career.title !== 'Infant' && (
-                            <button onClick={(e) => { e.stopPropagation(); handleDropOut(); }} className="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold rounded shadow-sm border border-rose-200 transition uppercase tracking-wider">Drop Out</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleUniversityDropOut(); }} className="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold rounded shadow-sm border border-rose-200 transition uppercase tracking-wider">Drop Out</button>
                           )}
                           {gameState.career.type === 'job' && (
                             <span className="text-[#1a6fb5]">›</span>
@@ -6808,6 +6885,36 @@ export default function App() {
                           <p className="text-xs font-bold text-slate-500 mt-1">{(data.followers || 0).toLocaleString()} followers</p>
                         </div>
                       </div>
+
+                      {/* 18+ Risk Indicators */}
+                      <div className="bg-amber-50/50 border-b border-[#ebdcb9] px-4 py-3.5 text-left space-y-2 shrink-0">
+                        <div>
+                          <div className="flex justify-between items-center text-xs font-extrabold text-slate-700 mb-1">
+                            <span className="flex items-center gap-1">⚡ Creative Stress</span>
+                            <span className="font-mono">{(gameState.flags.stress !== undefined ? gameState.flags.stress : 10)}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-rose-600 transition-all duration-300" 
+                              style={{ width: `${(gameState.flags.stress !== undefined ? gameState.flags.stress : 10)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center text-xs font-extrabold text-slate-700 mb-1">
+                            <span className="flex items-center gap-1">🔒 Leak Risk</span>
+                            <span className="font-mono">{(gameState.flags.leakRisk || 0)}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-amber-500 transition-all duration-300" 
+                              style={{ width: `${(gameState.flags.leakRisk || 0)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+
 
                       {/* Activities Header */}
                       <div className="bg-[#5d4037] text-white text-[9px] font-black text-center py-1 tracking-widest uppercase font-mono shrink-0">
@@ -8743,7 +8850,244 @@ export default function App() {
       )}
 
 
+      {/* SOCIAL POST RESULT POPUP (GDD METRICS) */}
+      {socialPostResult && (
+        (() => {
+          const res = socialPostResult;
+          const p = animProgress;
+          const currViews = Math.floor(res.viewsStart + (res.viewsEnd - res.viewsStart) * p);
+          const currLikes = Math.floor(res.likesStart + (res.likesEnd - res.likesStart) * p);
+          const currFollowers = Math.floor(res.followersGained * p);
+          const currEarnings = Math.floor(res.earningsStart + (res.earningsEnd - res.earningsStart) * p);
+
+          const titles: Record<string, string> = {
+            facebook: 'Facebook', instagram: 'Instagram', onlyfans: 'OnlyFans', tiktok: 'TikTok',
+            twitch: 'Twitch', twitter: 'Twitter', soundcloud: 'SoundCloud', podcast: 'Podcast', youtube: 'YouTube'
+          };
+          const emojis: Record<string, string> = {
+            facebook: '📘', instagram: '📸', onlyfans: '🍑', tiktok: '🎵',
+            twitch: '🔮', twitter: '🐦', soundcloud: '☁️', podcast: '🎙️', youtube: '🎥'
+          };
+
+          const handleContinue = () => {
+            triggerSound('click');
+            
+            // Apply all stat modifications
+            const nextStats = { ...gameState.stats };
+            nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + (res.statChanges.happiness || 0)));
+            nextStats.status = Math.max(0, Math.min(100, nextStats.status + (res.statChanges.fame || 0)));
+
+            let nextCash = gameState.cash + (res.statChanges.money || 0);
+
+            // Fetch flags
+            const nextFlags = { ...gameState.flags };
+            nextFlags.stress = Math.max(0, Math.min(100, (nextFlags.stress || 10) + (res.statChanges.stress || 0)));
+            nextFlags.leakRisk = Math.max(0, Math.min(100, (nextFlags.leakRisk || 0) + (res.statChanges.leakRisk || 0)));
+
+            // Apply Family Relations change
+            let nextRelationships = [...gameState.relationships];
+            if (res.statChanges.family && res.statChanges.family !== 0) {
+              nextRelationships = gameState.relationships.map(r => {
+                if (r.relation === 'parent' || r.relation === 'sibling') {
+                  return { ...r, trust: Math.max(0, r.trust + res.statChanges.family) };
+                }
+                return r;
+              });
+            }
+
+            // Apply Bonus Event Effects
+            if (res.bonusEvent && res.bonusEvent.effect) {
+              const eff = res.bonusEvent.effect;
+              if (eff.cashChange) {
+                nextCash += eff.cashChange;
+              }
+              if (eff.statChanges) {
+                if (eff.statChanges.happiness) nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + eff.statChanges.happiness));
+                if (eff.statChanges.status) nextStats.status = Math.max(0, Math.min(100, nextStats.status + eff.statChanges.status));
+                if (eff.statChanges.health) nextStats.health = Math.max(0, Math.min(100, nextStats.health + eff.statChanges.health));
+              }
+              if (eff.stress) {
+                nextFlags.stress = Math.max(0, Math.min(100, (nextFlags.stress || 10) + eff.stress));
+              }
+              if (eff.leakRisk) {
+                nextFlags.leakRisk = Math.max(0, Math.min(100, (nextFlags.leakRisk || 0) + eff.leakRisk));
+              }
+              if (eff.familyRel) {
+                nextRelationships = nextRelationships.map(r => {
+                  if (r.relation === 'parent' || r.relation === 'sibling') {
+                    return { ...r, trust: Math.max(0, r.trust + eff.familyRel) };
+                  }
+                  return r;
+                });
+              }
+            }
+
+            // Write logs
+            const earnedText = res.statChanges.money > 0 ? ` Earning $${res.statChanges.money.toLocaleString()}.` : "";
+            const bonusText = res.bonusEvent ? ` [Event: ${res.bonusEvent.title}]` : "";
+            const logMsg = `📱 Posted "${res.topic}" on ${titles[res.channel]}. Views: ${res.viewsEnd.toLocaleString()} (${res.viralTier}).${earnedText}${bonusText}`;
+
+            // Check Critical Thresholds
+            let criticalPopup = null;
+            if (nextFlags.stress >= 100) {
+              nextFlags.stress = 20;
+              nextStats.happiness = Math.max(0, nextStats.happiness - 15);
+              criticalPopup = {
+                title: "⚠️ BREAKDOWN (Stress 100%)",
+                message: "You collapsed from extreme exhaustion! You are forced to rest, losing some momentum on all profiles.",
+                statMsg: "Stress Reset, Happiness -15%"
+              };
+            } else if (nextFlags.leakRisk >= 100) {
+              nextFlags.leakRisk = 20;
+              nextStats.status = Math.max(0, nextStats.status - 50); // Loss of Fame
+              criticalPopup = {
+                title: "⚠️ FULL DOXX (Leak Risk 100%)",
+                message: "Your real identity, address, and info have been leaked online. You must wipe accounts and rebuild anonymity.",
+                statMsg: "Fame/Status -50%"
+              };
+            }
+
+            setGameState({
+              ...gameState,
+              stats: nextStats,
+              cash: nextCash,
+              flags: nextFlags,
+              relationships: nextRelationships,
+              socialMedia: {
+                ...gameState.socialMedia,
+                [res.channel]: {
+                  ...gameState.socialMedia[res.channel],
+                  followers: Math.max(0, gameState.socialMedia[res.channel].followers + currFollowers),
+                  postsCount: gameState.socialMedia[res.channel].postsCount + 1
+                }
+              },
+              log: [...gameState.log, logMsg]
+            });
+
+            setSocialPostResult(null);
+
+            if (criticalPopup) {
+              setActionPopup({
+                isOpen: true,
+                title: criticalPopup.title,
+                message: `${criticalPopup.message}\n\n${criticalPopup.statMsg}`
+              });
+            }
+          };
+
+          return (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in font-sans">
+              <div className="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl relative border-4 border-slate-300 flex flex-col transform scale-100 transition-all">
+                
+                {/* Visual Header */}
+                <div 
+                  className="py-4 px-6 text-white text-center border-b-4 border-white/20 flex justify-between items-center"
+                  style={{ backgroundColor: res.viralColor }}
+                >
+                  <h3 className="font-black text-lg tracking-tight uppercase">
+                    {emojis[res.channel]} {titles[res.channel]} Post Results
+                  </h3>
+                  <span className="text-[10px] font-black tracking-widest bg-white/20 px-2.5 py-0.5 rounded-full font-mono">
+                    {res.viralTier} {res.viralEmoji}
+                  </span>
+                </div>
+
+                {/* Body Content */}
+                <div className="p-6 space-y-4 text-left overflow-y-auto max-h-[420px]">
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 space-y-1">
+                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-black font-mono block">Content Uploaded</span>
+                    <h4 className="text-sm font-black text-slate-800">"{res.topic}"</h4>
+                    <p className="text-[10px] text-slate-400 font-bold font-mono">{res.typeLabel}</p>
+                  </div>
+
+                  {/* Real-time stats display */}
+                  <div className="space-y-2.5 border-t border-slate-100 pt-3">
+                    <div className="flex justify-between items-center text-xs text-slate-700">
+                      <span className="font-bold flex items-center gap-1.5">👁️ Views</span>
+                      <span className="font-mono font-black">{currViews.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-slate-700">
+                      <span className="font-bold flex items-center gap-1.5">❤️ Likes</span>
+                      <span className="font-mono font-black">{currLikes.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-slate-700">
+                      <span className="font-bold flex items-center gap-1.5">👥 Followers</span>
+                      <span className="font-mono font-black text-emerald-600">+{currFollowers.toLocaleString()}</span>
+                    </div>
+                    {currEarnings > 0 && (
+                      <div className="flex justify-between items-center text-xs text-slate-700">
+                        <span className="font-bold flex items-center gap-1.5">💰 Net Earnings</span>
+                        <span className="font-mono font-black text-emerald-600">${currEarnings.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stat shifts updates */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
+                    <span className="text-[9px] uppercase tracking-widest text-slate-400 font-black font-mono block">📊 Statistical Shifts</span>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600">
+                      {res.statChanges.happiness !== 0 && (
+                        <div className="flex justify-between items-center bg-white border border-slate-100 p-2 rounded-xl">
+                          <span>Happiness</span>
+                          <span className={res.statChanges.happiness > 0 ? "text-emerald-600 font-black font-mono" : "text-rose-600 font-black font-mono"}>
+                            {res.statChanges.happiness > 0 ? `↑ +${res.statChanges.happiness}%` : `↓ ${res.statChanges.happiness}%`}
+                          </span>
+                        </div>
+                      )}
+                      {res.statChanges.fame !== 0 && (
+                        <div className="flex justify-between items-center bg-white border border-slate-100 p-2 rounded-xl">
+                          <span>Fame</span>
+                          <span className={res.statChanges.fame > 0 ? "text-emerald-600 font-black font-mono" : "text-rose-600 font-black font-mono"}>
+                            {res.statChanges.fame > 0 ? `↑ +${res.statChanges.fame}%` : `↓ ${res.statChanges.fame}%`}
+                          </span>
+                        </div>
+                      )}
+                      {res.statChanges.stress !== 0 && (
+                        <div className="flex justify-between items-center bg-white border border-slate-100 p-2 rounded-xl">
+                          <span>Stress</span>
+                          <span className="text-rose-600 font-black font-mono">
+                            ↑ +{res.statChanges.stress}%
+                          </span>
+                        </div>
+                      )}
+                      {res.statChanges.leakRisk !== 0 && (
+                        <div className="flex justify-between items-center bg-white border border-slate-100 p-2 rounded-xl">
+                          <span>Leak Risk</span>
+                          <span className="text-rose-600 font-black font-mono">
+                            ↑ +{res.statChanges.leakRisk}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bonus event box */}
+                  {res.bonusEvent && (
+                    <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 space-y-1">
+                      <span className="text-[10px] uppercase tracking-widest text-amber-700 font-black font-mono block">🎲 BONUS EVENT!</span>
+                      <h5 className="text-xs font-black text-amber-900">{res.bonusEvent.title}</h5>
+                      <p className="text-xs text-amber-800 leading-snug">{res.bonusEvent.description}</p>
+                      <p className="text-[9px] text-amber-600 font-black font-mono uppercase mt-1">{res.bonusEvent.extraStats}</p>
+                    </div>
+                  )}
+
+                  {/* Continue Button */}
+                  <button 
+                    onClick={handleContinue}
+                    className="w-full bg-[#0f4a8a] hover:bg-[#093566] text-white font-black py-3.5 rounded-2xl transition cursor-pointer text-center text-sm shadow-md mt-4 active:scale-[0.98]"
+                  >
+                    CONTINUE →
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()
+      )}
+
       {/* SOCIAL MEDIA POST MODAL */}
+
       {activeSocialModal === 'post' && selectedSocialChannel && gameState.socialMedia?.[selectedSocialChannel] && (
         (() => {
           const channel = selectedSocialChannel;
@@ -8829,98 +9173,221 @@ export default function App() {
 
           const executePost = () => {
             triggerSound('click');
-            let looksFactor = gameState.stats.looks / 100;
-            let smartsFactor = gameState.stats.smarts / 100;
-            let followerGained = 0;
-            let happinessChange = 3;
-            let relationshipPenalty = 0;
-            let outcomeText = "";
-
             const topic = selectedPostType || options[0];
+            const looksFactor = gameState.stats.looks / 100;
+            const smartsFactor = gameState.stats.smarts / 100;
+
+            // Determine Base Viral Category
+            let baseMin = 40;
+            let baseMax = 70;
+            let typeLabel = "Photo Post";
+
+            if (topic.includes('Teaser') || topic.includes('Selfie')) {
+              baseMin = 35; baseMax = 65; typeLabel = "Free Teaser Photo";
+            } else if (topic.includes('Bikini') || topic.includes('bathwater') || topic.includes('Feet') || topic.includes('Lingerie') || topic.includes('Nude') || topic.includes('Naked') || topic.includes('Thirst Trap')) {
+              baseMin = 30; baseMax = 70; typeLabel = "PPV Photo / Thirst Content";
+            } else if (topic.includes('Cringe') || topic.includes('Lip-Syncing') || topic.includes('Backflip') || topic.includes('Prank') || topic.includes('Transition') || topic.includes('Dance')) {
+              baseMin = 40; baseMax = 80; typeLabel = "Short Video Clip";
+            } else if (topic.includes('Reacting') || topic.includes('Unboxing') || topic.includes('Static') || topic.includes('Vlog') || topic.includes('Review') || topic.includes('Tutorial') || topic.includes('DIY')) {
+              baseMin = 50; baseMax = 85; typeLabel = "Long Video Segment";
+            } else if (topic.includes('Live') || topic.includes('Stream') || topic.includes('Hot Tub') || topic.includes('Sleep') || topic.includes('Microwave') || topic.includes('Meltdown') || topic.includes('ASMR')) {
+              baseMin = 45; baseMax = 75; typeLabel = "Live Stream Broadcast";
+            } else if (topic.includes('Diss') || topic.includes('Rant') || topic.includes('Beef') || topic.includes('Expose') || topic.includes('Troll') || topic.includes('Leaking') || topic.includes('Conspiracy') || topic.includes('MLM') || topic.includes('Threatening') || topic.includes('Arguing')) {
+              baseMin = 20; baseMax = 90; typeLabel = "Controversial Drama";
+            } else {
+              baseMin = 40; baseMax = 70; typeLabel = "Behind-the-Scenes Update";
+            }
+
+            // Collab check
+            let isCollab = topic.includes('Collab') || topic.includes('feud') || topic.includes('Beef');
+            let collabBonus = isCollab ? 15 : 0;
+
+            // Calculate score
+            let rawScore = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
+            let algoScore = Math.max(0, Math.min(100, rawScore + looksFactor * 10 + smartsFactor * 5 + collabBonus));
+
+            // Map score to GDD tiering
+            let tier = "AVERAGE";
+            let color = "#2196F3"; // Blue
+            let emoji = "😐";
+            let multiplier = 0.8;
+            let fMin = 0.005;
+            let fMax = 0.02;
+            let happinessChange = 1;
+            let fameChange = 0;
+            let leakRiskChange = 2;
+            let stressChange = 1;
+            let famChange = 0;
+
+            if (algoScore <= 25) {
+              tier = "FLOP"; color = "#9E9E9E"; emoji = "💀"; multiplier = 0.1; fMin = -0.05; fMax = -0.02;
+              happinessChange = -5; stressChange = 5;
+            } else if (algoScore <= 40) {
+              tier = "POOR"; color = "#795548"; emoji = "😬"; multiplier = 0.3; fMin = -0.02; fMax = 0.0;
+              happinessChange = -2; stressChange = 2;
+            } else if (algoScore <= 55) {
+              tier = "AVERAGE"; color = "#2196F3"; emoji = "😐"; multiplier = 0.8; fMin = 0.005; fMax = 0.02;
+              happinessChange = 1;
+            } else if (algoScore <= 70) {
+              tier = "GOOD"; color = "#8BC34A"; emoji = "🙂"; multiplier = 1.2; fMin = 0.02; fMax = 0.05;
+              happinessChange = 3;
+            } else if (algoScore <= 82) {
+              tier = "TRENDING"; color = "#4CAF50"; emoji = "🔥"; multiplier = 2.5; fMin = 0.05; fMax = 0.12;
+              happinessChange = 5; fameChange = 3; stressChange = 2;
+            } else if (algoScore <= 92) {
+              tier = "VIRAL"; color = "#FF9800"; emoji = "🚀"; multiplier = 6.0; fMin = 0.12; fMax = 0.25;
+              happinessChange = 8; fameChange = 8; leakRiskChange = 10; stressChange = 3;
+            } else if (algoScore <= 97) {
+              tier = "MEGA VIRAL"; color = "#FF5722"; emoji = "🤯"; multiplier = 15.0; fMin = 0.25; fMax = 0.50;
+              happinessChange = 10; fameChange = 15; leakRiskChange = 20; stressChange = 5; famChange = -10;
+            } else {
+              tier = "LEGENDARY"; color = "#FFD700"; emoji = "👑"; multiplier = 40.0; fMin = 0.50; fMax = 1.00;
+              happinessChange = 15; fameChange = 25; leakRiskChange = 30; stressChange = 10; famChange = -20;
+            }
+
+            // Calculate views, likes, follower details
+            let baseViews = 500 + data.followers * 0.05;
+            let viewsEnd = Math.floor(baseViews * multiplier);
+            let likesEnd = Math.floor(viewsEnd * (0.05 + looksFactor * 0.1 + Math.random() * 0.05));
+
+            let followerChangePercent = Math.random() * (fMax - fMin) + fMin;
+            let followersGained = Math.floor(data.followers * followerChangePercent);
+            if (data.followers < 100) {
+              followersGained = Math.floor((Math.random() * 40 + 10) * multiplier);
+            }
+
+            // Earnings logic
+            let earningsEnd = 0;
+            let newSubs = 0;
+            let tipRevenue = 0;
+            let platformCut = 0;
+            let userShare = 0;
 
             if (channel === 'onlyfans') {
-              // OnlyFans unhinged items
-              relationshipPenalty = 15;
-              if (topic.includes('Bathwater') || topic.includes('Feet') || topic.includes('ASMR')) {
-                followerGained = Math.floor((Math.random() * 4000 + 500) * (looksFactor + 0.5));
-                outcomeText = `You posted your "${topic}" on OnlyFans. Simps bought everything immediately!`;
-              } else if (topic.includes('Lingerie') || topic.includes('Nude') || topic.includes('Bikini')) {
-                followerGained = Math.floor((Math.random() * 8000 + 1500) * (looksFactor * 2.2 + 0.4));
-                outcomeText = `Your provocative "${topic}" went absolutely wild among subscribers. Subs skyrocketed!`;
-              } else {
-                followerGained = Math.floor((Math.random() * 3000 + 400));
-                outcomeText = `You uploaded your custom "${topic}" video. The OnlyFans community was highly pleased.`;
+              newSubs = Math.max(1, Math.floor(followersGained * 0.08));
+              earningsEnd = (data.subscriptionPrice || 10) * newSubs;
+              if (algoScore >= 70) {
+                tipRevenue = Math.floor(Math.random() * 80 + 20);
+                earningsEnd += tipRevenue;
               }
-            } else {
-              // Other platforms unhinged items
-              if (topic.includes('Flexing') || topic.includes('Thirst Trap') || topic.includes('Bikini')) {
-                followerGained = Math.floor((Math.random() * 2500 + 400) * (looksFactor + 0.3));
-                outcomeText = `You shared your "${topic}". You looked absolutely stunning, earning thousands of likes!`;
-              } else if (topic.includes('Leaking') || topic.includes('Conspiracy') || topic.includes('MLM') || topic.includes('Threatening') || topic.includes('Arguing')) {
-                const roll = Math.random();
-                if (roll > 0.5) {
-                  followerGained = Math.floor(Math.random() * 6000) + 1000;
-                  outcomeText = `Your unhinged post "${topic}" was shared everywhere as a meme. You gained massive notoriety!`;
-                } else {
-                  followerGained = -Math.floor(Math.random() * 3000) - 500;
-                  happinessChange = -20;
-                  outcomeText = `Your post "${topic}" caused an absolute disaster! You got ratio'd, canceled, and harassed by angry mobs.`;
-                }
-              } else if (topic.includes('Diss Track') || topic.includes('Pranked')) {
-                const roll = Math.random();
-                if (roll > 0.4) {
-                  followerGained = Math.floor(Math.random() * 5000) + 800;
-                  outcomeText = `Your savage "${topic}" targeted your boss. Everyone thought it was legendary!`;
-                } else {
-                  followerGained = -Math.floor(Math.random() * 1000);
-                  happinessChange = -15;
-                  outcomeText = `Your "${topic}" failed miserably. Your supervisor called HR, and you were heavily reprimanded.`;
-                }
-              } else if (topic.includes('Paint') || topic.includes('10 Hours') || topic.includes('Raccoon') || topic.includes('Static')) {
-                followerGained = Math.floor(Math.random() * 1200) + 100;
-                outcomeText = `Your weird video about "${topic}" acquired a dedicated cult following.`;
+              platformCut = Math.floor(earningsEnd * 0.2);
+              userShare = earningsEnd - platformCut;
+            } else if (data.monetized) {
+              earningsEnd = Math.floor((viewsEnd / 1000) * 1.5);
+              if (algoScore >= 70) {
+                earningsEnd += 300; // ad bonus
+              }
+              platformCut = Math.floor(earningsEnd * 0.3);
+              userShare = earningsEnd - platformCut;
+            }
+
+            // Roll 20% check for Bonus Mini-Events
+            let bonusEvent = null;
+            if (Math.random() < 0.2) {
+              const roll = Math.floor(Math.random() * 10);
+              if (roll === 0 && (channel === 'onlyfans' || topic.includes('Live') || topic.includes('Stream'))) {
+                bonusEvent = {
+                  title: "💎 Big Tipper",
+                  description: "@RichFan tipped you $500!",
+                  extraStats: "+$500 Cash, +5% Happiness",
+                  effect: { cashChange: 500, statChanges: { happiness: 5 } }
+                };
+              } else if (roll === 1 && algoScore >= 82) {
+                bonusEvent = {
+                  title: "📩 Collab Request",
+                  description: "@BigCreator wants to collab on a video!",
+                  extraStats: "+3% Fame",
+                  effect: { statChanges: { status: 3 } }
+                };
+              } else if (roll === 2 && algoScore >= 82) {
+                bonusEvent = {
+                  title: "😡 Hater Raid",
+                  description: "A hater army is mass-downvoting your content!",
+                  extraStats: "-3% Followers, +5% Stress",
+                  effect: { followerLossPercent: 0.03, stress: 5 }
+                };
+              } else if (roll === 3 && algoScore >= 92) {
+                bonusEvent = {
+                  title: "📰 Media Pickup",
+                  description: "BuzzFeed wrote an article about your post!",
+                  extraStats: "+10% Fame, +15% Leak Risk, -5% Family Relations",
+                  effect: { statChanges: { status: 10 }, leakRisk: 15, familyRel: -5 }
+                };
+              } else if (roll === 4 && algoScore >= 70) {
+                bonusEvent = {
+                  title: "⭐ Platform Feature",
+                  description: "Platform featured you on the homepage!",
+                  extraStats: "+100 free followers, +20% reach next post",
+                  effect: { followersRaw: 100 }
+                };
+              } else if (roll === 5 && gameState.stats.looks > 80) {
+                bonusEvent = {
+                  title: "🔪 Stalker DM",
+                  description: "Someone sent a threatening message detailing your street address...",
+                  extraStats: "+10% Stress, -5% Mental health",
+                  effect: { stress: 10, statChanges: { health: -5 } }
+                };
+              } else if (roll === 6 && (gameState.flags.leakRisk || 0) > 60) {
+                bonusEvent = {
+                  title: "😰 Ex Leaked It",
+                  description: "Your ex posted your private screenshot links to SpicyChat...",
+                  extraStats: "+25% Leak Risk, -8% Happiness",
+                  effect: { leakRisk: 25, statChanges: { happiness: -8 } }
+                };
+              } else if (roll === 7 && algoScore >= 92) {
+                bonusEvent = {
+                  title: "👀 Family Saw It",
+                  description: "Your mother liked the post by accident on her feed...",
+                  extraStats: "-15% Family Relations, +10% Stress",
+                  effect: { familyRel: -15, stress: 10 }
+                };
+              } else if (roll === 8 && algoScore >= 70 && data.followers > 10000) {
+                bonusEvent = {
+                  title: "💼 Brand Deal Offer",
+                  description: "LingerieBrand wants to sponsor your next channel update!",
+                  extraStats: "+$2,000 Cash, +5% Fame",
+                  effect: { cashChange: 2000, statChanges: { status: 5 } }
+                };
               } else {
-                followerGained = Math.floor(Math.random() * 800) + 50;
-                outcomeText = `You posted your "${topic}" update. Your core fan base liked it.`;
+                bonusEvent = {
+                  title: "🤖 Algorithm Change",
+                  description: "Platform changed its feed ordering algorithm unexpectedly!",
+                  extraStats: "+5% Stress, ±20% organic fluctuation",
+                  effect: { stress: 5 }
+                };
               }
             }
 
-            const nextStats = { ...gameState.stats };
-            nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + happinessChange));
-            
-            // Apply relationship penalty for OnlyFans/Thirst posts
-            let nextRelationships = [...gameState.relationships];
-            if (relationshipPenalty > 0) {
-              nextRelationships = gameState.relationships.map(r => {
-                if (r.relation === 'parent' || r.relation === 'partner' || r.relation === 'spouse') {
-                  return { ...r, trust: Math.max(0, r.trust - relationshipPenalty), resentment: Math.min(100, r.resentment + 5) };
-                }
-                return r;
-              });
-            }
-
-            setGameState({
-              ...gameState,
-              stats: nextStats,
-              relationships: nextRelationships,
-              socialMedia: {
-                ...gameState.socialMedia,
-                [channel]: {
-                  ...data,
-                  followers: Math.max(0, data.followers + followerGained),
-                  postsCount: data.postsCount + 1
-                }
+            // Set state to trigger the animated modal display
+            setSocialPostResult({
+              channel,
+              typeLabel,
+              topic,
+              viewsStart: 0,
+              viewsEnd,
+              likesStart: 0,
+              likesEnd,
+              followersGained,
+              earningsStart: 0,
+              earningsEnd: userShare > 0 ? userShare : earningsEnd,
+              viralTier: tier,
+              viralColor: color,
+              viralEmoji: emoji,
+              statChanges: {
+                happiness: happinessChange,
+                fame: fameChange,
+                money: userShare > 0 ? userShare : earningsEnd,
+                leakRisk: leakRiskChange,
+                stress: stressChange,
+                family: famChange
               },
-              log: [...gameState.log, `📱 Posted a "${topic}" on ${titles[channel]}. Gained ${followerGained.toLocaleString()} followers.`]
+              bonusEvent
             });
 
+            // Close post config modal
             setActiveSocialModal(null);
-            setActionPopup({ 
-              isOpen: true, 
-              title: followerGained >= 0 ? 'Post Successful' : 'Drama Alert', 
-              message: `${outcomeText}\n\nFollowers: ${followerGained >= 0 ? '+' : ''}${followerGained.toLocaleString()}`
-            });
           };
+
 
           return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -9301,4 +9768,6 @@ export default function App() {
       </div>
     </div>
   );
+}
+
 }
