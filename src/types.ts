@@ -4,12 +4,6 @@
  */
 
 export interface Stats {
-  karma?: number;
-  willpower?: number;
-  family?: number;
-  leakRisk?: number;
-  cashChange?: number;
-  confidence?: number;
   health: number;
   smarts: number;
   looks: number;
@@ -161,7 +155,7 @@ export interface EventCondition {
 }
 
 export interface OutcomeEffect {
-  statChanges?: Partial<Stats>;
+  statChanges?: Partial<Stats> & { karma?: number; willpower?: number; cashChange?: number };
   repChanges?: Partial<Reputation>;
   cashChange?: number;
   karmaChange?: number;

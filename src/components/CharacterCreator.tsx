@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { AvatarConfig } from '../types';
 import { getAvatarUrl } from '../App';
+import { CharacterAvatar } from './CharacterAvatar';
 
 // Constants duplicated/shared for character name generation
 const SURNAMES = ['Armstrong', 'Miller', 'Vance', 'Kovacs', 'Rodriguez', 'Chen', 'Sterling', 'Hayes', 'O\'Connor', 'Patel'];
@@ -373,12 +374,7 @@ export function CharacterCreator({ onStartGame, triggerSound }: CharacterCreator
             {/* Avatar Circle Container */}
             <div className="flex flex-col items-center justify-center my-6 relative">
               <div className="w-32 h-32 bg-slate-900 border-4 border-slate-800 rounded-full flex items-center justify-center overflow-hidden shadow-2xl relative group">
-                <img
-                  src={getAvatarUrl(currentAvatarConfig, previewAdult ? 25 : 0, gender)}
-                  alt="Character Avatar Preview"
-                  className="w-full h-full object-cover select-none transform transition duration-300 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                />
+                <CharacterAvatar config={currentAvatarConfig} gender={gender} age={previewAdult ? 25 : 0} />
                 <span className="absolute bottom-1 bg-slate-950/90 text-white text-[8px] font-black uppercase font-mono px-2 py-0.5 rounded border border-slate-800">
                   {gender}
                 </span>
@@ -771,12 +767,7 @@ export function CharacterCreator({ onStartGame, triggerSound }: CharacterCreator
             <div className="flex flex-col items-center justify-center mb-6 shrink-0 bg-gradient-to-b from-slate-900/80 to-slate-950 p-6 rounded-3xl border border-slate-800 relative shadow-inner">
               
               <div className="w-32 h-32 bg-slate-800 border-4 border-[#ffab00] rounded-full flex items-center justify-center overflow-hidden shadow-2xl relative mb-4 z-10 ring-4 ring-slate-950">
-                <img
-                  src={getAvatarUrl(currentAvatarConfig, 25, gender)}
-                  alt="Character Avatar Preview"
-                  className="w-full h-full object-cover select-none transform scale-125 transition-all duration-300"
-                  referrerPolicy="no-referrer"
-                />
+                <CharacterAvatar config={currentAvatarConfig} gender={gender} age={25} />
                 
                 {editorTab !== 'skin' && (
                   <>

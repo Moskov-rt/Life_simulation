@@ -45,7 +45,7 @@ import {
   ChevronDown,
   Skull, Plane, Mountain, Star, Dices, Laptop, UserCircle, Scale, Ticket, Wine, Dog, Sun, Smartphone, Palmtree, HandHeart, FileText, Flag
 } from 'lucide-react';
-import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig } from './types';
+import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount } from './types';
 import { relationshipToNPC } from './utils/saveMigration';
 import { EVENTS_POOL } from './events';
 import { SICKNESS_TITLES, SICKNESS_DESCRIPTIONS, IGNORE_TEXTS, PRAY_TEXTS, WATER_TEXTS } from './healthTexts';
@@ -53,6 +53,7 @@ import { playClick, playSuccess, playError, playAgeUp } from './utils/audio';
 import { WorldTravelMap, MapCity } from './components/WorldTravelMap';
 import { CharacterCreator } from './components/CharacterCreator';
 import { AppearanceModal } from './components/AppearanceModal';
+import { CharacterAvatar } from './components/CharacterAvatar';
 
 // Constants for initial state generation
 const SURNAMES = ['Armstrong', 'Miller', 'Vance', 'Kovacs', 'Rodriguez', 'Chen', 'Sterling', 'Hayes', 'O\'Connor', 'Patel'];
@@ -258,15 +259,6 @@ interface MedicalReportState {
   cost: number;
 }
 
-interface IllnessTemplate {
-  id: string;
-  name: string;
-  type: 'minor' | 'chronic' | 'terminal';
-  curable: boolean;
-  healthImpactPerYear: number;
-  happinessImpactPerYear: number;
-  cureCost: number;
-}
 
 const FIGHT_MOVES = [
   { id: 'uppercut', name: 'Uppercut', emoji: '👊', desc: 'Powerful vertical fist launch' },
@@ -378,7 +370,6 @@ const ALL_ACTIVITIES = [
   { id: 'will', name: 'Will & Testament', subtitle: 'Manage your legacy', icon: FileText, color: 'text-slate-500', minAge: 18, functional: false }
 ];
 
-import { Illness } from './types';
 
 export function getAvatarUrl(config: AvatarConfig | undefined, age: number, defaultGender?: string): string {
   const gender = defaultGender || 'Male';
@@ -969,7 +960,7 @@ export default function App() {
     }
   }, [socialPostResult]);
 
-  const relTrustString = gameState?.relationships ? JSON.stringify((Object.values(gameState.npcs || {}) as NPC[]).map(r => r.trust)) : '';
+  const relTrustString = gameState?.relationships ? JSON.stringify((Object.values(gameState.npcs || {}) as any[]).map(r => r.trust)) : '';
   const illnessesCuredString = gameState?.illnesses ? JSON.stringify(gameState.illnesses.map(i => i.cured)) : '';
   const purchasedAssetsCount = purchasedAssets.length;
 
@@ -1027,7 +1018,7 @@ export default function App() {
             met = purchasedAssets.length >= 3;
             break;
           case 'perfect_relation':
-            met = (Object.values(gameState.npcs || {}) as NPC[]).some(rel => rel.trust >= 100);
+            met = (Object.values(gameState.npcs || {}) as any[]).some(rel => rel.trust >= 100);
             break;
           case 'overcome_terminal':
             met = gameState.illnesses.some(ill => ill.type === 'terminal' && ill.cured);
@@ -1270,7 +1261,7 @@ export default function App() {
       cash: customSetup?.startingCash || 0,
       stats,
       reputation,
-      relationships: [],
+      relationships: parents as any,
       npcs: Object.fromEntries(parents.map(p => [p.id, relationshipToNPC(p)])),
       illnesses: activeIllnesses,
       flags,
@@ -1413,7 +1404,7 @@ export default function App() {
     if (!effect) return; // Failsafe
     let nextStats = { ...gameState.stats };
     let nextRep = { ...gameState.reputation };
-    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => ({ ...r }));
+    let nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => ({ ...r }));
     let nextFlags = { ...gameState.flags };
     let nextDelayed = [...gameState.delayedEvents];
     let nextCash = gameState.cash + (effect.cashChange || 0);
@@ -1681,7 +1672,8 @@ export default function App() {
       cash: nextCash,
       stats: nextStats,
       reputation: nextRep,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: nextFlags,
       delayedEvents: nextDelayed,
       illnesses: nextIllnesses,
@@ -1778,9 +1770,9 @@ export default function App() {
     };
 
     // If opponent is a relationship, adjust their stats too!
-    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]);
+    let nextRelationships = (Object.values(gameState.npcs || {}) as any[]);
     if (activeFight.opponentId && activeFight.opponentId !== 'bully_marcus') {
-      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.id === activeFight.opponentId) {
           return {
             ...r,
@@ -1810,7 +1802,8 @@ export default function App() {
       alive: isAlive,
       deathReason,
       stats: nextStats,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: updatedFlags,
       currentEvent: null,
       log: [...gameState.log, logMsg, `✨ Fight Result: ${text}`]
@@ -2120,10 +2113,12 @@ export default function App() {
     triggerSound('ageUp');
 
     const nextAge = gameState.age + 1;
+    const newLogs: string[] = [`🎂 Age ${nextAge} years:`];
+    let triggeredEvent: Event | null = null;
     let nextStats = { ...gameState.stats };
     let nextRep = { ...gameState.reputation };
     let nextCash = gameState.cash;
-    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => ({
+    let nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => ({
       ...r,
       age: r.age + 1
     }));
@@ -2155,10 +2150,8 @@ export default function App() {
     }
     const nextFlags = { ...gameState.flags };
     nextFlags.napCount = 0; // Reset annual nap limit on age up
+    nextFlags.studiesThisYear = 0; // Reset annual study limit on age up
     let nextDelayedEvents = [...gameState.delayedEvents];
-
-    // Log for the new year
-    const newLogs = [`🎂 Age ${nextAge} years:`];
 
     // 1. Natural stat fluctuations & career progression
     if (nextCareer.type === 'job' && nextCareer.performance !== undefined) {
@@ -2167,7 +2160,8 @@ export default function App() {
       let earnedCash = 0;
       let socialLogs: string[] = [];
 
-      Object.entries(nextSocialMedia).forEach(([channel, data]) => {
+      Object.entries(nextSocialMedia).forEach(([channel, rawData]) => {
+        const data = rawData as SocialMediaAccount;
         if (!data.signedUp || data.suspended) return;
 
         // Organic growth/decay
@@ -2275,9 +2269,94 @@ export default function App() {
       }
     }
 
-    if (nextAge >= 60) {
-      // Natural health decay in old age
-      nextStats.health = Math.max(0, nextStats.health - (Math.floor(Math.random() * 4) + 1));
+    // --- DYNAMIC ANNUAL BASELINE STAT EVOLUTION ---
+    // Every year, stats fluctuate organically based on the character's age, career, lifestyle, and random yearly vibe shifts.
+    let annualHealthChange = 0;
+    let annualHappinessChange = Math.floor(Math.random() * 7) - 3; // -3 to +3 base yearly mood fluctuation
+    let annualSmartsChange = 0;
+    let annualLooksChange = 0;
+
+    // 1. Health Evolution
+    if (nextAge < 18) {
+      annualHealthChange += Math.floor(Math.random() * 3) + 1; // youth growth (+1 to +3)
+    } else if (nextAge >= 30 && nextAge < 50) {
+      annualHealthChange -= (Math.random() < 0.35 ? 1 : 0); // slowly aging midlife
+    } else if (nextAge >= 50 && nextAge < 65) {
+      annualHealthChange -= Math.floor(Math.random() * 2) + 1; // -1 to -2
+    } else if (nextAge >= 65) {
+      annualHealthChange -= Math.floor(Math.random() * 3) + 1; // elderly decay (-1 to -3)
+    }
+
+    // Gym bonus
+    if (nextFlags.gymVisitsThisYear && nextFlags.gymVisitsThisYear > 0) {
+      annualHealthChange += Math.min(5, nextFlags.gymVisitsThisYear * 2);
+      nextFlags.gymVisitsThisYear = 0; // Reset for next year
+    }
+
+    // Illness/Stress impacts
+    if (gameState.stats.happiness < 30) {
+      annualHealthChange -= Math.floor(Math.random() * 2) + 1; // high stress hurts health
+    }
+
+    // 2. Happiness Evolution
+    if (nextStats.health < 40) {
+      annualHappinessChange -= Math.floor(Math.random() * 3) + 2; // low health causes distress
+    } else if (nextStats.health > 85) {
+      annualHappinessChange += 1; // high health boosts mood
+    }
+
+    // Relationship trust impact on happiness
+    if ((Object.values(gameState.npcs || {}) as any[]) && (Object.values(gameState.npcs || {}) as any[]).length > 0) {
+      const avgTrust = (Object.values(gameState.npcs || {}) as any[]).reduce((sum, r) => sum + r.trust, 0) / (Object.values(gameState.npcs || {}) as any[]).length;
+      if (avgTrust > 75) {
+        annualHappinessChange += 2;
+      } else if (avgTrust < 30) {
+        annualHappinessChange -= 2;
+      }
+    }
+
+    // 3. Smarts Evolution
+    if (nextAge < 10) {
+      annualSmartsChange += Math.floor(Math.random() * 4) + 1; // +1 to +4
+    } else if (nextAge < 22 && nextCareer.type === 'school') {
+      annualSmartsChange += Math.floor(Math.random() * 3); // 0 to +2
+    } else {
+      annualSmartsChange += Math.floor(Math.random() * 3) - 1; // -1 to +1 cognitive drift
+    }
+
+    // 4. Looks Evolution
+    if (nextAge >= 12 && nextAge <= 19) {
+      annualLooksChange += Math.floor(Math.random() * 5) - 1; // puberty changes (-1 to +3)
+    } else if (nextAge >= 30 && nextAge < 55) {
+      annualLooksChange -= (Math.random() < 0.40 ? 1 : 0); // gradual decline
+    } else if (nextAge >= 55) {
+      annualLooksChange -= Math.floor(Math.random() * 2) + 1; // -1 to -2 aging
+    }
+
+    const prevHealth = nextStats.health;
+    const prevHappiness = nextStats.happiness;
+    const prevSmarts = nextStats.smarts;
+    const prevLooks = nextStats.looks;
+
+    // Apply baseline modifications
+    nextStats.health = Math.max(0, Math.min(100, nextStats.health + annualHealthChange));
+    nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + annualHappinessChange));
+    nextStats.smarts = Math.max(0, Math.min(100, nextStats.smarts + annualSmartsChange));
+    nextStats.looks = Math.max(0, Math.min(100, nextStats.looks + annualLooksChange));
+
+    const healthDiff = nextStats.health - prevHealth;
+    const happinessDiff = nextStats.happiness - prevHappiness;
+    const smartsDiff = nextStats.smarts - prevSmarts;
+    const looksDiff = nextStats.looks - prevLooks;
+
+    const changesText: string[] = [];
+    if (healthDiff !== 0) changesText.push(`Health ${healthDiff > 0 ? '▲ +' : '▼ '}${healthDiff}%`);
+    if (happinessDiff !== 0) changesText.push(`Happiness ${happinessDiff > 0 ? '▲ +' : '▼ '}${happinessDiff}%`);
+    if (smartsDiff !== 0) changesText.push(`Smarts ${smartsDiff > 0 ? '▲ +' : '▼ '}${smartsDiff}%`);
+    if (looksDiff !== 0) changesText.push(`Looks ${looksDiff > 0 ? '▲ +' : '▼ '}${looksDiff}%`);
+
+    if (changesText.length > 0) {
+      newLogs.push(`🌱 Year-over-year organic changes: ${changesText.join(', ')}.`);
     }
     
     // Auto career change for education stages
@@ -2318,7 +2397,6 @@ export default function App() {
 
     // 2. Sickness Contractor and Active Illness Processing
     let currentIllnesses = gameState.illnesses ? [...gameState.illnesses] : [];
-    let triggeredEvent: Event | null = null;
     
     // Deduct stats for active uncured illnesses
     currentIllnesses.forEach(ill => {
@@ -2428,15 +2506,15 @@ export default function App() {
             {
               id: 'sick_ignore',
               text: IGNORE_TEXTS[Math.floor(Math.random() * IGNORE_TEXTS.length)],
-              effect: { statChanges: { willpower: 10, health: -5 }, outcomeText: 'You ignored the illness. Your body will have to fight it off naturally.', logText: `Ignored ${template.name}.` }
+              effect: { statChanges: { health: -5 }, willpowerChange: 10, outcomeText: 'You ignored the illness. Your body will have to fight it off naturally.', logText: `Ignored ${template.name}.` }
             },
             {
               id: 'sick_pray',
               text: PRAY_TEXTS[Math.floor(Math.random() * PRAY_TEXTS.length)],
               outcomes: [
                 { weight: 87, effect: { statChanges: { happiness: 3 }, outcomeText: 'You prayed earnestly, but the heavens were silent today. You feel slightly more at peace, but you are still sick.', logText: `Prayed to be cured from ${template.name}. Wasn't heard this time.` } },
-                { weight: 12, effect: { statChanges: { karma: 2, happiness: 8 }, outcomeText: 'You prayed, and for a moment you felt a strange warmth. It didn\'t cure you, but something subtle shifted. Your karma grew slightly.', logText: `Prayed to be cured from ${template.name}. Your prayer was heard. +2 Karma.` } },
-                { weight: 1, effect: { statChanges: { karma: 2, happiness: 40, health: 30 }, cureIllness: true, outcomeText: 'A MIRACLE! You prayed fervently, and a warm golden light washed over you. The sickness vanished instantly!', logText: `Experienced a medical miracle after praying for ${template.name}.` } }
+                { weight: 12, effect: { statChanges: { happiness: 8 }, karmaChange: 2, outcomeText: 'You prayed, and for a moment you felt a strange warmth. It didn\'t cure you, but something subtle shifted. Your karma grew slightly.', logText: `Prayed to be cured from ${template.name}. Your prayer was heard. +2 Karma.` } },
+                { weight: 1, effect: { statChanges: { happiness: 40, health: 30 }, karmaChange: 2, cureIllness: true, outcomeText: 'A MIRACLE! You prayed fervently, and a warm golden light washed over you. The sickness vanished instantly!', logText: `Experienced a medical miracle after praying for ${template.name}.` } }
               ]
             },
             {
@@ -2658,7 +2736,8 @@ export default function App() {
       cash: nextCash,
       stats: nextStats,
       reputation: nextRep,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       illnesses: currentIllnesses,
       career: nextCareer,
       completedEducation: nextCompletedEducation,
@@ -2689,7 +2768,7 @@ export default function App() {
     }
 
     if (isUnderage) {
-      const parents = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'parent');
+      const parents = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation === 'parent');
       const parentsCount = parents.length;
       const avgTrust = parentsCount > 0 
         ? parents.reduce((sum, p) => sum + p.trust, 0) / parentsCount 
@@ -2705,7 +2784,7 @@ export default function App() {
           ...gameState.stats,
           happiness: Math.max(0, gameState.stats.happiness - 5)
         };
-        const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+        const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
           if (r.relation === 'parent') {
             return { ...r, resentment: Math.min(100, r.resentment + 2) };
           }
@@ -2715,13 +2794,19 @@ export default function App() {
         setGameState({
           ...gameState,
           stats: nextStats,
-          npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+          relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
           log: [
             ...gameState.log,
             `😢 Asked my parents to let me join the gym, but they refused! "You can exercise by running around the backyard for free!"`,
             `└─ Lost happiness (-5).`
-          ]
+          ],
+          lastOutcome: {
+            choiceText: "Ask Parents to pay for Gym Membership",
+            outcomeText: `😢 Asked your parents to let you join the gym, but they refused! "You can exercise by running around the backyard for free!" they declared. (-5 Happiness, +2 Parents' Resentment)`
+          }
         });
+        setShowOutcomeModal(true);
         setSelectedActivity(null);
         return;
       }
@@ -2751,14 +2836,25 @@ export default function App() {
       cash: gameState.cash - gymCost,
       stats: nextStats,
       willpower: Math.min(100, gameState.willpower + willpowerGain),
+      flags: {
+        ...gameState.flags,
+        gymVisitsThisYear: (gameState.flags.gymVisitsThisYear || 0) + 1
+      },
       log: [
         ...gameState.log,
         isUnderage 
           ? `🏋️ Asked my parents to let me join the local gym. They said YES and paid for my session!`
           : `🏋️ Worked out vigorously at the local gym (-$20).`,
         `└─ Gained health (+${healthGain}), looks (+${looksGain}), happiness (+${happinessGain})${bonusText}, and willpower (+${willpowerGain})!`
-      ]
+      ],
+      lastOutcome: isUnderage ? {
+        choiceText: "Ask Parents to pay for Gym Membership",
+        outcomeText: `🏋️ You asked your parents to let you join the local gym. They said YES and paid for your session! You had an incredible workout. (+${healthGain} Health, +${looksGain} Looks, +${happinessGain} Happiness, +${willpowerGain} Willpower)`
+      } : null
     });
+    if (isUnderage) {
+      setShowOutcomeModal(true);
+    }
     setSelectedActivity(null);
   };
 
@@ -2902,13 +2998,41 @@ export default function App() {
 
   const handleStudy = () => {
     if (!gameState) return;
+    const studiesThisYear = gameState.flags.studiesThisYear || 0;
+    
+    if (studiesThisYear >= 2) {
+      triggerSound('error');
+      setGameState({
+        ...gameState,
+        log: [
+          ...gameState.log,
+          `📚 I tried to study harder, but my brain is completely fried! I've already hit the study limit of 2 times this year.`,
+          `└─ No stats were changed (reached annual study cap).`
+        ]
+      });
+      setSelectedActivity(null);
+      return;
+    }
+
     triggerSound('success');
-    let smartsGain = Math.floor(Math.random() * 12) + 5;
+    
+    // Highly dynamic stat change: harder to gain smarts when already very smart,
+    // and higher willpower boosts the studying efficiency.
+    const currentSmarts = gameState.stats.smarts;
+    const baseMin = Math.max(2, Math.floor((102 - currentSmarts) / 12));
+    const baseMax = Math.max(5, Math.floor((102 - currentSmarts) / 6) + 3);
+    const willpowerModifier = 0.8 + (gameState.willpower / 100); // 0.8 to 1.8 multiplier
+    
+    let smartsGain = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
+    smartsGain = Math.round(smartsGain * willpowerModifier);
+    if (smartsGain < 1) smartsGain = 1;
+
     let bonusText = '';
     if (gameState.location === 'Tokyo, Japan') {
       smartsGain = Math.round(smartsGain * 1.15);
       bonusText = ' (Tokyo Tech Sanctuary Bonus: +15%)';
     }
+    
     const happinessChange = -2; // Studying is hard work
     const willpowerGain = Math.floor(Math.random() * 4) + 2; // +2 to +5 willpower
 
@@ -2922,9 +3046,13 @@ export default function App() {
       ...gameState,
       stats: nextStats,
       willpower: Math.min(100, gameState.willpower + willpowerGain),
+      flags: {
+        ...gameState.flags,
+        studiesThisYear: studiesThisYear + 1
+      },
       log: [
         ...gameState.log,
-        `📚 Spent the weekend studying advanced materials intensely at the library.`,
+        `📚 Spent the weekend studying advanced materials intensely at the library (Study ${studiesThisYear + 1}/2 this year).`,
         `└─ Smarts increased (+${smartsGain})${bonusText}, willpower improved (+${willpowerGain}), but felt slightly tired (-2 happiness).`
       ]
     });
@@ -2994,7 +3122,7 @@ export default function App() {
     triggerSound('error');
 
     // Reduce relationship with parents
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.relation === 'parent') {
         return {
           ...r,
@@ -3008,7 +3136,8 @@ export default function App() {
     setGameState({
       ...gameState,
       career: { title: 'High School Dropout', salary: 0, type: 'unemployed' },
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       reputation: {
         ...gameState.reputation,
         family: Math.max(0, gameState.reputation.family - 45)
@@ -3024,8 +3153,8 @@ export default function App() {
 
   const handleAskPrivateSchool = () => {
     if (!gameState) return;
-    const dad = (Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === 'dad');
-    const mom = (Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === 'mom');
+    const dad = (Object.values(gameState.npcs || {}) as any[]).find(r => r.id === 'dad');
+    const mom = (Object.values(gameState.npcs || {}) as any[]).find(r => r.id === 'mom');
     const trustScore = ((dad?.trust || 50) + (mom?.trust || 50)) / 2;
     
     // Success chance scales with parental trust
@@ -3035,7 +3164,7 @@ export default function App() {
     let happinessChange = 0;
     let smartsChange = 0;
     let styleChange = 0;
-    let nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]);
+    let nextRelationships = (Object.values(gameState.npcs || {}) as any[]);
     let schoolType = 'public';
 
     if (isSuccess) {
@@ -3047,7 +3176,7 @@ export default function App() {
       outcomeText = `Your parents agreed! They decided your intellectual genius is wasted on public school and enrolled you in "St. Jude's Unhinged Academy for Academic Mischief." However, they force you to wear a giant velvet bow-tie and a blazer with gold buttons.`;
       logMsg = `🏫 Successfully convinced parents to send me to Private School!`;
       
-      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, trust: Math.max(0, r.trust - 5) }; // cost them money!
         }
@@ -3059,7 +3188,7 @@ export default function App() {
       outcomeText = `Your father laughed so hard he choked on his coffee. "Do you think I'm made of solid gold?! Go sell a kidney if you want private tutoring!" Your mother nodded in agreement.`;
       logMsg = `🏫 Asked parents to go to Private School, but they laughed in my face.`;
       
-      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, resentment: Math.min(100, r.resentment + 5) };
         }
@@ -3075,7 +3204,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         happiness: Math.max(0, Math.min(100, gameState.stats.happiness + happinessChange)),
@@ -3087,8 +3217,13 @@ export default function App() {
         ...gameState.log,
         logMsg,
         `└─ ${outcomeText} (Happiness: ${happinessChange >= 0 ? '+' : ''}${happinessChange}, Smarts: ${smartsChange >= 0 ? '+' : ''}${smartsChange}, Style: ${styleChange >= 0 ? '+' : ''}${styleChange})`
-      ]
+      ],
+      lastOutcome: {
+        choiceText: "Ask Parents to pay for Private School Tuition",
+        outcomeText: outcomeText
+      }
     });
+    setShowOutcomeModal(true);
     setSchoolSubView('main');
   };
 
@@ -3200,12 +3335,12 @@ export default function App() {
     let logText = '';
     let effectText = '';
     const nextStats = { ...gameState.stats };
-    let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as NPC[])];
+    let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as any[])];
 
     if (roll < 0.4) {
       // Cuddled
       nextStats.happiness = Math.min(100, nextStats.happiness + 6);
-      nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => r.relation === 'parent' ? { ...r, trust: Math.min(100, r.trust + 4) } : r);
+      nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => r.relation === 'parent' ? { ...r, trust: Math.min(100, r.trust + 4) } : r);
       const cuddleResponses = [
         "Cried out loud! Mama rushed in, scooped me up, and gave me a warm, gentle cuddle.",
         "Let out a big wail! Papa came running and rocked me gently until I calmed down.",
@@ -3242,7 +3377,8 @@ export default function App() {
     setGameState({
       ...gameState,
       stats: nextStats,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: [
         ...gameState.log,
         `😭 ${logText}`,
@@ -3263,7 +3399,7 @@ export default function App() {
     const happinessGain = Math.floor(Math.random() * 4) + 3;
     const trustGain = Math.floor(Math.random() * 5) + 5;
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => 
       r.relation === 'parent' ? { ...r, trust: Math.min(100, r.trust + trustGain) } : r
     );
 
@@ -3285,7 +3421,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         happiness: Math.min(100, gameState.stats.happiness + happinessGain)
@@ -3440,7 +3577,7 @@ export default function App() {
     const statusGain = Math.floor(Math.random() * 10) + 5;
 
     if (isUnderage) {
-      const parents = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'parent');
+      const parents = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation === 'parent');
       const parentsCount = parents.length;
       const avgTrust = parentsCount > 0 
         ? parents.reduce((sum, p) => sum + p.trust, 0) / parentsCount 
@@ -3456,7 +3593,7 @@ export default function App() {
           ...gameState.stats,
           happiness: Math.max(0, gameState.stats.happiness - 5)
         };
-        const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+        const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
           if (r.relation === 'parent') {
             return { ...r, resentment: Math.min(100, r.resentment + 2) };
           }
@@ -3466,13 +3603,19 @@ export default function App() {
         setGameState({
           ...gameState,
           stats: nextStats,
-          npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+          relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
           log: [
             ...gameState.log,
             `😢 Asked my parents for money to upgrade my wardrobe, but they said NO! "You still fit perfectly fine in your older sibling's hand-me-downs!"`,
             `└─ Lost happiness (-5).`
-          ]
+          ],
+          lastOutcome: {
+            choiceText: "Ask Parents to pay for Wardrobe Upgrade ($150)",
+            outcomeText: `😢 You asked your parents for money to buy stylish new clothes, but they said NO! "You still fit perfectly fine in your older sibling's hand-me-downs!" they complained. (-5 Happiness, +2 Parents' Resentment)`
+          }
         });
+        setShowOutcomeModal(true);
         setSelectedActivity(null);
         return;
       }
@@ -3485,7 +3628,7 @@ export default function App() {
         status: Math.min(100, gameState.stats.status + statusGain),
         happiness: Math.min(100, gameState.stats.happiness + 5)
       };
-      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, trust: Math.min(100, r.trust + 2) };
         }
@@ -3495,13 +3638,19 @@ export default function App() {
       setGameState({
         ...gameState,
         stats: nextStats,
-        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+        relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: [
           ...gameState.log,
           `👗 Asked my parents for money to buy stylish new clothes. They agreed and paid the $150!`,
           `└─ Style increased substantially (+${styleGain}), social status grew (+${statusGain}), and happiness improved (+5)!`
-        ]
+        ],
+        lastOutcome: {
+          choiceText: "Ask Parents to pay for Wardrobe Upgrade ($150)",
+          outcomeText: `👗 You asked your parents for money to upgrade your wardrobe. They agreed and happily paid the $150! You look fabulous. (+${styleGain} Style, +${statusGain} Status, +5 Happiness, +2 Parents' Trust)`
+        }
       });
+      setShowOutcomeModal(true);
     } else {
       // Adult purchase
       triggerSound('success');
@@ -3650,7 +3799,7 @@ export default function App() {
         });
       }
       
-      const filteredRels = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation !== 'colleague' && r.relation !== 'supervisor');
+      const filteredRels = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation !== 'colleague' && r.relation !== 'supervisor');
       const nextRelationships = [...filteredRels, ...newColleagues];
       
       setGameState({
@@ -3701,7 +3850,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 8) + 5;
     const resentmentDec = Math.floor(Math.random() * 10) + 5;
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3720,7 +3869,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3745,7 +3895,7 @@ export default function App() {
       outcomeText = `The conversation took an awkward turn, hitting a sore spot and creating tension.`;
     }
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3764,7 +3914,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3782,7 +3933,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 10) + baseGain;
     const resentmentDec = Math.floor(Math.random() * 15) + baseGain;
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3803,7 +3954,8 @@ export default function App() {
     setGameState({
       ...gameState,
       cash: gameState.cash - cost,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3816,7 +3968,7 @@ export default function App() {
     const trustDec = Math.floor(Math.random() * 20) + 15;
     const resentmentInc = Math.floor(Math.random() * 25) + 15;
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3835,7 +3987,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -3891,13 +4044,14 @@ export default function App() {
     const newSalary = Math.floor(gameState.career.salary * 1.25);
     const newTitle = "Senior " + gameState.career.title.replace("Senior ", "").replace("Junior ", "");
     
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => 
       r.id === rel.id ? { ...r, trust: Math.min(100, r.trust + 10) } : r
     );
     
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       career: { ...gameState.career, title: newTitle, salary: newSalary, yearsInRole: 0 },
       log: [...gameState.log, `📈 You asked your supervisor for a promotion and got it! You are now a ${newTitle} making $${newSalary.toLocaleString()}/yr.`]
     });
@@ -3919,23 +4073,25 @@ export default function App() {
     if (perf < 60 || rel.trust < 40) {
       triggerSound('error');
       setActionPopup({ isOpen: true, title: 'Raise Denied', message: 'Your supervisor laughed at your request for a raise. Your performance and relationship need to be better.' });
-      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
+      const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => 
         r.id === rel.id ? { ...r, resentment: Math.min(100, r.resentment + 5) } : r
       );
-      setGameState({ ...gameState, npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])), log: [...gameState.log, `❌ Your request for a raise was denied.`] });
+      setGameState({ ...gameState, relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])), log: [...gameState.log, `❌ Your request for a raise was denied.`] });
       return;
     }
     
     triggerSound('success');
     const newSalary = Math.floor(gameState.career.salary * 1.08); // 8% raise
     
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => 
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => 
       r.id === rel.id ? { ...r, trust: Math.min(100, r.trust + 5) } : r
     );
     
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       career: { ...gameState.career, salary: newSalary },
       log: [...gameState.log, `💰 You negotiated a raise! Your new salary is $${newSalary.toLocaleString()}/yr.`]
     });
@@ -3972,7 +4128,7 @@ export default function App() {
       logMsg = `💔 Failed miserably trying to flirt with classmate ${rel.name}.`;
     }
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -3990,7 +4146,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         happiness: Math.max(0, Math.min(100, gameState.stats.happiness + happinessChange))
@@ -4022,7 +4179,7 @@ export default function App() {
     const resentmentChange = 30;
     const popularityChange = Math.floor(Math.random() * 12) + 6;
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4040,7 +4197,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: nextFlags,
       log: [
         ...gameState.log,
@@ -4078,7 +4236,7 @@ export default function App() {
       logMsg = `❌ My prank on classmate ${rel.name} backfired catastrophically!`;
     }
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4096,7 +4254,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         health: Math.max(0, gameState.stats.health + healthChange)
@@ -4117,7 +4276,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 12) + 8;
     const smartsGain = Math.floor(Math.random() * 5) + 2;
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4129,7 +4288,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       stats: {
         ...gameState.stats,
         smarts: Math.min(100, gameState.stats.smarts + smartsGain)
@@ -4207,7 +4367,7 @@ export default function App() {
       logMsg = `❌ Got caught pranking teacher ${rel.name}.`;
     }
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4225,7 +4385,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       reputation: {
         ...gameState.reputation,
         family: Math.max(0, gameState.reputation.family + familyRepChange)
@@ -4247,7 +4408,7 @@ export default function App() {
     const trustGain = Math.floor(Math.random() * 8) + 6;
     const resentmentDec = Math.floor(Math.random() * 8) + 4;
 
-    const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+    const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
       if (r.id === rel.id) {
         return {
           ...r,
@@ -4275,7 +4436,8 @@ export default function App() {
 
     setGameState({
       ...gameState,
-      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+      relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       log: updatedLog
     });
     setSelectedRelationship(null);
@@ -4308,7 +4470,7 @@ export default function App() {
         ? Math.floor(Math.random() * 50) + 20  // $20-$70
         : Math.floor(Math.random() * 150) + 50; // $50-$200
 
-      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.id === rel.id) {
           return {
             ...r,
@@ -4327,16 +4489,23 @@ export default function App() {
       setGameState({
         ...gameState,
         cash: gameState.cash + amount,
-        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
-        log: updatedLog
+        relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+        log: updatedLog,
+        lastOutcome: {
+          choiceText: `Ask ${rel.relation === 'parent' ? 'Parents' : 'Partner'} for Money`,
+          outcomeText: `💰 Your ${rel.relation} (${rel.name}) agreed! They handed you $${amount.toLocaleString()} with a warm smile. "Use it wisely!"`,
+          cashChange: amount
+        }
       });
+      setShowOutcomeModal(true);
     } else {
       triggerSound('error');
       // Rejected
       const trustDec = Math.floor(Math.random() * 5) + 3;
       const resentmentInc = Math.floor(Math.random() * 6) + 4;
 
-      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.id === rel.id) {
           return {
             ...r,
@@ -4355,9 +4524,15 @@ export default function App() {
 
       setGameState({
         ...gameState,
-        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
-        log: updatedLog
+        relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+        log: updatedLog,
+        lastOutcome: {
+          choiceText: `Ask ${rel.relation === 'parent' ? 'Parents' : 'Partner'} for Money`,
+          outcomeText: `🚫 You asked your ${rel.relation} (${rel.name}) for some money, but they flatly refused! "We are not made of solid gold. Go earn your own money!" (Trust: -${trustDec}, Resentment: +${resentmentInc})`
+        }
       });
+      setShowOutcomeModal(true);
     }
     setSelectedRelationship(null);
   };
@@ -4486,7 +4661,7 @@ export default function App() {
       triggerSound('success');
       
       // Filter out any prior partner relationship to represent dating monogamously (standard in BitLife)
-      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation !== 'partner');
+      const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation !== 'partner');
       nextRelationships.push(datingAppMatch);
 
       const nextRep = {
@@ -4497,7 +4672,8 @@ export default function App() {
       setGameState({
         ...gameState,
         cash: gameState.cash - 50,
-        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+        relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         reputation: nextRep,
         log: [
           ...gameState.log,
@@ -4551,7 +4727,7 @@ export default function App() {
       return;
     }
 
-    const parents = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'parent');
+    const parents = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation === 'parent');
     const parentsCount = parents.length;
     const avgTrust = parentsCount > 0 
       ? parents.reduce((sum, p) => sum + p.trust, 0) / parentsCount 
@@ -4585,7 +4761,7 @@ export default function App() {
       };
 
       // Boost relationship trust slightly
-      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, trust: Math.min(100, r.trust + 3) };
         }
@@ -4595,13 +4771,19 @@ export default function App() {
       setGameState({
         ...gameState,
         stats: nextStats,
-        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+        relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: [
           ...gameState.log,
           `🎁 Asked my parents to buy me: "${asset.name}". They smiled and bought it for me!`,
           `└─ Gained status (+${asset.status}), style (+${asset.style}), and happiness (+8) (Parents paid $${asset.cost.toLocaleString()}).`
-        ]
+        ],
+        lastOutcome: {
+          choiceText: `Ask Parents to buy "${asset.name}"`,
+          outcomeText: `🎁 Your parents smiled warmly and decided to purchase "${asset.name}" (worth $${asset.cost.toLocaleString()}) for you! They love seeing you happy. (+8 Happiness, +${asset.style} Style, +${asset.status} Status)`
+        }
       });
+      setShowOutcomeModal(true);
       setPurchasedAssets([...purchasedAssets, asset.name]);
     } else {
       triggerSound('error');
@@ -4611,7 +4793,7 @@ export default function App() {
       };
 
       // Slight resentment / tension boost
-      const nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+      const nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
         if (r.relation === 'parent') {
           return { ...r, resentment: Math.min(100, r.resentment + 2) };
         }
@@ -4621,13 +4803,19 @@ export default function App() {
       setGameState({
         ...gameState,
         stats: nextStats,
-        npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
+        relationships: nextRelationships as any,
+              npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
         log: [
           ...gameState.log,
           `😢 Asked my parents to buy me: "${asset.name}". They flatly refused! "We are not made of money."`,
           `└─ Lost happiness (-6).`
-        ]
+        ],
+        lastOutcome: {
+          choiceText: `Ask Parents to buy "${asset.name}"`,
+          outcomeText: `😢 You asked your parents to buy you "${asset.name}" (worth $${asset.cost.toLocaleString()}), but they flatly refused! "Do you think we are made of money?!" they scolded. (-6 Happiness, +2 Parents' Resentment)`
+        }
       });
+      setShowOutcomeModal(true);
     }
     setSelectedActivity(null);
   };
@@ -4693,23 +4881,7 @@ export default function App() {
             title="Click to view detailed profile and reputation stats"
           >
             <div className="w-16 h-16 bg-slate-900 border-2 border-indigo-500/60 rounded-full flex items-center justify-center overflow-hidden shadow-lg shadow-indigo-950/40 mb-3 animate-fade-in relative group-hover:border-indigo-400 group-hover:shadow-indigo-500/20 transition-all">
-              {gameState.avatarConfig ? (
-                <img 
-                  src={getAvatarUrl(gameState.avatarConfig, gameState.age, gameState.gender)} 
-                  alt="Character Avatar" 
-                  className="w-full h-full object-cover select-none" 
-                  referrerPolicy="no-referrer"
-                />
-              ) : gameState.avatar ? (
-                <img 
-                  src={gameState.avatar} 
-                  alt="Character Avatar" 
-                  className="w-full h-full object-cover select-none" 
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <span className="text-3xl">{gameState.gender === 'Male' ? '👦' : '👧'}</span>
-              )}
+              <CharacterAvatar config={gameState.avatarConfig} gender={gameState.gender as 'Male' | 'Female'} age={gameState.age} />
               <span className="absolute bottom-0 right-0 bg-slate-950 text-[10px] font-black border border-slate-800 rounded-full px-1.5 py-0.5 leading-none z-10">
                 {gameState.gender === 'Male' ? 'M' : 'F'}
               </span>
@@ -4747,9 +4919,9 @@ export default function App() {
 
                 {gameState.activeRelationshipContextId && (
                   <div className="mt-3 px-3 py-2 bg-slate-50 border border-slate-100 text-xs text-slate-500 rounded-2xl flex items-center justify-between">
-                    <span>Involved: <strong className="text-slate-800">{(Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === gameState.activeRelationshipContextId)?.name}</strong></span>
+                    <span>Involved: <strong className="text-slate-800">{(Object.values(gameState.npcs || {}) as any[]).find(r => r.id === gameState.activeRelationshipContextId)?.name}</strong></span>
                     <span className="uppercase text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                      {(Object.values(gameState.npcs || {}) as NPC[]).find(r => r.id === gameState.activeRelationshipContextId)?.archetype}
+                      {(Object.values(gameState.npcs || {}) as any[]).find(r => r.id === gameState.activeRelationshipContextId)?.archetype}
                     </span>
                   </div>
                 )}
@@ -4938,28 +5110,7 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Display changes */}
-              <div className="grid grid-cols-2 gap-2 mt-1 py-3 border-y border-slate-100 text-xs">
-                {gameState.lastOutcome.statChanges && Object.entries(gameState.lastOutcome.statChanges).map(([stat, val]) => {
-                  const numVal = val as number;
-                  return (
-                    <div key={stat} className="flex items-center gap-1.5 py-0.5">
-                      <span className="font-bold text-slate-500 capitalize">{stat}:</span>
-                      <span className={`font-mono font-black ${numVal && numVal > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-                        {numVal && numVal > 0 ? `+${numVal}` : numVal}
-                      </span>
-                    </div>
-                  );
-                })}
-                {gameState.lastOutcome.cashChange !== undefined && gameState.lastOutcome.cashChange !== 0 && (
-                  <div className="flex items-center gap-1.5 py-0.5 col-span-2 border-t border-slate-50 pt-1.5 mt-0.5">
-                    <span className="font-bold text-slate-500">Cash effect:</span>
-                    <span className={`font-mono font-black ${gameState.lastOutcome.cashChange > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-                      {gameState.lastOutcome.cashChange > 0 ? `+$${gameState.lastOutcome.cashChange.toLocaleString()}` : `-$${Math.abs(gameState.lastOutcome.cashChange).toLocaleString()}`}
-                    </span>
-                  </div>
-                )}
-              </div>
+
 
               <button
                 onClick={() => { triggerSound('click'); setShowOutcomeModal(false); }}
@@ -5161,25 +5312,7 @@ export default function App() {
                     className="absolute top-2 right-4 w-12 h-12 rounded-full overflow-hidden border border-white/20 select-none bg-slate-900/50 hover:scale-105 hover:border-yellow-400 active:scale-95 transition-all cursor-pointer group"
                     title="Click to customize appearance"
                   >
-                    {gameState.avatarConfig ? (
-                      <img 
-                        src={getAvatarUrl(gameState.avatarConfig, gameState.age, gameState.gender)} 
-                        alt="Avatar" 
-                        className="w-full h-full object-cover group-hover:opacity-60 transition-opacity" 
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : gameState.avatar ? (
-                      <img 
-                        src={gameState.avatar} 
-                        alt="Avatar" 
-                        className="w-full h-full object-cover group-hover:opacity-60 transition-opacity" 
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <span className="text-3xl flex items-center justify-center h-full">
-                        {gameState.gender === 'Male' ? '👦' : '👧'}
-                      </span>
-                    )}
+                    <CharacterAvatar config={gameState.avatarConfig} gender={gameState.gender as 'Male' | 'Female'} age={gameState.age} className="group-hover:opacity-60 transition-opacity" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[8px] font-black uppercase text-white transition-opacity select-none">
                       Edit
                     </div>
@@ -5826,21 +5959,40 @@ export default function App() {
                                 <span className="text-slate-300 font-mono">❯</span>
                             </button>
 
-                            {/* Study Harder */}
-                            <button
-                              onClick={handleStudy}
-                              className="w-full text-left p-3.5 border border-slate-200 bg-white hover:border-indigo-500 hover:bg-indigo-50/10 transition flex items-center justify-between group cursor-pointer"
-                              id="school-study-harder"
-                            >
-                              <div className="flex items-center gap-3">
-                                  <span className="text-2xl group-hover:scale-110 transition-all">📚</span>
-                                  <div>
-                                    <span className="font-extrabold text-xs text-slate-900 block uppercase tracking-wide">Study Harder</span>
-                                    <span className="text-[10px] text-slate-400">Hit the books to boost your grades and intelligence</span>
-                                  </div>
-                                </div>
-                                <span className="text-slate-300 font-mono">❯</span>
-                            </button>
+                             {/* Study Harder */}
+                             <button
+                               onClick={handleStudy}
+                               disabled={(gameState.flags.studiesThisYear || 0) >= 2}
+                               className={`w-full text-left p-3.5 border transition flex items-center justify-between group ${
+                                 (gameState.flags.studiesThisYear || 0) >= 2
+                                   ? 'border-slate-100 bg-slate-50/50 opacity-60 cursor-not-allowed'
+                                   : 'border-slate-200 bg-white hover:border-indigo-500 hover:bg-indigo-50/10 cursor-pointer'
+                               }`}
+                               id="school-study-harder"
+                             >
+                               <div className="flex items-center gap-3">
+                                   <span className="text-2xl group-hover:scale-110 transition-all">📚</span>
+                                   <div>
+                                     <div className="flex items-center gap-2">
+                                       <span className="font-extrabold text-xs text-slate-900 block uppercase tracking-wide">Study Harder</span>
+                                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                         (gameState.flags.studiesThisYear || 0) >= 2 
+                                           ? 'bg-rose-100 text-rose-700' 
+                                           : 'bg-indigo-100 text-indigo-700'
+                                       }`}>
+                                         {gameState.flags.studiesThisYear || 0}/2 this year
+                                       </span>
+                                     </div>
+                                     <span className="text-[10px] text-slate-400">
+                                       {(gameState.flags.studiesThisYear || 0) >= 2
+                                         ? "Your brain needs a rest! You've reached your studying limit for this year."
+                                         : "Hit the books to boost your grades and intelligence"
+                                       }
+                                     </span>
+                                   </div>
+                                 </div>
+                                 <span className="text-slate-300 font-mono">❯</span>
+                             </button>
 
                             {/* Drop Out */}
                             <button
@@ -5893,10 +6045,10 @@ export default function App() {
 
                         {/* Classmates List */}
                         <div className="space-y-2 flex-1 pb-6 overflow-y-auto pr-1">
-                          {(Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'classmate').length === 0 ? (
+                          {(Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation === 'classmate').length === 0 ? (
                             <p className="text-xs text-slate-400 italic text-center py-8">No classmates generated yet. Advance your age to populate your class!</p>
                           ) : (
-                            (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'classmate').map((classmate) => {
+                            (Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation === 'classmate').map((classmate) => {
                               return (
                                 <button
                                   key={classmate.id}
@@ -5948,10 +6100,10 @@ export default function App() {
 
                         {/* Faculty list */}
                         <div className="space-y-2 flex-1 pb-6 overflow-y-auto pr-1">
-                          {(Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'teacher').length === 0 ? (
+                          {(Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation === 'teacher').length === 0 ? (
                             <p className="text-xs text-slate-400 italic text-center py-8">No teachers generated yet. Advance your age to hire school faculty!</p>
                           ) : (
-                            (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.relation === 'teacher').map((teacher) => {
+                            (Object.values(gameState.npcs || {}) as any[]).filter(r => r.relation === 'teacher').map((teacher) => {
                               return (
                                 <button
                                   key={teacher.id}
@@ -6686,22 +6838,19 @@ export default function App() {
                     Misc.
                   </div>
                   <div className="divide-y divide-[#ebdcb9] border-b border-[#ebdcb9] bg-white">
-                    {/* Social Media */}
+                    {/* Go Shopping */}
                     <button 
                       onClick={() => {
                         triggerSound('click');
-                        if (gameState.age < 13) {
-                          setActionPopup({ isOpen: true, title: 'Too Young', message: 'You must be at least 13 years old to use social media.' });
-                          return;
-                        }
-                        setAssetsSubView('social_media');
+                        setAssetMarketFilter('all');
+                        setShowShopModal(true);
                       }}
                       className="w-full text-left p-3.5 hover:bg-[#fffaf2] transition flex items-center gap-3 cursor-pointer"
                     >
-                      <span className="text-2xl">Social Media</span>
+                      <span className="text-2xl">Shopping</span>
                       <div className="flex-1 min-w-0">
-                        <span className="font-extrabold text-sm text-[#5d4037] block">Social Media</span>
-                        <span className="text-[10px] text-slate-400 block truncate">Manage your online identity</span>
+                        <span className="font-extrabold text-sm text-[#5d4037] block">Go Shopping...</span>
+                        <span className="text-[10px] text-slate-400 block truncate">Purchase assets, vehicles, properties, or commodities</span>
                       </div>
                       <span className="text-slate-300 font-bold">❯</span>
                     </button>
@@ -7011,7 +7160,7 @@ export default function App() {
                           onClick={() => {
                             triggerSound('click');
                             // Pick first available relative/friend, otherwise fallback to celebrity
-                            const contacts = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => !r.isDeceased);
+                            const contacts = (Object.values(gameState.npcs || {}) as any[]).filter(r => !r.isDeceased);
                             if (contacts.length > 0) {
                               setSelectedVictim(contacts[0].name);
                             } else {
@@ -7154,15 +7303,22 @@ export default function App() {
                 </div>
               )}
 
-              {/* ── Fixed bottom "Go Shopping" button (only in main Assets screen) ── */}
+              {/* ── Fixed bottom "Social Media" button (only in main Assets screen) ── */}
               {assetsSubView === 'main' && (
                 <div className="absolute bottom-0 left-0 right-0">
                   <button
-                    onClick={() => { triggerSound('click'); setAssetMarketFilter('all'); setShowShopModal(true); }}
+                    onClick={() => {
+                      triggerSound('click');
+                      if (gameState.age < 13) {
+                        setActionPopup({ isOpen: true, title: 'Too Young', message: 'You must be at least 13 years old to use social media.' });
+                        return;
+                      }
+                      setAssetsSubView('social_media');
+                    }}
                     className="w-full bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-[15px] py-4 flex items-center justify-center gap-3 transition cursor-pointer border-t border-[#00acc1]"
                     id="go-shopping-btn"
                   >
-                    <span className="text-xl">🛍️</span> Go Shopping...
+                    <span className="text-xl">📱</span> Social Media
                   </button>
                 </div>
               )}
@@ -7361,7 +7517,7 @@ export default function App() {
                   };
 
                   if (showExes) {
-                    const exes = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.isEx);
+                    const exes = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.isEx);
                     return (
                       <div className="space-y-0 pb-6 -mt-4">
                         <div className="flex items-center justify-between bg-[#0f4a8a] text-white p-3 cursor-pointer select-none" onClick={() => { triggerSound('click'); setShowExes(false); }}>
@@ -7382,13 +7538,13 @@ export default function App() {
                     );
                   }
 
-                  const activeRels = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => !r.isDeceased && !r.isEx);
-                  const deceasedRels = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.isDeceased);
+                  const activeRels = (Object.values(gameState.npcs || {}) as any[]).filter(r => !r.isDeceased && !r.isEx);
+                  const deceasedRels = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.isDeceased);
                   
                   const family = activeRels.filter(r => ['parent', 'sibling', 'cousin'].includes(r.relation));
                   const friends = activeRels.filter(r => ['friend', 'best_friend', 'pet'].includes(r.relation));
                   const love = activeRels.filter(r => ['partner', 'spouse', 'affair'].includes(r.relation));
-                  const exesCount = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => r.isEx).length;
+                  const exesCount = (Object.values(gameState.npcs || {}) as any[]).filter(r => r.isEx).length;
 
                   const groups = [
                     { title: 'Family', list: family, key: 'family' },
@@ -8888,9 +9044,9 @@ export default function App() {
             nextFlags.leakRisk = Math.max(0, Math.min(100, (nextFlags.leakRisk || 0) + (res.statChanges.leakRisk || 0)));
 
             // Apply Family Relations change
-            let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as NPC[])];
+            let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as any[])];
             if (res.statChanges.family && res.statChanges.family !== 0) {
-              nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+              nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
                 if (r.relation === 'parent' || r.relation === 'sibling') {
                   return { ...r, trust: Math.max(0, r.trust + res.statChanges.family) };
                 }
@@ -8955,6 +9111,7 @@ export default function App() {
               stats: nextStats,
               cash: nextCash,
               flags: nextFlags,
+              relationships: nextRelationships as any,
               npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
               socialMedia: {
                 ...gameState.socialMedia,
@@ -9452,7 +9609,7 @@ export default function App() {
           };
 
           const celebrities = ['Usher', 'Kesha', 'Olivia Rodrigo', '@BitLifeApp', 'Taylor Swift'];
-          const relatives = (Object.values(gameState.npcs || {}) as NPC[]).filter(r => !r.isDeceased).map(r => r.name);
+          const relatives = (Object.values(gameState.npcs || {}) as any[]).filter(r => !r.isDeceased).map(r => r.name);
           const victims = [...celebrities, ...relatives];
 
           const executeTroll = () => {
@@ -9498,9 +9655,9 @@ export default function App() {
             const nextStats = { ...gameState.stats };
             if (happinessChange !== 0) nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness + happinessChange));
 
-            let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as NPC[])];
+            let nextRelationships: any[] = [...(Object.values(gameState.npcs || {}) as any[])];
             if (!isCelebrity) {
-              nextRelationships = (Object.values(gameState.npcs || {}) as NPC[]).map(r => {
+              nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
                 if (r.name === target) {
                   return {
                     ...r,
@@ -9515,6 +9672,7 @@ export default function App() {
             setGameState({
               ...gameState,
               stats: nextStats,
+              relationships: nextRelationships as any,
               npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
               socialMedia: {
                 ...gameState.socialMedia,
