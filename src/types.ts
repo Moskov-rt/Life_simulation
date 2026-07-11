@@ -334,6 +334,7 @@ export interface GameState {
   stats: Stats;
   reputation: Reputation;
   saveVersion?: number;
+  rngSeed?: number;
   npcs: Record<string, NPC>;
   relationships: Relationship[];
   illnesses: Illness[];
