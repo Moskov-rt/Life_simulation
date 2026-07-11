@@ -47,7 +47,19 @@ import {
 } from 'lucide-react';
 import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount } from './types';
 import { relationshipToNPC } from './utils/saveMigration';
+
 import { EVENTS_POOL } from './events';
+import { AgeUpModal } from './components/AgeUpModal';
+import { EventPopupModal } from './components/EventPopupModal';
+
+import { applyYearlyDrift, modifyOutcomeDeltas, getDynamicChoiceOutcome } from './utils/relationshipVectors';
+import { resolveChoice } from './utils/choiceResolver';
+import { evaluateFollowUpFlags } from './utils/followUpFlags';
+import { applyPlayerTraits } from './utils/personalityEffects';
+import { calculateStatCascades } from './utils/statCascades';
+import { processOngoingEffects, mergeOngoingEffects } from './utils/ongoingEffects';
+import { evaluateSecretExposureEvents } from './utils/exposureEvents';
+
 import { SICKNESS_TITLES, SICKNESS_DESCRIPTIONS, IGNORE_TEXTS, PRAY_TEXTS, WATER_TEXTS } from './healthTexts';
 import { playClick, playSuccess, playError, playAgeUp } from './utils/audio';
 import { WorldTravelMap, MapCity } from './components/WorldTravelMap';
@@ -778,6 +790,10 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAgeUpModal, setShowAgeUpModal] = useState(false);
+  const [ageUpData, setAgeUpData] = useState<any>(null);
+  const [showEventPopupModal, setShowEventPopupModal] = useState(false);
+  const [eventPopupData, setEventPopupData] = useState<any>(null);
   const [purchasedAssets, setPurchasedAssets] = useState<string[]>([]);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Record<string, { unlockedAt: string; characterName: string }>>(() => {
     try {
@@ -1266,6 +1282,9 @@ export default function App() {
       illnesses: activeIllnesses,
       flags,
       delayedEvents: [],
+      followUpFlags: [],
+      ongoingEffects: [],
+      personalityTraits: [],
       log: initialLogs,
       career: {
         title: 'Infant',
@@ -1446,29 +1465,74 @@ export default function App() {
       });
     }
 
-    // 5. Relationship changes
-    if (effect.relationshipChanges) {
-      const rc = effect.relationshipChanges;
-      nextRelationships = nextRelationships.map(r => {
-        let isMatch = false;
-        if (rc.target === 'current' && r.id === gameState.activeRelationshipContextId) {
-          isMatch = true;
-        } else if (rc.target === 'all') {
-          isMatch = true;
-        } else if (rc.target === r.id) {
-          isMatch = true;
-        }
+    // 5. Use modular choiceResolver with personality and stat cascades
+    let overriddenOutcomeText = effect.outcomeText || "";
+    let overriddenLogText = effect.logText || `Selected: ${choice.text}`;
+    let nextOngoingEffects = gameState.ongoingEffects ? [...gameState.ongoingEffects] : [];
+    
+    const activeNpc = nextRelationships.find(r => r.id === gameState.activeRelationshipContextId);
+    if (activeNpc && effect) {
+      let result = resolveChoice(choice, activeNpc, gameState.age);
+      result = applyPlayerTraits(result, gameState.personalityTraits || [], choice.id, activeNpc, gameState.age);
+      result = calculateStatCascades(result, gameState.age, activeNpc.id);
+      
+      // Update text
+      overriddenOutcomeText = result.outcomeText;
+      overriddenLogText = result.outcomeText;
 
-        if (isMatch) {
-          return {
-            ...r,
-            trust: Math.max(0, Math.min(100, r.trust + (rc.trust || 0))),
-            suspicion: Math.max(0, Math.min(100, r.suspicion + (rc.suspicion || 0))),
-            resentment: Math.max(0, Math.min(100, r.resentment + (rc.resentment || 0)))
-          };
-        }
-        return r;
-      });
+      // Apply stat changes
+      if (result.statChanges) {
+        if (result.statChanges.happiness !== undefined) nextStats.happiness = Math.max(0, Math.min(100, (nextStats.happiness || 0) + (result.statChanges.happiness - (effect.statChanges?.happiness || 0))));
+        if (result.statChanges.health !== undefined) nextStats.health = Math.max(0, Math.min(100, (nextStats.health || 0) + (result.statChanges.health - (effect.statChanges?.health || 0))));
+        // Wait, result.statChanges contains the absolute new delta to add or the new value? 
+        // choiceResolver effect.statChanges has absolute changes or deltas? Usually deltas.
+        // If we add totalHappinessDelta in personalityEffects it's a delta.
+        // Let's just safely apply the full delta difference from base or just merge it directly.
+        // Actually, we should just apply the result.statChanges directly as the new values.
+        nextStats = { ...nextStats, ...result.statChanges };
+        nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness));
+        nextStats.health = Math.max(0, Math.min(100, nextStats.health));
+      }
+
+      // Merge ongoing effects
+      if (result.ongoingEffectsToAdd && result.ongoingEffectsToAdd.length > 0) {
+        nextOngoingEffects = mergeOngoingEffects(nextOngoingEffects, result.ongoingEffectsToAdd);
+      }
+
+      // Update active NPC relationships
+      if (result.relationshipChanges) {
+        nextRelationships = nextRelationships.map(r => {
+          if (r.id === activeNpc.id) {
+            const updatedVectors = {
+              trust: Math.max(-100, Math.min(100, (r.vectors?.trust || 0) + result.relationshipChanges!.trust)),
+              suspicion: Math.max(0, Math.min(100, (r.vectors?.suspicion || 0) + result.relationshipChanges!.suspicion)),
+              knowledge: r.vectors?.knowledge || 0,
+              resentment: Math.max(0, Math.min(100, (r.vectors?.resentment || 0) + result.relationshipChanges!.resentment)),
+              forgiveness: r.vectors?.forgiveness || 50
+            };
+            
+            // Apply flags directly to interactionHistory
+            const nextHistory = r.interactionHistory ? [...r.interactionHistory] : [];
+            if (result.followUpFlags && result.followUpFlags.length > 0) {
+              result.followUpFlags.forEach(f => {
+                if (f.type === 'interaction_history') {
+                  nextHistory.push({ year: f.year, playerLied: f.playerLied, playerToldTruth: f.playerToldTruth, playerAvoided: f.playerAvoided });
+                }
+              });
+            }
+            
+            return {
+              ...r,
+              vectors: updatedVectors,
+              trust: Math.round((updatedVectors.trust + 100) / 2),
+              suspicion: Math.round(updatedVectors.suspicion),
+              resentment: Math.round(updatedVectors.resentment),
+              interactionHistory: nextHistory
+            };
+          }
+          return r;
+        });
+      }
     }
 
     // 6. Cure Illness Effect
@@ -1531,8 +1595,7 @@ export default function App() {
     let nextWillpower = Math.max(0, Math.min(100, gameState.willpower + (effect.willpowerChange || 0) + autoWillpower));
 
     // Willpower Overrides & Peer Pressure Systems
-    let overriddenOutcomeText = effect.outcomeText;
-    let overriddenLogText = effect.logText || `Selected: ${choice.text}`;
+
 
     const isPeerPressureOrInfluence = 
       lowerText.includes('accept') || lowerText.includes('try') || lowerText.includes('join') || 
@@ -1675,6 +1738,7 @@ export default function App() {
       relationships: nextRelationships as any,
               npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: nextFlags,
+      ongoingEffects: typeof nextOngoingEffects !== 'undefined' ? nextOngoingEffects : gameState.ongoingEffects,
       delayedEvents: nextDelayed,
       illnesses: nextIllnesses,
       log: updatedLogs,
@@ -2118,14 +2182,18 @@ export default function App() {
     let nextStats = { ...gameState.stats };
     let nextRep = { ...gameState.reputation };
     let nextCash = gameState.cash;
-    let nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => ({
-      ...r,
-      age: r.age + 1
-    }));
+    let nextSocialMedia = gameState.socialMedia ? JSON.parse(JSON.stringify(gameState.socialMedia)) : {};
+    const hasOFPosts = (nextSocialMedia.onlyfans?.postsCount || 0) > 0;
+    const action = hasOFPosts ? 'kept_working' : 'none';
+    let nextRelationships = (Object.values(gameState.npcs || {}) as any[]).map(r => {
+      const npcCopy = { ...r };
+      npcCopy.age = r.age + 1;
+      applyYearlyDrift(npcCopy, action);
+      return npcCopy;
+    });
     let nextCareer = { ...gameState.career };
     nextCareer.yearsInRole = (nextCareer.yearsInRole || 0) + 1;
     let nextCompletedEducation = gameState.completedEducation ? [...gameState.completedEducation] : [];
-    let nextSocialMedia = gameState.socialMedia ? JSON.parse(JSON.stringify(gameState.socialMedia)) : {};
 
     // Graduation logic
     if (nextCareer.type === 'school' && nextCareer.educationLevel && nextCareer.educationLevel !== 'High School') {
@@ -2752,7 +2820,67 @@ export default function App() {
       lastOutcome: null
     };
 
+    // Capture transition data for Age Up Modal
+    const currentExposure = gameState.secretExposure?.level || 0;
+    const currentHeat = gameState.secretExposure?.heat || 0;
+    const ofPosts = nextSocialMedia.onlyfans?.postsCount || 0;
+    
+    // Math logic based on Part 2 deliverables
+    const postsVal = ofPosts > 0 ? ofPosts : 10;
+    const collabsVal = ofPosts > 5 ? 2 : 0;
+    const mitigationVal = 85; // Base mitigation
+    const locationMult = gameState.location.includes('Mumbai') ? 0.8 : 1.0;
+    const luckRoll = Math.floor(Math.random() * 6) - 3; // -3 to +3
+    
+    const calculatedGain = Math.round(((postsVal * 2) + (collabsVal * 4) - (mitigationVal * 0.1)) * locationMult + luckRoll);
+    const finalNextExposure = Math.max(0, Math.min(100, currentExposure + calculatedGain));
+    
+    // Decay heat by 50%
+    const nextHeat = Math.round(currentHeat * 0.5);
+
+    // Roll mathematical events
+    const mockStateForRoll = {
+      ...nextState,
+      secretExposure: {
+        ...gameState.secretExposure,
+        level: finalNextExposure,
+        heat: nextHeat
+      }
+    };
+    const rolledEvent = evaluateSecretExposureEvents(mockStateForRoll as any, []);
+    if (rolledEvent) {
+      triggeredEvent = rolledEvent;
+    }
+
+    // Save history
+    const prevHistory = gameState.secretExposure?.history || [];
+    const nextHistory = [...prevHistory, finalNextExposure];
+
+    const updatedSecretExposure = gameState.secretExposure ? {
+      ...gameState.secretExposure,
+      level: finalNextExposure,
+      heat: nextHeat,
+      history: nextHistory
+    } : undefined;
+
+    nextState.secretExposure = updatedSecretExposure;
+
+    setAgeUpData({
+      prevStats: { ...gameState.stats },
+      nextStats: nextStats,
+      earnedCash: (nextCash - gameState.cash) > 0 ? (nextCash - gameState.cash) : 0,
+      prevExposure: currentExposure,
+      nextExposure: finalNextExposure,
+      triggeredEvent: triggeredEvent
+    });
+    
+    // If an event triggered, clear it from nextState immediate display so EventPopupModal handles it
+    if (triggeredEvent) {
+      nextState.currentEvent = null;
+    }
+
     setGameState(nextState);
+    setShowAgeUpModal(true);
     setActiveTab('home');
   };
 
@@ -5287,7 +5415,43 @@ export default function App() {
         )}
 
         {/* PERSONAL IDENTITY PROFILE & DETAILED STATS MODAL */}
-        {showProfileModal && (
+        {showAgeUpModal && ageUpData && (
+        <AgeUpModal
+          gameState={gameState}
+          prevStats={ageUpData.prevStats}
+          nextStats={ageUpData.nextStats}
+          earnedCash={ageUpData.earnedCash}
+          prevExposure={ageUpData.prevExposure}
+          nextExposure={ageUpData.nextExposure}
+          triggeredEvent={ageUpData.triggeredEvent}
+          onSeeChoices={() => {
+            setShowAgeUpModal(false);
+            if (ageUpData.triggeredEvent) {
+              setEventPopupData(ageUpData.triggeredEvent);
+              setShowEventPopupModal(true);
+            }
+          }}
+          onClose={() => {
+            setShowAgeUpModal(false);
+          }}
+        />
+      )}
+
+      {showEventPopupModal && eventPopupData && (
+        <EventPopupModal
+          event={eventPopupData}
+          onChoiceSelected={(choice) => {
+            // Apply standard choice logic
+            handleChoiceSelect(choice);
+          }}
+          onClose={() => {
+            setShowEventPopupModal(false);
+            setEventPopupData(null);
+          }}
+        />
+      )}
+
+      {showProfileModal && (
           <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-md z-30 flex items-center justify-center p-4">
             <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-6 flex flex-col gap-4 border border-indigo-50/50 relative overflow-hidden max-h-[90%] transform scale-100 transition-all">
               <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto -mt-2 mb-1"></div>
