@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { AvatarConfig } from '../types';
 import { getAvatarUrl } from '../App';
+import { CharacterAvatar } from './CharacterAvatar';
 
 interface AppearanceModalProps {
   currentConfig: AvatarConfig;
@@ -248,12 +249,7 @@ export function AppearanceModal({
 
             {/* Avatar Preview Box */}
             <div className="w-40 h-40 rounded-full bg-slate-900/60 border-4 border-slate-700/80 flex items-center justify-center overflow-hidden shadow-2xl p-1 relative">
-              <img 
-                src={getAvatarUrl(config, age, gender)} 
-                alt="Custom Avatar" 
-                className="w-full h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
+              <CharacterAvatar config={config} gender={gender} age={age} />
             </div>
 
             {/* Right Cycle Arrow */}

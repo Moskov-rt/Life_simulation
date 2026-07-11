@@ -69,12 +69,32 @@ export function relationshipToNPC(rel: any): NPC {
   if (npc.suspicion === undefined) npc.suspicion = 0;
   if (npc.resentment === undefined) npc.resentment = 0;
 
+  if (npc.personality === undefined) {
+    const list = ['protective', 'religious', 'impulsive', 'cautious', 'denial_prone', 'supportive', 'gossipy'];
+    // Pick 1-2 random traits
+    const count = Math.floor(Math.random() * 2) + 1;
+    const shuffled = [...list].sort(() => 0.5 - Math.random());
+    npc.personality = shuffled.slice(0, count);
+  }
+
+  if (npc.vectors === undefined) {
+    npc.vectors = {
+      trust: (npc.trust * 2) - 100, // Map 0..100 to -100..100
+      suspicion: npc.suspicion,
+      knowledge: 0,
+      resentment: npc.resentment,
+      forgiveness: 50
+    };
+  }
+
   if (!npc.traits) npc.traits = generateDefaultTraits();
   if (!npc.lifeState) npc.lifeState = generateDefaultLifeState();
   if (!npc.goals) npc.goals = [];
   if (!npc.memories) npc.memories = [];
   if (!npc.lifestyle) npc.lifestyle = generateDefaultLifestyle();
   if (!npc.npcRelations) npc.npcRelations = {};
+  if (!npc.memoryFlags) npc.memoryFlags = [];
+  if (!npc.interactionHistory) npc.interactionHistory = [];
 
   return npc as NPC;
 }
@@ -87,12 +107,18 @@ export function migrateGameState(state: any): GameState {
   
   // Already on newest version
   if (state.saveVersion >= 1 && state.npcs) {
+    if (!state.followUpFlags) state.followUpFlags = [];
+    if (!state.ongoingEffects) state.ongoingEffects = [];
+    if (!state.personalityTraits) state.personalityTraits = [];
     return state as GameState;
   }
 
   const newState = { ...state };
   newState.saveVersion = 1;
   newState.npcs = {};
+  if (!newState.followUpFlags) newState.followUpFlags = [];
+  if (!newState.ongoingEffects) newState.ongoingEffects = [];
+  if (!newState.personalityTraits) newState.personalityTraits = [];
   
   // Convert legacy relationships array to npcs dictionary
   if (Array.isArray(state.relationships)) {

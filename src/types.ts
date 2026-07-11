@@ -4,12 +4,6 @@
  */
 
 export interface Stats {
-  karma?: number;
-  willpower?: number;
-  family?: number;
-  leakRisk?: number;
-  cashChange?: number;
-  confidence?: number;
   health: number;
   smarts: number;
   looks: number;
@@ -128,6 +122,19 @@ export interface NPCRelationLink {
   compatibility: number;
 }
 
+export interface NPCMemoryFlag {
+  year: number;
+  event: string;
+  choice: string;
+}
+
+export interface NPCInteractionHistory {
+  year: number;
+  playerToldTruth?: boolean;
+  playerLied?: boolean;
+  playerAvoided?: boolean;
+}
+
 export interface NPC extends Relationship {
   orientation: 'straight' | 'gay' | 'bisexual' | 'asexual';
   nationality: string;
@@ -139,12 +146,53 @@ export interface NPC extends Relationship {
   memories: NPCMemory[];
   lifestyle: NPCLifestyle;
   npcRelations: Record<string, NPCRelationLink>;
+  personality: string[];
+  vectors: {
+    trust: number;
+    suspicion: number;
+    knowledge: number;
+    resentment: number;
+    forgiveness: number;
+  };
+  memoryFlags: NPCMemoryFlag[];
+  interactionHistory: NPCInteractionHistory[];
 }
 
 export interface DelayedEvent {
   eventId: string;
   triggerAge: number;
 }
+
+export interface FollowUpFlag {
+  id: string;
+  templateId: string;
+  npcId: string;
+  sourceEventId: string;
+  createdYear: number;
+  earliestTriggerYear: number;
+  expiresYear: number;
+  conditionId: string;
+  triggerChance: number;
+  escalationEventId: string;
+}
+
+export interface OngoingEffect {
+  id: string;
+  effectType: string;
+  sourceId?: string;
+  startYear: number;
+  remainingYears: number | null;
+  intensity: number;
+}
+
+export type PlayerTrait =
+  | "guilt_prone"
+  | "manipulative"
+  | "family_oriented"
+  | "independent"
+  | "paranoid"
+  | "shameless"
+  | "empath";
 
 export interface EventCondition {
   minAge?: number;
@@ -161,7 +209,7 @@ export interface EventCondition {
 }
 
 export interface OutcomeEffect {
-  statChanges?: Partial<Stats>;
+  statChanges?: Partial<Stats> & { karma?: number; willpower?: number; cashChange?: number };
   repChanges?: Partial<Reputation>;
   cashChange?: number;
   karmaChange?: number;
@@ -254,6 +302,25 @@ export interface SocialMediaAccount {
   wishlistPosted?: boolean; // OnlyFans specific (resets yearly)
 }
 
+export interface SecretExposure {
+  isActive: boolean;
+  level: number; // 0-100
+  heat: number;
+  history: number[];
+  ignoredCount: Record<string, number>;
+  npcAwareness: Record<string, {
+    status: 'unaware' | 'suspicious' | 'knows_partial' | 'knows_full';
+    level: number; // 0-100
+  }>;
+  recentChanges: {
+    posts: number;
+    collabs: number;
+    mitigation: number;
+    locationMultiplier: number;
+    luck: number;
+  };
+}
+
 export interface GameState {
   name: string;
   gender: string;
@@ -272,6 +339,9 @@ export interface GameState {
   illnesses: Illness[];
   flags: Record<string, any>;
   delayedEvents: DelayedEvent[];
+  followUpFlags: FollowUpFlag[];
+  ongoingEffects: OngoingEffect[];
+  personalityTraits: PlayerTrait[];
   log: string[];
   career: {
     type: 'unemployed' | 'school' | 'job';
@@ -299,4 +369,5 @@ export interface GameState {
   } | null;
   completedEducation: { level: string; major: string }[];
   socialMedia: Record<string, SocialMediaAccount>;
+  secretExposure?: SecretExposure;
 }
