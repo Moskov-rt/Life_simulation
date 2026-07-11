@@ -506,7 +506,16 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     // Only increment age if they weren't just generated this exact year as new contacts
     // Wait, let's just increment age safely.
     npc.age += 1;
-    applyYearlyDrift(npc, action);
+    let driftAction = action;
+    if (npc.interactionHistory && npc.interactionHistory.length > 0) {
+      const recent = npc.interactionHistory.filter(h => h.year === workingState.age);
+      if (recent.length > 0) {
+        if (recent[recent.length - 1].playerLied) driftAction = 'lie';
+        else if (recent[recent.length - 1].playerToldTruth) driftAction = 'truth';
+        else if (recent[recent.length - 1].playerAvoided) driftAction = 'avoid';
+      }
+    }
+    applyYearlyDrift(npc, driftAction as any);
     workingState.relationships.push(npc);
   });
 

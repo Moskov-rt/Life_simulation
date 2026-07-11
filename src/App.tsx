@@ -1481,16 +1481,15 @@ export default function App() {
 
       // Apply stat changes
       if (result.statChanges) {
-        if (result.statChanges.happiness !== undefined) nextStats.happiness = Math.max(0, Math.min(100, (nextStats.happiness || 0) + (result.statChanges.happiness - (effect.statChanges?.happiness || 0))));
-        if (result.statChanges.health !== undefined) nextStats.health = Math.max(0, Math.min(100, (nextStats.health || 0) + (result.statChanges.health - (effect.statChanges?.health || 0))));
-        // Wait, result.statChanges contains the absolute new delta to add or the new value? 
-        // choiceResolver effect.statChanges has absolute changes or deltas? Usually deltas.
-        // If we add totalHappinessDelta in personalityEffects it's a delta.
-        // Let's just safely apply the full delta difference from base or just merge it directly.
-        // Actually, we should just apply the result.statChanges directly as the new values.
-        nextStats = { ...nextStats, ...result.statChanges };
-        nextStats.happiness = Math.max(0, Math.min(100, nextStats.happiness));
-        nextStats.health = Math.max(0, Math.min(100, nextStats.health));
+        Object.entries(result.statChanges).forEach(([stat, val]) => {
+          const k = stat as keyof Stats;
+          const originalDelta = effect.statChanges?.[k] || 0;
+          const newDelta = val || 0;
+          const diff = newDelta - originalDelta;
+          if (diff !== 0) {
+            nextStats[k] = Math.max(0, Math.min(100, (nextStats[k] || 0) + diff));
+          }
+        });
       }
 
       // Merge ongoing effects
