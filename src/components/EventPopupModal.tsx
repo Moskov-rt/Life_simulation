@@ -51,19 +51,19 @@ export const EventPopupModal: React.FC<EventPopupModalProps> = ({
             "{event.text}"
           </p>
 
-          <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800 space-y-1.5 text-xs font-mono">
+          <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800 space-y-2.5 text-xs font-mono">
             <h4 className="text-[10px] uppercase font-bold text-slate-500 mb-1">NPC Profile: Mom</h4>
-            <div className="flex justify-between text-slate-400">
-              <span>Trust:</span>
-              <span className="font-bold text-slate-200">72%</span>
+            <div className="flex items-center text-slate-400">
+              <span className="w-20">Trust:</span>
+              <div className="flex-1 ml-2 bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700">
+                <div className="bg-indigo-500 h-full" style={{ width: '72%' }}></div>
+              </div>
             </div>
-            <div className="flex justify-between text-slate-400">
-              <span>Suspicion:</span>
-              <span className="font-bold text-slate-200">30%</span>
-            </div>
-            <div className="flex justify-between text-slate-400">
-              <span>Knowledge:</span>
-              <span className="font-bold text-slate-200">20%</span>
+            <div className="flex items-center text-slate-400">
+              <span className="w-20">Suspicion:</span>
+              <div className="flex-1 ml-2 bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700">
+                <div className="bg-rose-500 h-full" style={{ width: '30%' }}></div>
+              </div>
             </div>
           </div>
 

@@ -1740,10 +1740,14 @@ export default function App() {
         ...gameState,
         currentEvent: null
       });
+      setShowEventPopupModal(false);
+      setEventPopupData(null);
       return;
     }
 
     setGameState(updatedState);
+    setShowEventPopupModal(false);
+    setEventPopupData(null);
     setShowOutcomeModal(true);
   };
 
@@ -2166,7 +2170,12 @@ export default function App() {
 
     setAgeUpData(result.ageUpData);
     setGameState(result.updatedState);
-    setShowAgeUpModal(true);
+    if (result.ageUpData.triggeredEvent) {
+      setEventPopupData(result.ageUpData.triggeredEvent);
+      setShowEventPopupModal(true);
+    } else {
+      setShowAgeUpModal(true);
+    }
     setActiveTab('home');
   };
 
@@ -4550,28 +4559,62 @@ export default function App() {
 
         {/* OUTCOME MODAL */}
         {showOutcomeModal && gameState.lastOutcome && (
-          <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-md z-30 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-6 flex flex-col gap-4 border border-indigo-50/50 relative overflow-hidden transform scale-100 transition-all">
-              <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto -mt-2 mb-1"></div>
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-30 flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col gap-4 relative overflow-hidden transform scale-100 transition-all animate-slide-up">
+              <div className="w-12 h-1 bg-slate-700 rounded-full mx-auto -mt-2 mb-1"></div>
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-widest rounded-full font-mono flex items-center gap-1.5 shadow-xs">
-                  <CheckCircle2 size={12} className="shrink-0 text-indigo-500" /> Outcome Report
+                <span className="px-3 py-1 bg-indigo-950 text-indigo-300 text-[10px] font-bold uppercase tracking-widest rounded-full font-mono flex items-center gap-1.5 shadow-xs border border-indigo-900/50">
+                  <CheckCircle2 size={12} className="shrink-0 text-indigo-400" /> Outcome Report
                 </span>
               </div>
               <div>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">You chose:</p>
-                <p className="text-xs font-bold text-indigo-950 italic mt-0.5">&ldquo;{gameState.lastOutcome.choiceText}&rdquo;</p>
+                <p className="text-xs font-bold text-slate-200 italic mt-0.5">&ldquo;{gameState.lastOutcome.choiceText}&rdquo;</p>
                 
-                <p className="text-sm text-slate-700 mt-4 leading-relaxed font-semibold">
+                <p className="text-sm text-slate-300 mt-4 leading-relaxed font-semibold">
                   {gameState.lastOutcome.outcomeText}
                 </p>
               </div>
 
 
 
+              <>
+                <div className="h-px bg-slate-800 my-2"></div>
+                <div className="space-y-3 font-mono text-xs pb-2">
+                  <h4 className="text-[10px] uppercase font-bold text-slate-500 mb-2 tracking-widest">Current Stats</h4>
+                  <div className="flex items-center text-slate-300">
+                    <span className="w-24">😊 Happiness:</span>
+                    <div className="flex-1 ml-2 bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700">
+                      <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${gameState.stats.happiness}%` }}></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center text-slate-300">
+                    <span className="w-24">❤️ Health:</span>
+                    <div className="flex-1 ml-2 bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700">
+                      <div className="bg-rose-500 h-full transition-all duration-1000" style={{ width: `${gameState.stats.health}%` }}></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center text-slate-300">
+                    <span className="w-24">🧠 Smarts:</span>
+                    <div className="flex-1 ml-2 bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700">
+                      <div className="bg-indigo-500 h-full transition-all duration-1000" style={{ width: `${gameState.stats.smarts}%` }}></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center text-slate-300">
+                    <span className="w-24">🔥 Looks:</span>
+                    <div className="flex-1 ml-2 bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700">
+                      <div className="bg-orange-500 h-full transition-all duration-1000" style={{ width: `${gameState.stats.looks}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+              </>
+
               <button
-                onClick={() => { triggerSound('click'); setShowOutcomeModal(false); }}
-                className="w-full py-3 bg-indigo-950 text-white text-xs font-bold uppercase tracking-widest hover:bg-indigo-900 transition mt-2 rounded-2xl cursor-pointer shadow-md"
+                onClick={() => { 
+                  triggerSound('click'); 
+                  setShowOutcomeModal(false); 
+                }}
+                className="w-full py-3 bg-indigo-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-indigo-500 transition mt-2 rounded-xl cursor-pointer shadow-md"
                 id="outcome-continue"
               >
                 Continue
@@ -4582,7 +4625,7 @@ export default function App() {
 
         {/* ACTIVE FIGHT SELECTION MODAL */}
         {activeFight && (
-          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-md z-30 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-30 flex items-center justify-center p-4">
             <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-6 flex flex-col gap-4 border border-rose-50/50 relative overflow-hidden transform scale-100 transition-all">
               <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto -mt-2 mb-1"></div>
               <div className="flex items-center gap-2">

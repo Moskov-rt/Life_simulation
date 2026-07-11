@@ -51,22 +51,30 @@ export const AgeUpModal: React.FC<AgeUpModalProps> = ({
             <span>💰 Total Income:</span>
             <span>+${earnedCash.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between items-center text-slate-300">
-            <span>😊 Happiness:</span>
-            <span>{prevStats.happiness}% → {nextStats.happiness}%</span>
-          </div>
-          <div className="flex justify-between items-center text-slate-300">
-            <span>❤️ Health:</span>
-            <span>{prevStats.health}% → {nextStats.health}%</span>
-          </div>
-          <div className="flex justify-between items-center text-slate-300">
-            <span>🧠 Smarts:</span>
-            <span>{prevStats.smarts}% → {nextStats.smarts}%</span>
-          </div>
-          <div className="flex justify-between items-center text-slate-300">
-            <span>🔥 Looks:</span>
-            <span>{prevStats.looks}% → {nextStats.looks}%</span>
-          </div>
+            <div className="flex items-center text-slate-300">
+              <span className="w-28">😊 Happiness:</span>
+              <div className="flex-1 ml-2 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${nextStats.happiness}%` }}></div>
+              </div>
+            </div>
+            <div className="flex items-center text-slate-300">
+              <span className="w-28">❤️ Health:</span>
+              <div className="flex-1 ml-2 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                <div className="bg-rose-500 h-full transition-all duration-1000" style={{ width: `${nextStats.health}%` }}></div>
+              </div>
+            </div>
+            <div className="flex items-center text-slate-300">
+              <span className="w-28">🧠 Smarts:</span>
+              <div className="flex-1 ml-2 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                <div className="bg-indigo-500 h-full transition-all duration-1000" style={{ width: `${nextStats.smarts}%` }}></div>
+              </div>
+            </div>
+            <div className="flex items-center text-slate-300">
+              <span className="w-28">🔥 Looks:</span>
+              <div className="flex-1 ml-2 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                <div className="bg-orange-500 h-full transition-all duration-1000" style={{ width: `${nextStats.looks}%` }}></div>
+              </div>
+            </div>
         </div>
 
         <div className="h-0.5 bg-slate-800 w-full"></div>
