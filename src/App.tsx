@@ -45,21 +45,19 @@ import {
   ChevronDown,
   Skull, Plane, Mountain, Star, Dices, Laptop, UserCircle, Scale, Ticket, Wine, Dog, Sun, Smartphone, Palmtree, HandHeart, FileText, Flag
 } from 'lucide-react';
-import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount } from './types';
+import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount, CreatorContentStyle, CreatorYearlyActions } from './types';
 import { relationshipToNPC } from './utils/saveMigration';
 
 import { EVENTS_POOL } from './events';
 import { AgeUpModal } from './components/AgeUpModal';
 import { EventPopupModal } from './components/EventPopupModal';
 
-import { applyYearlyDrift, modifyOutcomeDeltas, getDynamicChoiceOutcome } from './utils/relationshipVectors';
-import { resolveChoice } from './utils/choiceResolver';
-import { evaluateFollowUpFlags } from './utils/followUpFlags';
+import { modifyOutcomeDeltas, getDynamicChoiceOutcome } from './utils/relationshipVectors';
+import { resolveChoice, applyChoiceResultToNPC } from './utils/choiceResolver';
 import { applyPlayerTraits } from './utils/personalityEffects';
 import { calculateStatCascades } from './utils/statCascades';
-import { processOngoingEffects, mergeOngoingEffects } from './utils/ongoingEffects';
+import { mergeOngoingEffects } from './utils/ongoingEffects';
 import { runYearlySimulation } from './utils/ageUpSimulator';
-import { evaluateSecretExposureEvents } from './utils/exposureEvents';
 
 import { SICKNESS_TITLES, SICKNESS_DESCRIPTIONS, IGNORE_TEXTS, PRAY_TEXTS, WATER_TEXTS } from './healthTexts';
 import { playClick, playSuccess, playError, playAgeUp } from './utils/audio';
@@ -1472,8 +1470,8 @@ export default function App() {
     let nextOngoingEffects = gameState.ongoingEffects ? [...gameState.ongoingEffects] : [];
     
     const activeNpc = nextRelationships.find(r => r.id === gameState.activeRelationshipContextId);
+    let result = resolveChoice({ ...choice, effect }, activeNpc, gameState.age);
     if (activeNpc && effect) {
-      let result = resolveChoice(choice, activeNpc, gameState.age);
       result = applyPlayerTraits(result, gameState.personalityTraits || [], choice.id, activeNpc, gameState.age);
       result = calculateStatCascades(result, gameState.age, activeNpc.id);
       
@@ -1501,35 +1499,10 @@ export default function App() {
       }
 
       // Update active NPC relationships
-      if (result.relationshipChanges) {
+      if (result.relationshipChanges || result.memoryToAdd) {
         nextRelationships = nextRelationships.map(r => {
           if (r.id === activeNpc.id) {
-            const updatedVectors = {
-              trust: Math.max(-100, Math.min(100, (r.vectors?.trust || 0) + result.relationshipChanges!.trust)),
-              suspicion: Math.max(0, Math.min(100, (r.vectors?.suspicion || 0) + result.relationshipChanges!.suspicion)),
-              knowledge: r.vectors?.knowledge || 0,
-              resentment: Math.max(0, Math.min(100, (r.vectors?.resentment || 0) + result.relationshipChanges!.resentment)),
-              forgiveness: r.vectors?.forgiveness || 50
-            };
-            
-            // Apply flags directly to interactionHistory
-            const nextHistory = r.interactionHistory ? [...r.interactionHistory] : [];
-            if (result.followUpFlags && result.followUpFlags.length > 0) {
-              result.followUpFlags.forEach(f => {
-                if (f.type === 'interaction_history') {
-                  nextHistory.push({ year: f.year, playerLied: f.playerLied, playerToldTruth: f.playerToldTruth, playerAvoided: f.playerAvoided });
-                }
-              });
-            }
-            
-            return {
-              ...r,
-              vectors: updatedVectors,
-              trust: Math.round((updatedVectors.trust + 100) / 2),
-              suspicion: Math.round(updatedVectors.suspicion),
-              resentment: Math.round(updatedVectors.resentment),
-              interactionHistory: nextHistory
-            };
+            return applyChoiceResultToNPC(r, result);
           }
           return r;
         });
@@ -2185,7 +2158,7 @@ export default function App() {
       generateSchoolContacts
     };
 
-    const result = runYearlySimulation(gameState, context as any);
+    const result = runYearlySimulation(gameState, context);
     
     if (!result.updatedState.alive) {
       triggerSound('error');
@@ -2705,10 +2678,53 @@ export default function App() {
     setGameState({
       ...gameState,
       career: { title: 'Unemployed', salary: 0, type: 'unemployed', yearsInRole: 0 },
+      creatorCareer: gameState.creatorCareer?.active ? { ...gameState.creatorCareer, active: false } : gameState.creatorCareer,
       log: [
         ...gameState.log,
         `💼 Resigned: I quit my job as a ${oldTitle} and am now looking for new career paths.`
       ]
+    });
+  };
+
+  const handleStartCreatorCareer = () => {
+    if (!gameState || gameState.age < 18) return;
+    triggerSound('click');
+    setGameState({
+      ...gameState,
+      career: { title: 'Creator', salary: 0, type: 'job', performance: 50, yearsInRole: 0 },
+      creatorCareer: {
+        active: true,
+        profile: gameState.creatorCareer?.profile || {
+          platform: 'creator_platform',
+          contentStyle: 'anonymous',
+          tier: 'beginner',
+          contentQuality: 50,
+          consistency: 0,
+          yearlyActions: { publishCount: 0, livestreamCount: 0, collaborationCount: 0, promotionCount: 0, privacyImprovementCount: 0 },
+          milestones: {}
+        }
+      }
+    });
+    setOccupationSubView('current_job');
+  };
+
+  const handleCreatorContentStyle = (contentStyle: CreatorContentStyle) => {
+    const profile = gameState?.creatorCareer?.profile;
+    if (!gameState || !gameState.creatorCareer?.active || !profile) return;
+    triggerSound('click');
+    setGameState({ ...gameState, creatorCareer: { ...gameState.creatorCareer, profile: { ...profile, contentStyle } } });
+  };
+
+  const handleCreatorAction = (action: keyof CreatorYearlyActions) => {
+    const profile = gameState?.creatorCareer?.profile;
+    if (!gameState || !gameState.creatorCareer?.active || !profile) return;
+    triggerSound('click');
+    setGameState({
+      ...gameState,
+      creatorCareer: {
+        ...gameState.creatorCareer,
+        profile: { ...profile, yearlyActions: { ...profile.yearlyActions, [action]: profile.yearlyActions[action] + 1 } }
+      }
     });
   };
 
@@ -5838,6 +5854,23 @@ export default function App() {
                             <ChevronRight className="text-[#2a6184]" size={20} />
                           </button>
 
+                          {!gameState.creatorCareer?.active && (
+                            <button
+                              onClick={handleStartCreatorCareer}
+                              disabled={gameState.age < 18}
+                              className="w-full text-left py-4 px-4 border-b border-slate-200 hover:bg-slate-50 transition flex items-center justify-between cursor-pointer group disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              <div className="flex items-center gap-4">
+                                <span className="text-2xl group-hover:scale-110 transition-transform">🎥</span>
+                                <div className="flex flex-col">
+                                  <span className="font-extrabold text-[15px] text-[#0f4a8a]">Creator Career</span>
+                                  <span className="text-[12px] text-[#4281a4]">{gameState.age >= 18 ? 'Start creating on CreatorPlatform' : 'Available at age 18'}</span>
+                                </div>
+                              </div>
+                              <ChevronRight className="text-[#2a6184]" size={20} />
+                            </button>
+                          )}
+
                           {/* MILITARY */}
                           <button 
                             onClick={() => triggerSound('click')}
@@ -5918,6 +5951,27 @@ export default function App() {
 
                       {occupationSubView === 'current_job' && gameState.career.type === 'job' && (
                         <div className="flex flex-col">
+                          {gameState.creatorCareer?.active && gameState.creatorCareer.profile && (
+                            <div className="p-4 border-b border-slate-200 space-y-3">
+                              <div>
+                                <span className="font-extrabold text-[15px] text-[#0f4a8a]">Creator Career</span>
+                                <span className="text-[12px] text-[#4281a4] block">{gameState.creatorCareer.profile.tier.replace('_', ' ')}</span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                {(['anonymous', 'suggestive', 'explicit'] as CreatorContentStyle[]).map(style => (
+                                  <button key={style} onClick={() => handleCreatorContentStyle(style)} className={`py-2 text-[10px] font-bold rounded border ${gameState.creatorCareer?.profile?.contentStyle === style ? 'bg-[#0f4a8a] text-white border-[#0f4a8a]' : 'bg-white text-[#0f4a8a] border-slate-200'}`}>{style}</button>
+                                ))}
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => handleCreatorAction('publishCount')} className="py-2 text-[11px] font-bold bg-slate-50 text-[#0f4a8a] border border-slate-200 rounded">Publish content ({gameState.creatorCareer.profile.yearlyActions.publishCount})</button>
+                                <button onClick={() => handleCreatorAction('livestreamCount')} className="py-2 text-[11px] font-bold bg-slate-50 text-[#0f4a8a] border border-slate-200 rounded">Livestream ({gameState.creatorCareer.profile.yearlyActions.livestreamCount})</button>
+                                <button onClick={() => handleCreatorAction('collaborationCount')} className="py-2 text-[11px] font-bold bg-slate-50 text-[#0f4a8a] border border-slate-200 rounded">Collaborate ({gameState.creatorCareer.profile.yearlyActions.collaborationCount})</button>
+                                <button onClick={() => handleCreatorAction('promotionCount')} className="py-2 text-[11px] font-bold bg-slate-50 text-[#0f4a8a] border border-slate-200 rounded">Promote account ({gameState.creatorCareer.profile.yearlyActions.promotionCount})</button>
+                                <button onClick={() => handleCreatorAction('privacyImprovementCount')} className="py-2 text-[11px] font-bold bg-slate-50 text-[#0f4a8a] border border-slate-200 rounded col-span-2">Improve privacy ({gameState.creatorCareer.profile.yearlyActions.privacyImprovementCount})</button>
+                              </div>
+                              <button onClick={handleResign} className="w-full py-2 text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded">Leave Creator Career</button>
+                            </div>
+                          )}
                           {/* Job Profile Header */}
                           <button 
                             onClick={() => { triggerSound('click'); setShowJobDetailsModal(true); }}

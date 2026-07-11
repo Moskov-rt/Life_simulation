@@ -53,8 +53,8 @@ function generateDefaultLifestyle(): NPCLifestyle {
 /**
  * Creates a valid NPC from legacy Relationship data or new basic data.
  */
-export function relationshipToNPC(rel: any): NPC {
-  const npc: any = { ...rel };
+export function relationshipToNPC(rel: Partial<NPC> & Pick<NPC, 'id' | 'name' | 'relation'>): NPC {
+  const npc = { ...rel } as NPC;
 
   if (npc.archetype === undefined) npc.archetype = 'average';
   if (npc.age === undefined) npc.age = 18;
@@ -70,11 +70,7 @@ export function relationshipToNPC(rel: any): NPC {
   if (npc.resentment === undefined) npc.resentment = 0;
 
   if (npc.personality === undefined) {
-    const list = ['protective', 'religious', 'impulsive', 'cautious', 'denial_prone', 'supportive', 'gossipy'];
-    // Pick 1-2 random traits
-    const count = Math.floor(Math.random() * 2) + 1;
-    const shuffled = [...list].sort(() => 0.5 - Math.random());
-    npc.personality = shuffled.slice(0, count);
+    npc.personality = ['cautious'];
   }
 
   if (npc.vectors === undefined) {
@@ -96,40 +92,41 @@ export function relationshipToNPC(rel: any): NPC {
   if (!npc.memoryFlags) npc.memoryFlags = [];
   if (!npc.interactionHistory) npc.interactionHistory = [];
 
-  return npc as NPC;
+  return npc;
 }
 
 /**
  * Migrates a legacy GameState into the new format.
  */
-export function migrateGameState(state: any): GameState {
-  if (!state) return state;
-  
-  // Already on newest version
-  if (state.saveVersion >= 1 && state.npcs) {
-    if (!state.followUpFlags) state.followUpFlags = [];
-    if (!state.ongoingEffects) state.ongoingEffects = [];
-    if (!state.personalityTraits) state.personalityTraits = [];
-    return state as GameState;
-  }
+export function migrateGameState(state: unknown): GameState {
+  if (!state) throw new TypeError('Invalid saved game state');
+  if (typeof state !== 'object') throw new TypeError('Invalid saved game state');
 
-  const newState = { ...state };
+  const source = state as Partial<GameState>;
+  const newState = structuredClone(source) as GameState;
   newState.saveVersion = 1;
   newState.npcs = {};
   if (!newState.followUpFlags) newState.followUpFlags = [];
   if (!newState.ongoingEffects) newState.ongoingEffects = [];
   if (!newState.personalityTraits) newState.personalityTraits = [];
+  if (!newState.creatorCareer) {
+    newState.creatorCareer = { active: false, profile: null };
+  }
   
   // Convert legacy relationships array to npcs dictionary
-  if (Array.isArray(state.relationships)) {
-    for (const rel of state.relationships) {
+  for (const npc of Object.values(source.npcs || {})) {
+    const normalized = relationshipToNPC(npc);
+    newState.npcs[normalized.id] = normalized;
+  }
+  if (Array.isArray(source.relationships)) {
+    for (const rel of source.relationships) {
       const npc = relationshipToNPC(rel);
-      newState.npcs[npc.id] = npc;
+      if (!newState.npcs[npc.id]) newState.npcs[npc.id] = npc;
     }
   }
 
   // Clear out old relationships array to prevent bugs, or keep empty
-  newState.relationships = [];
+  newState.relationships = Object.values(newState.npcs);
   
   return newState as GameState;
 }

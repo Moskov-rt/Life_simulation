@@ -1,4 +1,4 @@
-import { Choice, NPC, NPCInteractionHistory, Stats, Reputation, OngoingEffect } from '../types';
+import { Choice, NPC, NPCInteractionHistory, NPCMemory, Stats, Reputation, OngoingEffect } from '../types';
 import { modifyOutcomeDeltas, getDynamicChoiceOutcome } from './relationshipVectors';
 
 export interface ChoiceResult {
@@ -13,8 +13,9 @@ export interface ChoiceResult {
   };
   statChanges?: Partial<Stats>;
   repChanges?: Partial<Reputation>;
-  followUpFlags?: any[];
+  followUpFlags?: (NPCInteractionHistory & { type: 'interaction_history' })[];
   ongoingEffectsToAdd?: OngoingEffect[];
+  memoryToAdd?: NPCMemory;
 }
 
 export function resolveChoice(
@@ -65,7 +66,11 @@ export function resolveChoice(
   }
 
   // Pass through modifyOutcomeDeltas
-  const modified = modifyOutcomeDeltas(npc, baseTrustChange, baseSuspicionChange, baseResentmentChange);
+  const modified = {
+    ...modifyOutcomeDeltas(npc, baseTrustChange, baseSuspicionChange, baseResentmentChange),
+    knowledge: effect.relationshipChanges?.knowledge || 0,
+    forgiveness: effect.relationshipChanges?.forgiveness || 0
+  };
   
   // Dynamic text generation (using the logic we built in getDynamicChoiceOutcome)
   const dynamicResult = getDynamicChoiceOutcome(npc, choice.id, outcomeText);
@@ -102,6 +107,40 @@ export function resolveChoice(
     relationshipChanges: modified,
     statChanges: effect.statChanges,
     repChanges: effect.repChanges,
-    followUpFlags
+    followUpFlags,
+    memoryToAdd: effect.memory ? {
+      id: `${choice.id}_${npc.id}_${currentYear}`,
+      type: effect.memory.type,
+      sourceId: choice.id,
+      targetId: npc.id,
+      tick: currentYear,
+      intensity: effect.memory.intensity,
+      emotionalValue: effect.memory.emotionalValue,
+      decayRate: effect.memory.decayRate,
+      permanent: effect.memory.permanent
+    } : undefined
+  };
+}
+
+export function applyChoiceResultToNPC(npc: NPC, result: ChoiceResult): NPC {
+  const changes = result.relationshipChanges;
+  const vectors = changes ? {
+    trust: Math.max(-100, Math.min(100, npc.vectors.trust + changes.trust)),
+    suspicion: Math.max(0, Math.min(100, npc.vectors.suspicion + changes.suspicion)),
+    knowledge: Math.max(0, Math.min(100, npc.vectors.knowledge + (changes.knowledge || 0))),
+    resentment: Math.max(0, Math.min(100, npc.vectors.resentment + changes.resentment)),
+    forgiveness: Math.max(0, Math.min(100, npc.vectors.forgiveness + (changes.forgiveness || 0)))
+  } : npc.vectors;
+  const interactionHistory = [...(npc.interactionHistory || [])];
+  result.followUpFlags?.forEach(flag => interactionHistory.push({ year: flag.year, playerLied: flag.playerLied, playerToldTruth: flag.playerToldTruth, playerAvoided: flag.playerAvoided }));
+
+  return {
+    ...npc,
+    vectors,
+    trust: Math.round((vectors.trust + 100) / 2),
+    suspicion: Math.round(vectors.suspicion),
+    resentment: Math.round(vectors.resentment),
+    memories: result.memoryToAdd ? [...(npc.memories || []), result.memoryToAdd] : npc.memories,
+    interactionHistory
   };
 }

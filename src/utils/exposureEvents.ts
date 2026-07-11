@@ -84,9 +84,9 @@ export function calculateHeatMultiplier(heat: number): number {
   return 1.0 + (heat / 20);
 }
 
-export function rollLuck(): { value: number; isCritical: boolean; isNearMiss: boolean } {
-  const val = 0.7 + Math.random() * 0.6;
-  const roll = Math.random();
+export function rollLuck(random: () => number = Math.random): { value: number; isCritical: boolean; isNearMiss: boolean } {
+  const val = 0.7 + random() * 0.6;
+  const roll = random();
   return {
     value: val,
     isCritical: roll < 0.05,
@@ -96,7 +96,8 @@ export function rollLuck(): { value: number; isCritical: boolean; isNearMiss: bo
 
 export function evaluateSecretExposureEvents(
   gameState: GameState,
-  yearlyActions: string[]
+  yearlyActions: string[],
+  random: () => number = Math.random
 ): Event | null {
   if (!gameState.secretExposure?.isActive) return null;
 
@@ -105,10 +106,10 @@ export function evaluateSecretExposureEvents(
   const npcs = Object.values(gameState.npcs || {}) as NPC[];
   const possibleEvents: { event: Event; chance: number }[] = [];
 
-  const luckRoll = rollLuck();
+  const luckRoll = rollLuck(random);
   if (luckRoll.isCritical) {
     // Critical hit! Force a random event regardless of odds
-    const randomEvent = EXPOSURE_EVENTS[Math.floor(Math.random() * EXPOSURE_EVENTS.length)];
+    const randomEvent = EXPOSURE_EVENTS[Math.floor(random() * EXPOSURE_EVENTS.length)];
     return randomEvent;
   }
 
@@ -148,7 +149,7 @@ export function evaluateSecretExposureEvents(
       finalChance = 0;
     }
 
-    if (Math.random() < finalChance) {
+    if (random() < finalChance) {
       possibleEvents.push({ event, chance: finalChance });
     }
   }

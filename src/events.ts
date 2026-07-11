@@ -2822,5 +2822,108 @@ export const EVENTS_POOL: Event[] = [
         }
       }
     ]
+  },
+  {
+    id: 'creator_first_viral_post',
+    title: 'First Viral Post',
+    text: 'One of your posts suddenly spreads far beyond your usual audience.',
+    category: 'career',
+    weight: 25,
+    conditions: {
+      minAge: 18,
+      flagsFalse: ['creator_first_viral_post'],
+      customCheck: state => {
+        const profile = state.creatorCareer?.profile;
+        return state.creatorCareer?.active === true && !!profile && (state.socialMedia[profile.platform]?.followers || 0) >= 10000;
+      }
+    },
+    choices: [
+      { id: 'creator_viral_engage', text: 'Engage with the new audience.', effect: { repChanges: { online: 10 }, flagsSet: { creator_first_viral_post: true }, outcomeText: 'You welcome the attention and turn the viral moment into momentum.', logText: 'Engaged with the audience after a first viral post.' } },
+      { id: 'creator_viral_steady', text: 'Keep posting normally.', effect: { repChanges: { online: 5 }, flagsSet: { creator_first_viral_post: true }, outcomeText: 'You avoid chasing the trend and keep your account focused.', logText: 'Stayed consistent after a first viral post.' } }
+    ]
+  },
+  {
+    id: 'creator_collaboration_offer',
+    title: 'Collaboration Offer',
+    text: 'Another creator proposes a joint project for the coming year.',
+    category: 'career',
+    weight: 20,
+    conditions: {
+      minAge: 18,
+      flagsFalse: ['creator_collaboration_offer_resolved'],
+      customCheck: state => state.creatorCareer?.active === true && (state.creatorCareer.profile?.yearlyActions.collaborationCount || 0) > 0
+    },
+    choices: [
+      { id: 'creator_collaboration_accept', text: 'Accept the collaboration.', effect: { flagsSet: { creator_collaboration_offer_resolved: true, creator_collaboration_accepted: true }, scheduleDelayedEvent: { eventId: 'creator_sponsor_offer', delayYears: 1 }, outcomeText: 'You agree on a project and begin planning the release.', logText: 'Accepted a creator collaboration offer.' } },
+      { id: 'creator_collaboration_decline', text: 'Decline politely.', effect: { flagsSet: { creator_collaboration_offer_resolved: true }, outcomeText: 'You decline without burning the professional connection.', logText: 'Declined a creator collaboration offer.' } }
+    ]
+  },
+  {
+    id: 'creator_sponsor_offer',
+    title: 'Sponsor Offer',
+    text: 'A brand offers a paid sponsorship and asks you to promote its product.',
+    category: 'career',
+    weight: 15,
+    conditions: {
+      minAge: 18,
+      flagsFalse: ['creator_sponsor_offer_resolved'],
+      customCheck: state => state.creatorCareer?.active === true && (state.flags.creator_collaboration_accepted || ['established', 'top_creator'].includes(state.creatorCareer.profile?.tier || 'beginner'))
+    },
+    choices: [
+      { id: 'creator_sponsor_accept', text: 'Accept with clear disclosure.', effect: { repChanges: { online: 5 }, flagsSet: { creator_sponsor_offer_resolved: true }, outcomeText: 'You disclose the sponsorship and publish the campaign professionally.', logText: 'Accepted a disclosed creator sponsorship.' } },
+      { id: 'creator_sponsor_decline', text: 'Decline the offer.', effect: { flagsSet: { creator_sponsor_offer_resolved: true }, outcomeText: 'You decide the offer does not fit your account.', logText: 'Declined a creator sponsorship.' } }
+    ]
+  },
+  {
+    id: 'creator_family_discovers_account',
+    title: 'Family Discovers the Account',
+    text: 'A family member confronts you after connecting the account to you.',
+    category: 'relationship',
+    weight: 20,
+    involvedRelationshipType: 'parent',
+    conditions: {
+      minAge: 18,
+      flagsFalse: ['creator_family_discovery_resolved'],
+      hasRelationshipType: 'parent',
+      customCheck: state => state.creatorCareer?.active === true && (state.secretExposure?.level || 0) >= 30 && ((state.secretExposure?.level || 0) >= 60 || Object.values(state.npcs).some(npc => npc.relation === 'parent' && npc.vectors.knowledge >= 20))
+    },
+    choices: [
+      { id: 'creator_family_confess', text: 'Tell the truth and explain your boundaries.', effect: { flagsSet: { creator_family_discovery_resolved: true }, relationshipChanges: { target: 'current', trust: 12, suspicion: -10, resentment: -8, knowledge: 45, forgiveness: 5 }, memory: { type: 'honest_account_disclosure', intensity: 60, emotionalValue: 30, decayRate: 2, permanent: true }, outcomeText: 'You answer honestly. Their reaction is shaped by their trust and personality.', logText: 'Discussed the creator account honestly with family.' } },
+      { id: 'creator_family_deny', text: 'Deny that the account is yours.', effect: { flagsSet: { creator_family_discovery_resolved: true }, relationshipChanges: { target: 'current', trust: -10, suspicion: 20, resentment: 15, knowledge: 15 }, memory: { type: 'account_discovery_denial', intensity: 70, emotionalValue: -35, decayRate: 1, permanent: false }, outcomeText: 'You deny it, but the evidence leaves them uneasy.', logText: 'Denied owning the discovered creator account.' } }
+    ]
+  },
+  {
+    id: 'creator_partner_conflict',
+    title: 'Partner Conflict',
+    text: 'Your partner raises concerns about the account and what it means for the relationship.',
+    category: 'relationship',
+    weight: 20,
+    involvedRelationshipType: 'partner',
+    conditions: {
+      minAge: 18,
+      flagsFalse: ['creator_partner_conflict_resolved'],
+      hasRelationshipType: 'partner',
+      customCheck: state => state.creatorCareer?.active === true && (state.secretExposure?.level || 0) >= 30 && ((state.secretExposure?.level || 0) >= 50 || Object.values(state.npcs).some(npc => npc.relation === 'partner' && npc.vectors.knowledge >= 20))
+    },
+    choices: [
+      { id: 'creator_partner_confess', text: 'Talk openly and agree on boundaries.', effect: { flagsSet: { creator_partner_conflict_resolved: true }, relationshipChanges: { target: 'current', trust: 12, suspicion: -10, resentment: -10, knowledge: 35, forgiveness: 8 }, memory: { type: 'creator_boundary_agreement', intensity: 65, emotionalValue: 35, decayRate: 2, permanent: true }, outcomeText: 'You have a direct conversation and agree on boundaries together.', logText: 'Agreed on creator-career boundaries with a partner.' } },
+      { id: 'creator_partner_change_subject', text: 'Dismiss the concern and change the subject.', effect: { flagsSet: { creator_partner_conflict_resolved: true }, relationshipChanges: { target: 'current', trust: -12, suspicion: 18, resentment: 20, knowledge: 10 }, memory: { type: 'dismissed_creator_concern', intensity: 75, emotionalValue: -40, decayRate: 1, permanent: false }, outcomeText: 'They feel dismissed, and the unresolved conflict lingers.', logText: 'Dismissed a partner conflict about the creator account.' } }
+    ]
+  },
+  {
+    id: 'creator_account_leak_backlash',
+    title: 'Account Leak and Backlash',
+    text: 'Private account information leaks and a wave of backlash reaches your public profile.',
+    category: 'career',
+    weight: 15,
+    conditions: {
+      minAge: 18,
+      flagsFalse: ['creator_account_leak_resolved'],
+      customCheck: state => state.creatorCareer?.active === true && (state.secretExposure?.level || 0) >= 70
+    },
+    choices: [
+      { id: 'creator_leak_address', text: 'Address the leak publicly.', effect: { statChanges: { happiness: -10 }, repChanges: { online: -10 }, flagsSet: { creator_account_leak_resolved: true }, outcomeText: 'You acknowledge the leak and publish a measured response.', logText: 'Addressed an account leak publicly.' } },
+      { id: 'creator_leak_withdraw', text: 'Step back from posting.', effect: { statChanges: { happiness: -15 }, repChanges: { online: -15 }, flagsSet: { creator_account_leak_resolved: true }, outcomeText: 'You withdraw while the backlash cools, but the stress follows you offline.', logText: 'Stepped back after an account leak and backlash.' } }
+    ]
   }
 ];

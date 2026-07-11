@@ -208,6 +208,14 @@ export interface EventCondition {
   customCheck?: (state: GameState) => boolean;
 }
 
+export interface NPCMemoryEffect {
+  type: string;
+  intensity: number;
+  emotionalValue: number;
+  decayRate: number;
+  permanent: boolean;
+}
+
 export interface OutcomeEffect {
   statChanges?: Partial<Stats> & { karma?: number; willpower?: number; cashChange?: number };
   repChanges?: Partial<Reputation>;
@@ -222,7 +230,10 @@ export interface OutcomeEffect {
     trust?: number;
     suspicion?: number;
     resentment?: number;
+    knowledge?: number;
+    forgiveness?: number;
   };
+  memory?: NPCMemoryEffect;
   logText?: string;
   outcomeText: string;
   cureIllness?: boolean;
@@ -302,6 +313,37 @@ export interface SocialMediaAccount {
   wishlistPosted?: boolean; // OnlyFans specific (resets yearly)
 }
 
+export type CreatorPlatform = 'creator_platform';
+export type CreatorContentStyle = 'anonymous' | 'suggestive' | 'explicit';
+export type CreatorTier = 'beginner' | 'rising' | 'established' | 'top_creator';
+
+/**
+ * Actions selected during a year. Their outcomes are resolved only by the
+ * yearly simulation; they deliberately do not duplicate social-media state.
+ */
+export interface CreatorYearlyActions {
+  publishCount: number;
+  livestreamCount: number;
+  collaborationCount: number;
+  promotionCount: number;
+  privacyImprovementCount: number;
+}
+
+export interface CreatorProfile {
+  platform: CreatorPlatform;
+  contentStyle: CreatorContentStyle;
+  tier: CreatorTier;
+  contentQuality: number;
+  consistency: number;
+  yearlyActions: CreatorYearlyActions;
+  milestones: Record<string, boolean>;
+}
+
+export interface CreatorCareer {
+  active: boolean;
+  profile: CreatorProfile | null;
+}
+
 export interface SecretExposure {
   isActive: boolean;
   level: number; // 0-100
@@ -370,5 +412,6 @@ export interface GameState {
   } | null;
   completedEducation: { level: string; major: string }[];
   socialMedia: Record<string, SocialMediaAccount>;
+  creatorCareer?: CreatorCareer;
   secretExposure?: SecretExposure;
 }

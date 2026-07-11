@@ -150,6 +150,12 @@ export function modifyOutcomeDeltas(
     if (trait === 'religious' && resentmentChange > 0) {
       rMult *= 1.5;
     }
+    if (trait === 'supportive' && trustChange > 0) {
+      tMult *= 1.5;
+    }
+    if (trait === 'supportive' && resentmentChange > 0) {
+      rMult *= 0.5;
+    }
   }
 
   return {

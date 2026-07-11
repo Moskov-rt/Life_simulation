@@ -1,4 +1,4 @@
-import { GameState, Event as GameEvent, Stats, Reputation, Relationship, SocialMediaAccount, Illness, IllnessTemplate } from '../types';
+import { GameState, Event as GameEvent, Stats, Reputation, Relationship, SocialMediaAccount, Illness, IllnessTemplate, CreatorYearlyActions, CreatorTier } from '../types';
 import { applyYearlyDrift } from './relationshipVectors';
 import { evaluateSecretExposureEvents } from './exposureEvents';
 import { processOngoingEffects } from './ongoingEffects';
@@ -14,6 +14,17 @@ export function nextRandom(seed: number): { value: number; nextSeed: number } {
   const m = Math.pow(2, 32);
   const nextSeed = (a * seed + c) % m;
   return { value: nextSeed / m, nextSeed };
+}
+
+function calculateCreatorActivityScore(actions: CreatorYearlyActions): number {
+  return actions.publishCount + (actions.livestreamCount * 2) + (actions.collaborationCount * 3) + (actions.promotionCount * 2);
+}
+
+function calculateCreatorTier(followers: number, consistency: number, contentQuality: number, reputation: number): CreatorTier {
+  if (followers >= 1000000 && consistency >= 80 && contentQuality >= 80 && reputation >= 70) return 'top_creator';
+  if (followers >= 100000 && consistency >= 60 && contentQuality >= 65 && reputation >= 50) return 'established';
+  if (followers >= 10000 && consistency >= 35 && contentQuality >= 50 && reputation >= 30) return 'rising';
+  return 'beginner';
 }
 
 export interface AgeUpData {
@@ -70,6 +81,15 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   workingState.age += 1;
   const nextAge = workingState.age;
 
+  const creatorProfile = workingState.creatorCareer?.active && workingState.career.type === 'job' ? workingState.creatorCareer.profile : null;
+  const creatorActions = creatorProfile ? structuredClone(creatorProfile.yearlyActions) : null;
+  const creatorActivityScore = creatorActions ? calculateCreatorActivityScore(creatorActions) : 0;
+  if (creatorProfile) {
+    const creatorAccount = workingState.socialMedia[creatorProfile.platform] ||= { signedUp: true, followers: 0, verified: false, suspended: false, postsCount: 0, subscribers: 0, subscriptionPrice: 10 };
+    creatorAccount.signedUp = true;
+    creatorAccount.postsCount = creatorActivityScore;
+  }
+
   // 2. Calculate yearly income and normal stat changes
   const hasOFPosts = (workingState.socialMedia?.onlyfans?.postsCount || 0) > 0;
   const action = hasOFPosts ? 'kept_working' : 'none';
@@ -102,6 +122,7 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
       let socialLogs: string[] = [];
       Object.entries(workingState.socialMedia).forEach(([channel, rawData]) => {
         const data = rawData as SocialMediaAccount;
+        if (channel === workingState.creatorCareer?.profile?.platform && !creatorProfile) return;
         if (!data.signedUp || data.suspended) return;
 
         let growthFactor = 1.0;
@@ -121,7 +142,13 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
           socialLogs.push(`🌟 Congratulations! Your ${channel} account has been verified!`);
         }
 
-        if (channel === 'onlyfans') {
+        if (creatorProfile && channel === creatorProfile.platform) {
+          creatorProfile.consistency = Math.max(0, Math.min(100, creatorProfile.consistency + (creatorActivityScore > 0 ? Math.min(10, creatorActivityScore) : -5)));
+          creatorProfile.contentQuality = Math.max(0, Math.min(100, creatorProfile.contentQuality + Math.min(5, (creatorActions?.livestreamCount || 0) + (creatorActions?.collaborationCount || 0))));
+          creatorProfile.tier = calculateCreatorTier(data.followers, creatorProfile.consistency, creatorProfile.contentQuality, workingState.reputation.online);
+        }
+
+        if (channel === 'onlyfans' || (creatorProfile && channel === creatorProfile.platform)) {
           const price = data.subscriptionPrice || 10;
           const targetSubs = Math.floor(data.followers * (workingState.stats.looks / 100) * (15 / price));
           data.subscribers = Math.max(0, Math.min(data.followers, targetSubs));
@@ -129,7 +156,7 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
           if (payout > 0) {
             earnedCashTotal += payout;
             workingState.cash += payout;
-            socialLogs.push(`🍑 OnlyFans: Earned $${payout.toLocaleString()} from your subscribers this year!`);
+            socialLogs.push(`🍑 ${channel === 'onlyfans' ? 'OnlyFans' : 'CreatorPlatform'}: Earned $${payout.toLocaleString()} from your subscribers this year!`);
           }
         } else if (channel === 'youtube' && data.monetized && data.followers >= 10000) {
           const payout = Math.floor(data.followers * 0.05);
@@ -453,9 +480,9 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   // 3. Calculate exposure gain, decay, and new exposure
   if (workingState.secretExposure) {
     const ofPosts = workingState.socialMedia?.onlyfans?.postsCount || 0;
-    const postsVal = ofPosts > 0 ? ofPosts : 10;
-    const collabsVal = ofPosts > 5 ? 2 : 0;
-    const mitigationVal = 85; 
+    const postsVal = creatorActions ? creatorActions.publishCount + creatorActions.livestreamCount + creatorActions.promotionCount : ofPosts > 0 ? ofPosts : 10;
+    const collabsVal = creatorActions ? creatorActions.collaborationCount : ofPosts > 5 ? 2 : 0;
+    const mitigationVal = creatorActions ? Math.min(100, 85 + (creatorActions.privacyImprovementCount * 5)) : 85;
     const locationMult = workingState.location.includes('Mumbai') ? 0.8 : 1.0;
     const luckRoll = Math.floor(roll() * 6) - 3;
     
@@ -463,6 +490,7 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     workingState.secretExposure.level = Math.max(0, Math.min(100, workingState.secretExposure.level + calculatedGain));
     workingState.secretExposure.heat = Math.round(workingState.secretExposure.heat * 0.5);
     workingState.secretExposure.history.push(workingState.secretExposure.level);
+    if (creatorActions) workingState.secretExposure.recentChanges = { posts: postsVal, collabs: collabsVal, mitigation: mitigationVal, locationMultiplier: locationMult, luck: luckRoll };
   }
 
   workingState.relationships.forEach(r => {
@@ -490,7 +518,9 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
 
   // 6. Evaluate follow-up flags
   const followUpResult = evaluateFollowUpFlags(workingState);
-  workingState.followUpFlags = (workingState.followUpFlags || []).filter(f => !followUpResult.flagsToRemove.includes(f.id));
+  workingState.delayedEvents = workingState.delayedEvents.filter(
+    event => !followUpResult.flagsToRemove.includes(event.eventId)
+  );
   
   if (followUpResult.newEvents.length > 0) {
     followUpResult.newEvents.forEach(eventId => {
@@ -509,22 +539,10 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   }
 
   // 7. Check for a new exposure event using the updated exposure
-  const rolledExposureEvent = evaluateSecretExposureEvents(workingState as any, []);
+  const rolledExposureEvent = evaluateSecretExposureEvents(workingState, [], roll);
   if (rolledExposureEvent) {
     if (!triggeredEvent) triggeredEvent = rolledExposureEvent;
     else queuedEvents.push(rolledExposureEvent);
-  }
-
-  // Delayed / callback event queue
-  const delayedMatchIndex = workingState.delayedEvents.findIndex(de => de.triggerAge === nextAge);
-  if (delayedMatchIndex !== -1) {
-    const match = workingState.delayedEvents[delayedMatchIndex];
-    workingState.delayedEvents = workingState.delayedEvents.filter((_, idx) => idx !== delayedMatchIndex);
-    const fullMatch = EVENTS_POOL.find(e => e.id === match.eventId);
-    if (fullMatch) {
-      if (!triggeredEvent) triggeredEvent = fullMatch;
-      else queuedEvents.push(fullMatch);
-    }
   }
 
   // General conditional eligibility checks from pool
@@ -546,6 +564,7 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
       if (c.flagsFalse) { for (const f of c.flagsFalse) { if (workingState.flags[f]) return false; } }
       if (c.hasRelationshipType && !workingState.relationships.some(r => r.relation === c.hasRelationshipType)) return false;
       if (c.hasRelationshipArchetype && !workingState.relationships.some(r => r.archetype === c.hasRelationshipArchetype)) return false;
+      if (c.customCheck && !c.customCheck(workingState)) return false;
 
       return true;
     });
@@ -620,6 +639,9 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
         acc.wishlistPosted = false;
       }
     });
+  }
+  if (workingState.creatorCareer?.profile) {
+    workingState.creatorCareer.profile.yearlyActions = { publishCount: 0, livestreamCount: 0, collaborationCount: 0, promotionCount: 0, privacyImprovementCount: 0 };
   }
 
   // 12. Advance RNG seed deterministically
