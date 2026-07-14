@@ -136,6 +136,7 @@ export interface NPCInteractionHistory {
 }
 
 export interface NPC extends Relationship {
+  context?: string;
   orientation: 'straight' | 'gay' | 'bisexual' | 'asexual';
   nationality: string;
   education: string;
@@ -216,6 +217,41 @@ export interface NPCMemoryEffect {
   permanent: boolean;
 }
 
+export type NarrativeTone = 'positive' | 'neutral' | 'negative' | 'chaotic';
+
+export type WealthBand = 'struggling' | 'stable' | 'comfortable' | 'wealthy';
+
+export type CareerGroup = 'actor' | 'creator' | 'adult_performer' | 'medical' | 'corporate' | 'education' | 'unemployed';
+
+export interface NarrativeVariant {
+  text: string;
+  minAge?: number;
+  maxAge?: number;
+  careers?: string[];
+  careerGroups?: CareerGroup[];
+  wealthBands?: WealthBand[];
+  minFame?: number;
+  maxFame?: number;
+  minReputation?: Partial<Reputation>;
+  relationshipTypes?: RelationType[];
+  npcArchetypes?: ArchetypeType[];
+  memoryTypesAny?: string[];
+  memoryTypesAll?: string[];
+  memorySentiment?: 'positive' | 'negative';
+  minMemoryIntensity?: number;
+  requiredFlags?: string[];
+  excludedFlags?: string[];
+  previousEventIds?: string[];
+  minRelationshipTrust?: number;
+  maxRelationshipTrust?: number;
+  minRelationshipSuspicion?: number;
+  maxRelationshipSuspicion?: number;
+  minRelationshipResentment?: number;
+  maxRelationshipResentment?: number;
+  minRelationshipYears?: number;
+  maxRelationshipYears?: number;
+}
+
 export interface OutcomeEffect {
   statChanges?: Partial<Stats> & { karma?: number; willpower?: number; cashChange?: number };
   repChanges?: Partial<Reputation>;
@@ -234,6 +270,7 @@ export interface OutcomeEffect {
     forgiveness?: number;
   };
   memory?: NPCMemoryEffect;
+  narrativeVariants?: Partial<Record<NarrativeTone, NarrativeVariant[]>>;
   logText?: string;
   outcomeText: string;
   cureIllness?: boolean;
@@ -344,6 +381,37 @@ export interface CreatorCareer {
   profile: CreatorProfile | null;
 }
 
+export interface AdultPerformerYearlyActions {
+  performCount: number;
+  collaborationCount: number;
+  promotionCount: number;
+  networkingCount: number;
+  skillCount: number;
+  privacyCount: number;
+  restCount: number;
+}
+
+export interface ActorYearlyActions {
+  auditionCount: number;
+  rolesAccepted: number;
+  networkCount: number;
+  promoteCount: number;
+  trainCount: number;
+  restCount: number;
+}
+
+export interface AdultPerformerCareer {
+  active: boolean;
+  consistency: number;
+  yearlyActions: AdultPerformerYearlyActions;
+}
+
+export interface ActorCareer {
+  active: boolean;
+  consistency: number;
+  yearlyActions: ActorYearlyActions;
+}
+
 export interface SecretExposure {
   isActive: boolean;
   level: number; // 0-100
@@ -375,6 +443,7 @@ export interface GameState {
   cash: number;
   stats: Stats;
   reputation: Reputation;
+  fame: number;
   saveVersion?: number;
   rngSeed?: number;
   npcs: Record<string, NPC>;
@@ -392,11 +461,13 @@ export interface GameState {
     salary: number;
     performance: number;
     yearsInRole: number;
+    tier?: number;
     educationLevel?: string;
     major?: string;
     employer?: string;
     workHarderCount?: number;
     hoursPerWeek?: number;
+    track?: 'adult_performer' | 'actor';
   };
   karma: number; // 0 - 100
   willpower: number; // 0 - 100
@@ -413,5 +484,7 @@ export interface GameState {
   completedEducation: { level: string; major: string }[];
   socialMedia: Record<string, SocialMediaAccount>;
   creatorCareer?: CreatorCareer;
+  adultPerformerCareer?: AdultPerformerCareer;
+  actorCareer?: ActorCareer;
   secretExposure?: SecretExposure;
 }

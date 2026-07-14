@@ -2,7 +2,43 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '../App';
-import * as eventsData from '../events';
+
+vi.mock('../utils/ageUpSimulator', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../utils/ageUpSimulator')>();
+  return {
+    ...original,
+    runYearlySimulation: vi.fn((state) => {
+      const triggeredEvent = {
+        id: 'test_npc_event',
+        title: 'Test NPC Event',
+        text: 'A test event.',
+        category: 'random' as const,
+        weight: 1000,
+        involvedRelationshipType: 'parent' as const,
+        choices: [{
+          id: 'test_choice',
+          text: 'Test Choice',
+          effect: { outcomeText: 'Test outcome', statChanges: { happiness: 10 } }
+        }]
+      };
+      const updatedState = { ...state, age: state.age + 1, currentEvent: null };
+      return {
+        updatedState,
+        ageUpData: {
+          prevStats: state.stats,
+          nextStats: updatedState.stats,
+          earnedCash: 0,
+          prevExposure: state.secretExposure?.level || 0,
+          nextExposure: state.secretExposure?.level || 0,
+          triggeredEvent
+        },
+        triggeredEvent,
+        queuedEvents: [],
+        newLogs: []
+      };
+    })
+  };
+});
 
 // Mock audio to prevent errors
 vi.mock('../utils/audio', () => ({
@@ -22,28 +58,6 @@ describe('Event Engine Integration', () => {
   });
 
   it('NPC choice with statChanges adds correctly and does not reset stats', async () => {
-    // Mock the event pool to only have our test event
-    vi.spyOn(eventsData, 'EVENTS_POOL', 'get').mockReturnValue([
-      {
-        id: 'test_npc_event',
-        title: 'Test NPC Event',
-        text: 'A test event.',
-        category: 'random',
-        weight: 1000, // Guarantee it triggers
-        involvedRelationshipType: 'parent', // Hooks into NPC logic
-        choices: [
-          {
-            id: 'test_choice',
-            text: 'Test Choice',
-            effect: {
-              outcomeText: 'Test outcome',
-              statChanges: { happiness: 10 } // Delta of +10
-            }
-          }
-        ]
-      }
-    ]);
-
     render(<App />);
 
     // Wait for the Character Creator to render and start the game

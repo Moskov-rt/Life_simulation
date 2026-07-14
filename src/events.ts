@@ -682,6 +682,7 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { happiness: -10, status: -5 },
           repChanges: { online: 15, family: 5 },
           outcomeText: 'Your apology is well-received by reasonable observers. The backlash cools down, although a few trolls continue to leaves comments on your profile.',
+          narrativeVariants: { positive: [{ text: 'Your explanation reaches people willing to listen. The pile-on loses momentum, leaving only a few stubborn trolls behind.' }, { text: 'A careful apology changes the tone of the conversation. By evening, more people are sharing your clarification than the original outrage.' }] },
           logText: 'Apologized publicly for an old online post.'
         }
       },
@@ -692,6 +693,7 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { happiness: 10, status: 15 },
           repChanges: { online: -25, family: -15 },
           outcomeText: 'You gain a small, rowdy following of internet contrarians, but your family is deeply embarrassed by your abrasive posts and local standing is damaged.',
+          narrativeVariants: { chaotic: [{ text: 'The post wins you a loud new audience while every family notification feels like a fresh warning. The attention is exhilarating and isolating at once.' }, { text: 'Your replies become a rallying cry for strangers and an embarrassment at home. You gain visibility, but not the kind that feels safe.' }] },
           logText: 'Publicly clashed with critics online, doubling down on comments.'
         }
       },
@@ -702,6 +704,7 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { happiness: 5, smarts: 10 },
           repChanges: { online: -5 },
           outcomeText: 'You turn off the screen. Over the next month, the internet hivemind forgets about you and moves on to another target. Your real-world mental health improves dramatically.',
+          narrativeVariants: { positive: [{ text: 'Offline, the noise becomes manageable. The trend finds another target, and you rediscover how quiet your own life can be.' }, { text: 'Stepping away costs a little visibility, but the relief arrives quickly. A month later, the outrage has moved on without you.' }] },
           logText: 'Deactivated online accounts to escape viral outrage.'
         }
       }
@@ -801,6 +804,7 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { happiness: 30, status: 15 },
           cashChange: 3500, // Recover initial 1000 + 2500 profit
           outcomeText: 'Your investment has paid off handsomely! You cash out with $3,500 in total returns, feeling like a financial genius.',
+          narrativeVariants: { positive: [{ text: 'The approval lands, the price surges, and your patience finally has a number attached to it. You cash out before the excitement can turn into greed.' }, { text: 'Two years of uncertainty resolve in a single satisfying sale. For once, the risky decision pays exactly as promised.' }] },
           logText: 'Cashed out a massive $3,500 profit from biotech stocks.'
         }
       }
@@ -1368,9 +1372,9 @@ export const EVENTS_POOL: Event[] = [
     conditions: { minAge: 24, maxAge: 45 },
     weight: 28,
     choices: [
-      { id: 'promo_work', text: 'Put in extra work and let your results speak for themselves.', effect: { statChanges: { status: 20, happiness: 5, willpower: 20 }, repChanges: { workplace: 20 }, outcomeText: 'You pull three brilliant reports in a week. Your boss notices. On announcement day, your name is called. Alex congratulates you with class.', logText: 'Won a competitive promotion through hard work and outstanding results.' } },
-      { id: 'promo_network', text: 'Schmooze every stakeholder and play company politics.', effect: { statChanges: { status: 25, smarts: 10, happiness: -5 }, repChanges: { workplace: 10 }, outcomeText: 'You attend every optional meeting, remember everyone\'s birthday, and mention your achievements in every conversation. It works. You feel slightly hollow but get the job title.', logText: 'Won a promotion through strategic networking and office politics.' } },
-      { id: 'promo_sabotage', text: 'Anonymously tip the boss off about a minor mistake Alex made.', effect: { statChanges: { karma: -30, status: 15 }, repChanges: { workplace: -15 }, outcomeText: 'Alex finds out it was you two months later through a mutual colleague. The damage to your relationship is irreversible. You got the job but lost your integrity and a friend.', logText: 'Sabotaged a colleague to secure a promotion. Lost their friendship.' } }
+      { id: 'promo_work', text: 'Put in extra work and let your results speak for themselves.', effect: { statChanges: { status: 20, happiness: 5, willpower: 20 }, repChanges: { workplace: 20 }, outcomeText: 'You pull three brilliant reports in a week. Your boss notices. On announcement day, your name is called. Alex congratulates you with class.', narrativeVariants: { positive: [{ text: 'The late nights show up in the work, not the gossip. When your name is announced, even Alex has no reason to doubt it.' }, { text: 'Your results make the decision look inevitable. The promotion feels earned, and the congratulations around you feel genuine.' }] }, logText: 'Won a competitive promotion through hard work and outstanding results.' } },
+      { id: 'promo_network', text: 'Schmooze every stakeholder and play company politics.', effect: { statChanges: { status: 25, smarts: 10, happiness: -5 }, repChanges: { workplace: 10 }, outcomeText: 'You attend every optional meeting, remember everyone\'s birthday, and mention your achievements in every conversation. It works. You feel slightly hollow but get the job title.', narrativeVariants: { chaotic: [{ text: 'You learn every name, every hallway alliance, and exactly when to mention your wins. The title arrives with applause that feels a little rehearsed.' }, { text: 'Your networking campaign works perfectly. By the time the offer arrives, you have the role—and a nagging sense that you performed a different version of yourself.' }] }, logText: 'Won a promotion through strategic networking and office politics.' } },
+      { id: 'promo_sabotage', text: 'Anonymously tip the boss off about a minor mistake Alex made.', effect: { statChanges: { karma: -30, status: 15 }, repChanges: { workplace: -15 }, outcomeText: 'Alex finds out it was you two months later through a mutual colleague. The damage to your relationship is irreversible. You got the job but lost your integrity and a friend.', narrativeVariants: { chaotic: [{ text: 'The promotion is yours, but Alex eventually connects the missing pieces. The new title cannot make the office feel like home again.' }, { text: 'Your warning does its job. Months later, the victory curdles when Alex learns who made the competition personal.' }] }, logText: 'Sabotaged a colleague to secure a promotion. Lost their friendship.' } }
     ]
   },
 
@@ -2784,6 +2788,7 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           cashChange: -10000,
           outcomeText: 'Doctors treat the poisoning. You recover, but you are weak.',
+          narrativeVariants: { negative: [{ text: 'The hospital stops the poisoning before it becomes irreversible. Recovery is slow, and every weak morning reminds you why you came.' }, { text: 'Doctors stabilize you, but the scare leaves its mark. You leave alive, exhausted, and unable to treat the warning as abstract anymore.' }] },
           logText: 'Admitted to ER for supplement liver poisoning.'
         }
       },
@@ -2793,6 +2798,7 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           statChanges: { health: -30 },
           outcomeText: 'Your condition worsens. You pass out and are rushed to the ICU.',
+          narrativeVariants: { negative: [{ text: 'Waiting it out becomes impossible. By the time you collapse, the people around you are making the emergency decision for you.' }, { text: 'The pain keeps escalating until the room goes dark. You wake in intensive care with the cost of delay written all around you.' }] },
           logText: 'Refused medical attention for liver toxicity.'
         }
       }
@@ -2838,8 +2844,8 @@ export const EVENTS_POOL: Event[] = [
       }
     },
     choices: [
-      { id: 'creator_viral_engage', text: 'Engage with the new audience.', effect: { repChanges: { online: 10 }, flagsSet: { creator_first_viral_post: true }, outcomeText: 'You welcome the attention and turn the viral moment into momentum.', logText: 'Engaged with the audience after a first viral post.' } },
-      { id: 'creator_viral_steady', text: 'Keep posting normally.', effect: { repChanges: { online: 5 }, flagsSet: { creator_first_viral_post: true }, outcomeText: 'You avoid chasing the trend and keep your account focused.', logText: 'Stayed consistent after a first viral post.' } }
+      { id: 'creator_viral_engage', text: 'Engage with the new audience.', effect: { repChanges: { online: 10 }, flagsSet: { creator_first_viral_post: true }, outcomeText: 'You welcome the attention and turn the viral moment into momentum.', narrativeVariants: { positive: [{ text: 'The new comments feel overwhelming at first, then energizing. You meet the moment with warmth and turn a spike in attention into a community.' }, { text: 'Instead of treating the viral post as a fluke, you show up for the people it reached. The audience begins to recognize you as more than one lucky clip.' }] }, logText: 'Engaged with the audience after a first viral post.' } },
+      { id: 'creator_viral_steady', text: 'Keep posting normally.', effect: { repChanges: { online: 5 }, flagsSet: { creator_first_viral_post: true }, outcomeText: 'You avoid chasing the trend and keep your account focused.', narrativeVariants: { positive: [{ text: 'You let the trend pass through without changing your voice. The quieter growth that follows feels more durable.' }, { text: 'Rather than chase the algorithm, you keep your routine. Some new viewers stay because they like what you were already making.' }] }, logText: 'Stayed consistent after a first viral post.' } }
     ]
   },
   {
@@ -2854,8 +2860,8 @@ export const EVENTS_POOL: Event[] = [
       customCheck: state => state.creatorCareer?.active === true && (state.creatorCareer.profile?.yearlyActions.collaborationCount || 0) > 0
     },
     choices: [
-      { id: 'creator_collaboration_accept', text: 'Accept the collaboration.', effect: { flagsSet: { creator_collaboration_offer_resolved: true, creator_collaboration_accepted: true }, scheduleDelayedEvent: { eventId: 'creator_sponsor_offer', delayYears: 1 }, outcomeText: 'You agree on a project and begin planning the release.', logText: 'Accepted a creator collaboration offer.' } },
-      { id: 'creator_collaboration_decline', text: 'Decline politely.', effect: { flagsSet: { creator_collaboration_offer_resolved: true }, outcomeText: 'You decline without burning the professional connection.', logText: 'Declined a creator collaboration offer.' } }
+      { id: 'creator_collaboration_accept', text: 'Accept the collaboration.', effect: { flagsSet: { creator_collaboration_offer_resolved: true, creator_collaboration_accepted: true }, scheduleDelayedEvent: { eventId: 'creator_sponsor_offer', delayYears: 1 }, outcomeText: 'You agree on a project and begin planning the release.', narrativeVariants: { neutral: [{ text: 'You settle the practical details, divide the work, and begin planning a release neither of you could make alone.' }, { text: 'The agreement is straightforward: shared work, shared credit, and a project on the calendar. The real work starts now.' }] }, logText: 'Accepted a creator collaboration offer.' } },
+      { id: 'creator_collaboration_decline', text: 'Decline politely.', effect: { flagsSet: { creator_collaboration_offer_resolved: true }, outcomeText: 'You decline without burning the professional connection.', narrativeVariants: { neutral: [{ text: 'You pass without making it personal. The connection remains open, even if this project is not the right fit.' }, { text: 'The offer does not match your plans, and you say so clearly. No bridge burns; you simply keep moving on your own schedule.' }] }, logText: 'Declined a creator collaboration offer.' } }
     ]
   },
   {
@@ -2870,8 +2876,8 @@ export const EVENTS_POOL: Event[] = [
       customCheck: state => state.creatorCareer?.active === true && (state.flags.creator_collaboration_accepted || ['established', 'top_creator'].includes(state.creatorCareer.profile?.tier || 'beginner'))
     },
     choices: [
-      { id: 'creator_sponsor_accept', text: 'Accept with clear disclosure.', effect: { repChanges: { online: 5 }, flagsSet: { creator_sponsor_offer_resolved: true }, outcomeText: 'You disclose the sponsorship and publish the campaign professionally.', logText: 'Accepted a disclosed creator sponsorship.' } },
-      { id: 'creator_sponsor_decline', text: 'Decline the offer.', effect: { flagsSet: { creator_sponsor_offer_resolved: true }, outcomeText: 'You decide the offer does not fit your account.', logText: 'Declined a creator sponsorship.' } }
+      { id: 'creator_sponsor_accept', text: 'Accept with clear disclosure.', effect: { repChanges: { online: 5 }, flagsSet: { creator_sponsor_offer_resolved: true }, outcomeText: 'You disclose the sponsorship and publish the campaign professionally.', narrativeVariants: { positive: [{ text: 'You label the partnership clearly and keep the campaign aligned with your usual voice. Your audience sees the disclosure—and the care behind it.' }, { text: 'The sponsored post is direct about what it is. That clarity lets the campaign support your work without pretending to be something else.' }] }, logText: 'Accepted a disclosed creator sponsorship.' } },
+      { id: 'creator_sponsor_decline', text: 'Decline the offer.', effect: { flagsSet: { creator_sponsor_offer_resolved: true }, outcomeText: 'You decide the offer does not fit your account.', narrativeVariants: { neutral: [{ text: 'The money is tempting, but the brand does not belong in your feed. You leave the door open for an offer that does.' }, { text: 'You thank them and decline. Your account stays pointed in the direction you chose, without any need for a public explanation.' }] }, logText: 'Declined a creator sponsorship.' } }
     ]
   },
   {
@@ -2888,8 +2894,8 @@ export const EVENTS_POOL: Event[] = [
       customCheck: state => state.creatorCareer?.active === true && (state.secretExposure?.level || 0) >= 30 && ((state.secretExposure?.level || 0) >= 60 || Object.values(state.npcs).some(npc => npc.relation === 'parent' && npc.vectors.knowledge >= 20))
     },
     choices: [
-      { id: 'creator_family_confess', text: 'Tell the truth and explain your boundaries.', effect: { flagsSet: { creator_family_discovery_resolved: true }, relationshipChanges: { target: 'current', trust: 12, suspicion: -10, resentment: -8, knowledge: 45, forgiveness: 5 }, memory: { type: 'honest_account_disclosure', intensity: 60, emotionalValue: 30, decayRate: 2, permanent: true }, outcomeText: 'You answer honestly. Their reaction is shaped by their trust and personality.', logText: 'Discussed the creator account honestly with family.' } },
-      { id: 'creator_family_deny', text: 'Deny that the account is yours.', effect: { flagsSet: { creator_family_discovery_resolved: true }, relationshipChanges: { target: 'current', trust: -10, suspicion: 20, resentment: 15, knowledge: 15 }, memory: { type: 'account_discovery_denial', intensity: 70, emotionalValue: -35, decayRate: 1, permanent: false }, outcomeText: 'You deny it, but the evidence leaves them uneasy.', logText: 'Denied owning the discovered creator account.' } }
+      { id: 'creator_family_confess', text: 'Tell the truth and explain your boundaries.', effect: { flagsSet: { creator_family_discovery_resolved: true }, relationshipChanges: { target: 'current', trust: 12, suspicion: -10, resentment: -8, knowledge: 45, forgiveness: 5 }, memory: { type: 'honest_account_disclosure', intensity: 60, emotionalValue: 30, decayRate: 2, permanent: true }, outcomeText: 'You answer honestly. Their reaction is shaped by their trust and personality.', narrativeVariants: { positive: [{ text: 'You make room for their discomfort without surrendering your boundaries. The conversation is difficult, but it leaves the relationship clearer than before.', relationshipTypes: ['parent'], npcArchetypes: ['average', 'mentor'], minRelationshipTrust: 55 }, { text: 'Honesty does not make the subject easy, yet it gives you both something solid to work from. They leave knowing where you stand.', relationshipTypes: ['parent'], minAge: 21 }] }, logText: 'Discussed the creator account honestly with family.' } },
+      { id: 'creator_family_deny', text: 'Deny that the account is yours.', effect: { flagsSet: { creator_family_discovery_resolved: true }, relationshipChanges: { target: 'current', trust: -10, suspicion: 20, resentment: 15, knowledge: 15 }, memory: { type: 'account_discovery_denial', intensity: 70, emotionalValue: -35, decayRate: 1, permanent: false }, outcomeText: 'You deny it, but the evidence leaves them uneasy.', narrativeVariants: { negative: [{ text: 'They stop pressing, but not believing. Every later pause in the conversation carries the question you refused to answer.', relationshipTypes: ['parent'], npcArchetypes: ['controlling partner', 'average'] }, { text: 'The denial buys you a quiet exit, not relief. Their uncertainty hardens into something harder to repair.', relationshipTypes: ['parent'], maxRelationshipSuspicion: 80 }] }, logText: 'Denied owning the discovered creator account.' } }
     ]
   },
   {
@@ -2906,8 +2912,8 @@ export const EVENTS_POOL: Event[] = [
       customCheck: state => state.creatorCareer?.active === true && (state.secretExposure?.level || 0) >= 30 && ((state.secretExposure?.level || 0) >= 50 || Object.values(state.npcs).some(npc => npc.relation === 'partner' && npc.vectors.knowledge >= 20))
     },
     choices: [
-      { id: 'creator_partner_confess', text: 'Talk openly and agree on boundaries.', effect: { flagsSet: { creator_partner_conflict_resolved: true }, relationshipChanges: { target: 'current', trust: 12, suspicion: -10, resentment: -10, knowledge: 35, forgiveness: 8 }, memory: { type: 'creator_boundary_agreement', intensity: 65, emotionalValue: 35, decayRate: 2, permanent: true }, outcomeText: 'You have a direct conversation and agree on boundaries together.', logText: 'Agreed on creator-career boundaries with a partner.' } },
-      { id: 'creator_partner_change_subject', text: 'Dismiss the concern and change the subject.', effect: { flagsSet: { creator_partner_conflict_resolved: true }, relationshipChanges: { target: 'current', trust: -12, suspicion: 18, resentment: 20, knowledge: 10 }, memory: { type: 'dismissed_creator_concern', intensity: 75, emotionalValue: -40, decayRate: 1, permanent: false }, outcomeText: 'They feel dismissed, and the unresolved conflict lingers.', logText: 'Dismissed a partner conflict about the creator account.' } }
+      { id: 'creator_partner_confess', text: 'Talk openly and agree on boundaries.', effect: { flagsSet: { creator_partner_conflict_resolved: true }, relationshipChanges: { target: 'current', trust: 12, suspicion: -10, resentment: -10, knowledge: 35, forgiveness: 8 }, memory: { type: 'creator_boundary_agreement', intensity: 65, emotionalValue: 35, decayRate: 2, permanent: true }, outcomeText: 'You have a direct conversation and agree on boundaries together.', narrativeVariants: { positive: [{ text: 'You make the rules explicit instead of asking either of you to guess. The tension softens into a plan you both helped build.', relationshipTypes: ['partner', 'spouse'], npcArchetypes: ['loyal partner', 'supportive friend'] }, { text: 'The talk is vulnerable, but neither of you walks away from it. Your boundaries become an agreement rather than an ultimatum.', relationshipTypes: ['partner', 'spouse'], minRelationshipTrust: 50 }] }, logText: 'Agreed on creator-career boundaries with a partner.' } },
+      { id: 'creator_partner_change_subject', text: 'Dismiss the concern and change the subject.', effect: { flagsSet: { creator_partner_conflict_resolved: true }, relationshipChanges: { target: 'current', trust: -12, suspicion: 18, resentment: 20, knowledge: 10 }, memory: { type: 'dismissed_creator_concern', intensity: 75, emotionalValue: -40, decayRate: 1, permanent: false }, outcomeText: 'They feel dismissed, and the unresolved conflict lingers.', narrativeVariants: { negative: [{ text: 'The room goes quiet, but the problem does not. Your partner hears the subject change as a decision to leave them alone with it.', relationshipTypes: ['partner', 'spouse'], npcArchetypes: ['jealous partner', 'controlling partner'] }, { text: 'You escape the conversation for tonight. The unanswered concern settles into the relationship as distance.', relationshipTypes: ['partner', 'spouse'] }] }, logText: 'Dismissed a partner conflict about the creator account.' } }
     ]
   },
   {
@@ -2922,8 +2928,82 @@ export const EVENTS_POOL: Event[] = [
       customCheck: state => state.creatorCareer?.active === true && (state.secretExposure?.level || 0) >= 70
     },
     choices: [
-      { id: 'creator_leak_address', text: 'Address the leak publicly.', effect: { statChanges: { happiness: -10 }, repChanges: { online: -10 }, flagsSet: { creator_account_leak_resolved: true }, outcomeText: 'You acknowledge the leak and publish a measured response.', logText: 'Addressed an account leak publicly.' } },
-      { id: 'creator_leak_withdraw', text: 'Step back from posting.', effect: { statChanges: { happiness: -15 }, repChanges: { online: -15 }, flagsSet: { creator_account_leak_resolved: true }, outcomeText: 'You withdraw while the backlash cools, but the stress follows you offline.', logText: 'Stepped back after an account leak and backlash.' } }
+      { id: 'creator_leak_address', text: 'Address the leak publicly.', effect: { statChanges: { happiness: -10 }, repChanges: { online: -10 }, flagsSet: { creator_account_leak_resolved: true }, outcomeText: 'You acknowledge the leak and publish a measured response.', narrativeVariants: { negative: [{ text: 'You make the statement because silence would let the leak define you. It costs energy and goodwill, but you regain a little control of the story.' }, { text: 'The response is measured, even while the attention is not. You face the leak directly and accept that repair will take longer than one post.' }] }, logText: 'Addressed an account leak publicly.' } },
+      { id: 'creator_leak_withdraw', text: 'Step back from posting.', effect: { statChanges: { happiness: -15 }, repChanges: { online: -15 }, flagsSet: { creator_account_leak_resolved: true }, outcomeText: 'You withdraw while the backlash cools, but the stress follows you offline.', narrativeVariants: { negative: [{ text: 'You stop posting to create distance, but the story follows you past the screen. The quiet helps only after the stress has had time to settle.' }, { text: 'Retreating gives the backlash less to react to. It does not erase the feeling that your private life has been pulled into public view.' }] }, logText: 'Stepped back after an account leak and backlash.' } }
+    ]
+  },
+  {
+    id: 'adult_performer_breakout',
+    title: 'Breakout Collaboration',
+    text: 'A respected performer offers you a collaboration that could put your work in front of a much larger audience.',
+    category: 'career',
+    weight: 18,
+    conditions: {
+      minAge: 18,
+      flagsFalse: ['adult_performer_breakout_resolved'],
+      customCheck: state => state.adultPerformerCareer?.active === true && (state.fame || 0) >= 20 && (state.adultPerformerCareer?.yearlyActions.collaborationCount || 0) > 0
+    },
+    choices: [
+      { id: 'adult_breakout_accept', text: 'Accept and prepare carefully.', effect: { repChanges: { online: 8 }, flagsSet: { adult_performer_breakout_resolved: true }, memory: { type: 'breakout_collaboration', intensity: 45, emotionalValue: 25, decayRate: 2, permanent: false }, outcomeText: 'The collaboration lands well and strengthens your professional network.', narrativeVariants: { positive: [{ text: 'Preparation keeps the larger audience from feeling like a gamble. The collaboration expands your reach while proving you can hold your own in the room.', careers: ['adult_performer'], minFame: 20 }, { text: 'The release reaches beyond your usual circle, and the professional respect matters as much as the numbers. A new door opens without costing you control.', careers: ['adult_performer'] }] }, logText: 'Accepted a breakout performer collaboration.' } },
+      { id: 'adult_breakout_decline', text: 'Decline to protect your boundaries.', effect: { statChanges: { happiness: 5 }, flagsSet: { adult_performer_breakout_resolved: true }, outcomeText: 'You pass on the opportunity and keep control of your boundaries.', narrativeVariants: { positive: [{ text: 'The opportunity is real, but so is your right to say no. You leave with your limits intact and no explanation owed.' }, { text: 'You choose the pace of your own career. The offer moves on, while your sense of control remains yours.' }] }, logText: 'Declined a breakout collaboration to protect boundaries.' } }
+    ]
+  },
+  {
+    id: 'adult_performer_family_rumor',
+    title: 'A Family Member Has Questions',
+    text: 'A family member has seen hints of your public work and asks whether the rumors are true.',
+    category: 'relationship',
+    weight: 16,
+    involvedRelationshipType: 'parent',
+    conditions: {
+      minAge: 18,
+      hasRelationshipType: 'parent',
+      flagsFalse: ['adult_performer_family_rumor_resolved'],
+      customCheck: state => state.adultPerformerCareer?.active === true && (state.secretExposure?.level || 0) >= 30 && (state.fame || 0) >= 15
+    },
+    choices: [
+      { id: 'adult_family_honest', text: 'Explain your work and your boundaries.', effect: { relationshipChanges: { target: 'current', trust: 8, suspicion: -12, knowledge: 35, forgiveness: 5 }, flagsSet: { adult_performer_family_rumor_resolved: true }, memory: { type: 'adult_career_disclosure', intensity: 55, emotionalValue: 10, decayRate: 1, permanent: true }, outcomeText: 'The conversation is difficult, but honesty gives the relationship a path forward.', narrativeVariants: { positive: [{ text: 'You explain the work without apologizing for existing. The conversation is strained, but it ends with clearer boundaries and less fear.', relationshipTypes: ['parent'], minFame: 15 }, { text: 'There is no perfect way to have this conversation. Still, honesty gives your family something more useful than rumor.', relationshipTypes: ['parent'], npcArchetypes: ['average', 'mentor'] }] }, logText: 'Discussed adult performer work honestly with family.' } },
+      { id: 'adult_family_deny', text: 'Deny everything and change the subject.', effect: { relationshipChanges: { target: 'current', trust: -8, suspicion: 18, knowledge: 8 }, flagsSet: { adult_performer_family_rumor_resolved: true }, outcomeText: 'They let the subject drop, but the unanswered questions remain.', narrativeVariants: { negative: [{ text: 'They let you change the subject, but their doubt does not leave with it. The next family gathering feels more watchful.', relationshipTypes: ['parent'] }, { text: 'The rumor is no longer discussed aloud. It survives instead in the pauses between ordinary questions.', relationshipTypes: ['parent'], maxAge: 30 }] }, logText: 'Denied rumors about adult performer work.' } }
+    ]
+  },
+  {
+    id: 'actor_breakout_audition', title: 'Breakout Audition', text: 'A director offers you a high-stakes audition after seeing your recent work.', category: 'career', weight: 18,
+    conditions: { minAge: 18, flagsFalse: ['actor_breakout_audition_resolved'], customCheck: state => state.actorCareer?.active === true && (state.fame || 0) >= 15 && (state.actorCareer?.yearlyActions.auditionCount || 0) > 0 },
+    choices: [
+      { id: 'actor_audition_commit', text: 'Prepare intensely and commit.', effect: { statChanges: { happiness: -3 }, repChanges: { online: 8 }, flagsSet: { actor_breakout_audition_resolved: true }, memory: { type: 'breakout_audition', intensity: 45, emotionalValue: 25, decayRate: 2, permanent: false }, outcomeText: 'Your preparation earns respect and a larger professional network.', narrativeVariants: { positive: [{ text: 'The preparation costs you sleep, not focus. In the room, you are ready enough to turn nerves into presence.', careers: ['actor'], minFame: 15 }, { text: 'You treat the audition like the opening it is. Whatever happens next, the casting team remembers how prepared you were.', careers: ['actor'] }] }, logText: 'Committed to a breakout acting audition.' } },
+      { id: 'actor_audition_pass', text: 'Pass and protect your schedule.', effect: { statChanges: { happiness: 4 }, flagsSet: { actor_breakout_audition_resolved: true }, outcomeText: 'You protect your energy, though the opportunity moves on.', narrativeVariants: { positive: [{ text: 'You recognize that an open door is not always the right one. The role moves on, while your energy stays available for the work you chose.' }, { text: 'Saying no feels quieter than chasing a breakthrough, but the relief is immediate. You keep your schedule—and your agency.' }] }, logText: 'Passed on a breakout acting audition.' } }
+    ]
+  },
+  {
+    id: 'actor_family_premiere', title: 'Premiere Attention', text: 'A family member sees your name in the press and asks how public you intend your career to become.', category: 'relationship', weight: 16, involvedRelationshipType: 'parent',
+    conditions: { minAge: 18, hasRelationshipType: 'parent', flagsFalse: ['actor_family_premiere_resolved'], customCheck: state => state.actorCareer?.active === true && (state.fame || 0) >= 35 },
+    choices: [
+      { id: 'actor_family_share', text: 'Share the excitement and set boundaries.', effect: { relationshipChanges: { target: 'current', trust: 8, suspicion: -8, knowledge: 25 }, flagsSet: { actor_family_premiere_resolved: true }, memory: { type: 'actor_premiere_discussion', intensity: 35, emotionalValue: 20, decayRate: 2, permanent: false }, outcomeText: 'They understand the visibility tradeoff and celebrate with you.', narrativeVariants: { positive: [{ text: 'You let them celebrate the premiere without pretending fame has no cost. The shared excitement makes the boundaries easier to understand.', relationshipTypes: ['parent'], minFame: 35 }, { text: 'For a moment, the press coverage feels personal instead of distant. Your family sees both the opportunity and the limits you need.', relationshipTypes: ['parent'], npcArchetypes: ['average', 'mentor'] }] }, logText: 'Discussed acting fame with family.' } },
+      { id: 'actor_family_withhold', text: 'Keep the details private.', effect: { relationshipChanges: { target: 'current', suspicion: 8, knowledge: 5 }, flagsSet: { actor_family_premiere_resolved: true }, outcomeText: 'You keep the conversation light and your career boundaries firm.', narrativeVariants: { negative: [{ text: 'You keep the details to yourself, and they respect the boundary without quite understanding it. Curiosity lingers after the subject changes.', relationshipTypes: ['parent'] }, { text: 'The premiere remains public news but private territory at home. Your family leaves with more questions than answers.', relationshipTypes: ['parent'], minFame: 50 }] }, logText: 'Kept acting career details private from family.' } }
+    ]
+  },
+  {
+    id: 'actor_first_audition', title: 'First Audition', text: 'Your first serious casting call is tomorrow, and the room will be full of more experienced performers.', category: 'career', weight: 20,
+    conditions: { minAge: 18, flagsFalse: ['actor_first_audition_resolved'], customCheck: state => state.actorCareer?.active === true && state.flags.actorFirstAuditionEligibleThisYear === true },
+    choices: [
+      { id: 'actor_first_audition_prepare', text: 'Rehearse until you know every beat.', effect: { statChanges: { smarts: 2, happiness: -2 }, repChanges: { workplace: 5 }, flagsSet: { actor_first_audition_resolved: true }, outcomeText: 'You arrive prepared and leave a strong first impression.', logText: 'Prepared thoroughly for a first acting audition.' } },
+      { id: 'actor_first_audition_improvise', text: 'Trust your instincts and improvise.', effect: { statChanges: { status: 3 }, flagsSet: { actor_first_audition_resolved: true }, outcomeText: 'Your bold choice gets the casting team talking.', logText: 'Took an instinctive approach to a first acting audition.' } }
+    ]
+  },
+  {
+    id: 'actor_award_season', title: 'Award Season', text: 'Your lead performance is on an awards shortlist, and every interview could shape the public story around you.', category: 'career', weight: 18,
+    conditions: { minAge: 18, flagsFalse: ['actor_award_season_resolved'], customCheck: state => state.actorCareer?.active === true && (state.flags.actorAwardEligibleThisYear === true || state.flags.actorAwardEligiblePending === true) },
+    choices: [
+      { id: 'actor_award_gracious', text: 'Keep every appearance gracious and focused.', effect: { repChanges: { online: 10, workplace: 5 }, flagsSet: { actor_award_season_resolved: true, actorAwardEligiblePending: false }, outcomeText: 'Your professionalism wins over voters and collaborators.', narrativeVariants: { positive: [{ text: 'Every interview gives the same impression: prepared, generous, and impossible to rattle. The season leaves collaborators eager to work with you again.', careers: ['actor'], minFame: 50, minReputation: { online: 30 } }, { text: 'You let the work remain the headline. By the end of the circuit, the attention has strengthened both your public image and your professional ties.', careers: ['actor'] }] }, logText: 'Handled award-season attention professionally.' } },
+      { id: 'actor_award_skip', text: 'Skip the circuit and protect your energy.', effect: { statChanges: { happiness: 6 }, repChanges: { online: -3 }, flagsSet: { actor_award_season_resolved: true, actorAwardEligiblePending: false }, outcomeText: 'You preserve your energy, even as the spotlight moves on without you.', narrativeVariants: { chaotic: [{ text: 'The silence protects your energy but gives the spotlight somewhere else to go. You feel better while the public conversation keeps moving without you.' }, { text: 'You trade a little visibility for a life that feels manageable again. It is a relief—and a reminder that attention rarely waits.' }] }, logText: 'Stepped back from award-season publicity.' } }
+    ]
+  },
+  {
+    id: 'actor_scandal', title: 'Set Gossip Goes Public', text: 'A rumor from a film set is spreading online, and a close colleague asks whether you will address it together.', category: 'relationship', weight: 15, involvedRelationshipType: 'colleague',
+    conditions: { minAge: 18, hasRelationshipType: 'colleague', flagsFalse: ['actor_scandal_resolved'], customCheck: state => state.actorCareer?.active === true && (state.fame || 0) >= 30 && (state.reputation.online || 0) >= 15 },
+    choices: [
+      { id: 'actor_scandal_joint', text: 'Issue a calm joint statement.', effect: { repChanges: { online: 4 }, relationshipChanges: { target: 'current', trust: 8, suspicion: -6, resentment: -5, knowledge: 10 }, flagsSet: { actor_scandal_resolved: true }, outcomeText: 'The statement settles the story and shows your colleague you have their back.', narrativeVariants: { positive: [{ text: 'You and your colleague take the rumor seriously without feeding it. The unified response gives the story less room to grow.', careers: ['actor'], relationshipTypes: ['colleague'], minFame: 30 }, { text: 'The statement is calm, specific, and shared. Your colleague remembers that you stood beside them when silence would have been easier.', relationshipTypes: ['colleague'], npcArchetypes: ['supportive friend', 'mentor', 'average'] }] }, logText: 'Addressed a set rumor with a colleague.' } },
+      { id: 'actor_scandal_silent', text: 'Stay silent and let it burn out.', effect: { statChanges: { happiness: -4 }, relationshipChanges: { target: 'current', trust: -6, suspicion: 7, resentment: 8 }, flagsSet: { actor_scandal_resolved: true }, outcomeText: 'The headlines fade, but your colleague feels left alone in the fallout.', narrativeVariants: { negative: [{ text: 'The rumor eventually loses heat, but your colleague remembers who was absent while it was hottest. The professional cost is quieter than the headlines.', careers: ['actor'], relationshipTypes: ['colleague'] }, { text: 'Silence keeps you out of the immediate mess. It also leaves your colleague to carry a story that involved both of you.', relationshipTypes: ['colleague'], minRelationshipTrust: 40 }] }, logText: 'Stayed silent during a set-rumor scandal.' } }
     ]
   }
 ];

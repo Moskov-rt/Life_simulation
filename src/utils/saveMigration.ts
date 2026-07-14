@@ -105,12 +105,44 @@ export function migrateGameState(state: unknown): GameState {
   const source = state as Partial<GameState>;
   const newState = structuredClone(source) as GameState;
   newState.saveVersion = 1;
+  if (newState.fame === undefined) newState.fame = 0;
   newState.npcs = {};
   if (!newState.followUpFlags) newState.followUpFlags = [];
   if (!newState.ongoingEffects) newState.ongoingEffects = [];
   if (!newState.personalityTraits) newState.personalityTraits = [];
   if (!newState.creatorCareer) {
     newState.creatorCareer = { active: false, profile: null };
+  }
+  if (!newState.adultPerformerCareer) {
+    newState.adultPerformerCareer = {
+      active: false,
+      consistency: 0,
+      yearlyActions: {
+        performCount: 0,
+        collaborationCount: 0,
+        promotionCount: 0,
+        networkingCount: 0,
+        skillCount: 0,
+        privacyCount: 0,
+        restCount: 0
+      }
+    };
+  } else {
+    newState.adultPerformerCareer.yearlyActions = {
+      performCount: 0,
+      collaborationCount: 0,
+      promotionCount: 0,
+      networkingCount: 0,
+      skillCount: 0,
+      privacyCount: 0,
+      restCount: 0,
+      ...newState.adultPerformerCareer.yearlyActions
+    };
+  }
+  if (!newState.actorCareer) {
+    newState.actorCareer = { active: false, consistency: 0, yearlyActions: { auditionCount: 0, rolesAccepted: 0, networkCount: 0, promoteCount: 0, trainCount: 0, restCount: 0 } };
+  } else {
+    newState.actorCareer.yearlyActions = { auditionCount: 0, rolesAccepted: 0, networkCount: 0, promoteCount: 0, trainCount: 0, restCount: 0, ...newState.actorCareer.yearlyActions };
   }
   
   // Convert legacy relationships array to npcs dictionary

@@ -45,7 +45,7 @@ import {
   ChevronDown,
   Skull, Plane, Mountain, Star, Dices, Laptop, UserCircle, Scale, Ticket, Wine, Dog, Sun, Smartphone, Palmtree, HandHeart, FileText, Flag
 } from 'lucide-react';
-import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount, CreatorContentStyle, CreatorYearlyActions } from './types';
+import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount, CreatorContentStyle, CreatorYearlyActions, ActorYearlyActions, AdultPerformerYearlyActions } from './types';
 import { relationshipToNPC } from './utils/saveMigration';
 
 import { EVENTS_POOL } from './events';
@@ -58,6 +58,8 @@ import { applyPlayerTraits } from './utils/personalityEffects';
 import { calculateStatCascades } from './utils/statCascades';
 import { mergeOngoingEffects } from './utils/ongoingEffects';
 import { runYearlySimulation } from './utils/ageUpSimulator';
+import { evaluateFameCareerTier } from './utils/fameCareer';
+import { resolveNarrativeVariant } from './utils/narrativeVariants';
 
 import { SICKNESS_TITLES, SICKNESS_DESCRIPTIONS, IGNORE_TEXTS, PRAY_TEXTS, WATER_TEXTS } from './healthTexts';
 import { playClick, playSuccess, playError, playAgeUp } from './utils/audio';
@@ -80,6 +82,26 @@ const LOCATIONS = [
   'Sydney, Australia',
   'Mumbai, India'
 ];
+
+const emptyActorActions = (): ActorYearlyActions => ({ auditionCount: 0, rolesAccepted: 0, networkCount: 0, promoteCount: 0, trainCount: 0, restCount: 0 });
+export const emptyAdultPerformerActions = (): AdultPerformerYearlyActions => ({ performCount: 0, collaborationCount: 0, promotionCount: 0, networkingCount: 0, skillCount: 0, privacyCount: 0, restCount: 0 });
+const isActorJob = (job: JobInterview) => ['Extra', 'Supporting Actor', 'Lead Actor', 'Star', 'Legend'].includes(job.title);
+export const isAdultPerformerJob = (job: Pick<JobInterview, 'title'>) => ['Exotic Dancer', 'Webcam Model', 'Adult Film Extra', 'VIP Escort', 'Adult Film Star', 'Adult Studio Director'].includes(job.title);
+const isActorCareer = (career: GameState['career']) => career.track === 'actor';
+export const relationshipTargetIds = (relationships: Pick<NPC, 'id' | 'isDeceased'>[], target: 'current' | 'all' | string, activeId: string | null): string[] =>
+  target === 'all' ? relationships.filter(relationship => !relationship.isDeceased).map(relationship => relationship.id) : target === 'current' ? (activeId ? [activeId] : []) : [target];
+function evaluateActorTier(career: GameState['career'], state: GameState): number | undefined {
+  if (!isActorCareer(career)) return undefined;
+  const profile = state.actorCareer;
+  const score = (state.fame || 0) + (career.performance || 0) + (profile?.consistency || 0) + (state.reputation.online || 0);
+  return evaluateFameCareerTier(score, [
+    { title: 'Extra', salary: 15000 },
+    { title: 'Supporting Actor', salary: 60000 },
+    { title: 'Lead Actor', salary: 150000 },
+    { title: 'Star', salary: 500000 },
+    { title: 'Legend', salary: 2000000 }
+  ], (tier, total) => tier === 5 ? total >= 300 && (state.fame || 0) >= 75 : tier === 4 ? total >= 230 && (state.fame || 0) >= 50 : tier === 3 ? total >= 165 && (career.performance || 0) >= 55 : tier === 2 ? total >= 100 && (profile?.yearlyActions.rolesAccepted || 0) > 0 : true);
+}
 
 type JobInterviewOption = {
   text: string;
@@ -120,7 +142,13 @@ const JOB_INTERVIEWS: JobInterview[] = [
   { title: 'Adult Film Extra', salary: 40000, minAge: 18, req: 'Looks >= 50', industry: 'entertainment', tier: 1, minLooks: 50 },
   { title: 'VIP Escort', salary: 110000, minAge: 18, req: 'Looks >= 80, Smarts >= 50', industry: 'entertainment', tier: 2, minLooks: 80, minSmarts: 50 },
   { title: 'Adult Film Star', salary: 180000, minAge: 21, req: 'Looks >= 80', industry: 'entertainment', tier: 2, minLooks: 80 },
-  { title: 'Adult Studio Director', salary: 220000, minAge: 25, req: 'Smarts >= 75', industry: 'entertainment', tier: 3, minSmarts: 75 }
+  { title: 'Adult Studio Director', salary: 220000, minAge: 25, req: 'Smarts >= 75', industry: 'entertainment', tier: 3, minSmarts: 75 },
+  // --- ACTOR JOBS ---
+  { title: 'Extra', salary: 15000, minAge: 18, req: 'Looks >= 50', industry: 'entertainment', tier: 1, minLooks: 50 },
+  { title: 'Supporting Actor', salary: 60000, minAge: 18, req: 'Looks >= 60, Smarts >= 40', industry: 'entertainment', tier: 2, minLooks: 60, minSmarts: 40 },
+  { title: 'Lead Actor', salary: 150000, minAge: 18, req: 'Looks >= 70, Smarts >= 50', industry: 'entertainment', tier: 3, minLooks: 70, minSmarts: 50 },
+  { title: 'Star', salary: 500000, minAge: 18, req: 'Looks >= 80, Smarts >= 60', industry: 'entertainment', tier: 4, minLooks: 80, minSmarts: 60 },
+  { title: 'Legend', salary: 2000000, minAge: 18, req: 'Looks >= 90, Smarts >= 70', industry: 'entertainment', tier: 5, minLooks: 90, minSmarts: 70 }
 ];
 
 const INTERVIEW_QUESTIONS: Record<string, {question: string, options: JobInterviewOption[]}[]> = {
@@ -1285,6 +1313,7 @@ export default function App() {
       ongoingEffects: [],
       personalityTraits: [],
       log: initialLogs,
+      fame: 0,
       career: {
         title: 'Infant',
         salary: 0,
@@ -1310,6 +1339,8 @@ export default function App() {
         podcast: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
         youtube: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0, monetized: false }
       },
+      actorCareer: { active: false, consistency: 0, yearlyActions: emptyActorActions() },
+      adultPerformerCareer: { active: false, consistency: 0, yearlyActions: emptyAdultPerformerActions() },
     };
 
     setGameState(initialGameState);
@@ -1469,7 +1500,10 @@ export default function App() {
     let overriddenLogText = effect.logText || `Selected: ${choice.text}`;
     let nextOngoingEffects = gameState.ongoingEffects ? [...gameState.ongoingEffects] : [];
     
-    const activeNpc = nextRelationships.find(r => r.id === gameState.activeRelationshipContextId);
+    const relationshipTarget = effect.relationshipChanges?.target || 'current';
+    const targetNpcIds = relationshipTargetIds(nextRelationships, relationshipTarget, gameState.activeRelationshipContextId);
+    const targetNpcs = nextRelationships.filter(r => targetNpcIds.includes(r.id));
+    const activeNpc = targetNpcs[0];
     let result = resolveChoice({ ...choice, effect }, activeNpc, gameState.age);
     if (activeNpc && effect) {
       result = applyPlayerTraits(result, gameState.personalityTraits || [], choice.id, activeNpc, gameState.age);
@@ -1497,13 +1531,13 @@ export default function App() {
         nextOngoingEffects = mergeOngoingEffects(nextOngoingEffects, result.ongoingEffectsToAdd);
       }
 
-      // Update active NPC relationships
+      // Route the existing relationship result to current, all, or an explicit NPC id.
       if (result.relationshipChanges || result.memoryToAdd) {
         nextRelationships = nextRelationships.map(r => {
-          if (r.id === activeNpc.id) {
-            return applyChoiceResultToNPC(r, result);
-          }
-          return r;
+          if (!targetNpcIds.includes(r.id)) return r;
+          if (r.id === activeNpc.id) return applyChoiceResultToNPC(r, result);
+          const npcResult = applyPlayerTraits(resolveChoice({ ...choice, effect }, r, gameState.age), gameState.personalityTraits || [], choice.id, r, gameState.age);
+          return applyChoiceResultToNPC(r, npcResult);
         });
       }
     }
@@ -1685,6 +1719,31 @@ export default function App() {
       nextKarma = Math.max(0, nextKarma - 2);
     }
 
+    // Resolve an optional deterministic narrative variant after all choice effects.
+    const narrativeContextState: GameState = {
+      ...gameState,
+      cash: nextCash,
+      stats: nextStats,
+      reputation: nextRep,
+      relationships: nextRelationships as any,
+      npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)]))
+    };
+    const narrativeNpc = gameState.activeRelationshipContextId ? narrativeContextState.npcs[gameState.activeRelationshipContextId] : undefined;
+    const appliedNarrativeEffect: OutcomeEffect = {
+      ...effect,
+      statChanges: Object.fromEntries(Object.keys(nextStats).map(key => [key, nextStats[key as keyof Stats] - gameState.stats[key as keyof Stats]])),
+      repChanges: Object.fromEntries(Object.keys(nextRep).map(key => [key, nextRep[key as keyof Reputation] - gameState.reputation[key as keyof Reputation]])),
+      cashChange: nextCash - gameState.cash,
+      karmaChange: nextKarma - gameState.karma,
+      willpowerChange: nextWillpower - gameState.willpower,
+      relationshipChanges: result.relationshipChanges ? {
+        target: effect.relationshipChanges?.target || 'current',
+        ...result.relationshipChanges
+      } : effect.relationshipChanges
+    };
+    const narrativeResolution = resolveNarrativeVariant(appliedNarrativeEffect, undefined, narrativeContextState, narrativeNpc);
+    if (narrativeResolution.selected) overriddenOutcomeText = narrativeResolution.text;
+
     // Construct final outcome logging
     const loggedText = overriddenLogText.startsWith('└─') ? overriddenLogText : `└─ ${overriddenLogText}`;
     const outcomeLine = overriddenOutcomeText.startsWith('✨') ? overriddenOutcomeText : `✨ Outcome: ${overriddenOutcomeText}`;
@@ -1717,6 +1776,8 @@ export default function App() {
       log: updatedLogs,
       karma: nextKarma,
       willpower: nextWillpower,
+      // Legacy outcomes do not consume or initialize the seeded stream.
+      rngSeed: narrativeResolution.selected ? narrativeResolution.nextSeed : gameState.rngSeed,
       currentEvent: null,
       activeRelationshipContextId: null,
       lastOutcome: {
@@ -2158,7 +2219,8 @@ export default function App() {
       MINOR_ILLNESSES,
       CHRONIC_ILLNESSES,
       TERMINAL_ILLNESSES,
-      generateSchoolContacts
+      generateSchoolContacts,
+      evaluateCareerTier: evaluateActorTier
     };
 
     const result = runYearlySimulation(gameState, context);
@@ -2686,7 +2748,10 @@ export default function App() {
     setGameState({
       ...gameState,
       career: { title: 'Unemployed', salary: 0, type: 'unemployed', yearsInRole: 0 },
+      actorCareer: gameState.actorCareer?.active ? { ...gameState.actorCareer, active: false, yearlyActions: emptyActorActions() } : gameState.actorCareer,
+      adultPerformerCareer: gameState.adultPerformerCareer?.active ? { ...gameState.adultPerformerCareer, active: false, yearlyActions: emptyAdultPerformerActions() } : gameState.adultPerformerCareer,
       creatorCareer: gameState.creatorCareer?.active ? { ...gameState.creatorCareer, active: false } : gameState.creatorCareer,
+      flags: { ...gameState.flags, actorAwardEligiblePending: false },
       log: [
         ...gameState.log,
         `💼 Resigned: I quit my job as a ${oldTitle} and am now looking for new career paths.`
@@ -2700,6 +2765,7 @@ export default function App() {
     setGameState({
       ...gameState,
       career: { title: 'Creator', salary: 0, type: 'job', performance: 50, yearsInRole: 0 },
+      flags: { ...gameState.flags, actorAwardEligiblePending: false },
       creatorCareer: {
         active: true,
         profile: gameState.creatorCareer?.profile || {
@@ -2734,6 +2800,18 @@ export default function App() {
         profile: { ...profile, yearlyActions: { ...profile.yearlyActions, [action]: profile.yearlyActions[action] + 1 } }
       }
     });
+  };
+
+  const handleActorAction = (action: keyof ActorYearlyActions) => {
+    if (!gameState?.actorCareer?.active) return;
+    triggerSound('click');
+    setGameState({ ...gameState, actorCareer: { ...gameState.actorCareer, yearlyActions: { ...gameState.actorCareer.yearlyActions, [action]: gameState.actorCareer.yearlyActions[action] + 1 } } });
+  };
+
+  const handleAdultPerformerAction = (action: keyof AdultPerformerYearlyActions) => {
+    if (!gameState?.adultPerformerCareer?.active) return;
+    triggerSound('click');
+    setGameState({ ...gameState, adultPerformerCareer: { ...gameState.adultPerformerCareer, yearlyActions: { ...gameState.adultPerformerCareer.yearlyActions, [action]: gameState.adultPerformerCareer.yearlyActions[action] + 1 } } });
   };
 
   const handleUniversityDropOut = () => {
@@ -3225,6 +3303,7 @@ export default function App() {
         hoursPerWeek: 40,
         industry: theJob.industry,
         tier: theJob.tier,
+        track: isActorJob(theJob) ? 'actor' : isAdultPerformerJob(theJob) ? 'adult_performer' : undefined,
         employer: randomEmployer
       };
       
@@ -3272,6 +3351,9 @@ export default function App() {
         stats: nextStats,
         log: nextLog,
         career: nextCareer as any,
+        actorCareer: isActorJob(theJob) ? { active: true, consistency: 0, yearlyActions: emptyActorActions() } : { active: false, consistency: 0, yearlyActions: emptyActorActions() },
+        adultPerformerCareer: isAdultPerformerJob(theJob) ? { active: true, consistency: 0, yearlyActions: emptyAdultPerformerActions() } : { active: false, consistency: 0, yearlyActions: emptyAdultPerformerActions() },
+        flags: { ...gameState.flags, actorAwardEligiblePending: false, ...(isActorJob(theJob) ? { actorCareerStartAge: gameState.age } : {}) },
         npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       });
       
@@ -5993,6 +6075,22 @@ export default function App() {
 
                       {occupationSubView === 'current_job' && gameState.career.type === 'job' && (
                         <div className="flex flex-col">
+                          {gameState.actorCareer?.active && (
+                            <div className="p-4 border-b border-slate-200 space-y-3">
+                              <div className="font-extrabold text-[15px] text-[#0f4a8a]">Actor Career <span className="text-[12px] text-[#4281a4]">· Tier {gameState.career.tier || 1}</span></div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {([['auditionCount','Audition'],['rolesAccepted','Accept roles'],['trainCount','Train acting'],['networkCount','Network'],['promoteCount','Promote'],['restCount','Rest']] as [keyof ActorYearlyActions,string][]).map(([action,label]) => <button key={action} onClick={() => handleActorAction(action)} className="py-2 text-[11px] font-bold bg-slate-50 text-[#0f4a8a] border border-slate-200 rounded">{label} ({gameState.actorCareer?.yearlyActions[action] || 0})</button>)}
+                              </div>
+                            </div>
+                          )}
+                          {gameState.adultPerformerCareer?.active && (
+                            <div className="p-4 border-b border-slate-200 space-y-3">
+                              <div className="font-extrabold text-[15px] text-[#0f4a8a]">Adult Performer Career <span className="text-[12px] text-[#4281a4]">· Tier {gameState.career.tier || 1}</span></div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {([['performCount','Perform'],['collaborationCount','Collaborate'],['promotionCount','Promote'],['networkingCount','Network'],['skillCount','Train skills'],['privacyCount','Improve privacy'],['restCount','Rest']] as [keyof AdultPerformerYearlyActions,string][]).map(([action,label]) => <button key={action} onClick={() => handleAdultPerformerAction(action)} className="py-2 text-[11px] font-bold bg-slate-50 text-[#0f4a8a] border border-slate-200 rounded">{label} ({gameState.adultPerformerCareer?.yearlyActions[action] || 0})</button>)}
+                              </div>
+                            </div>
+                          )}
                           {gameState.creatorCareer?.active && gameState.creatorCareer.profile && (
                             <div className="p-4 border-b border-slate-200 space-y-3">
                               <div>

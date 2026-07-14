@@ -7,8 +7,8 @@ export const EXPOSURE_EVENTS: Event[] = [
     text: "You overhear whispering at a family gathering. A relative mentions seeing someone online who looks exactly like you in some suggestive promotional posts.",
     category: 'relationship',
     choices: [
-      { id: 'whisper_ignore', text: 'Ignore it and walk away.', effect: { outcomeText: 'You pretended not to hear anything, but the rumor mill keeps spinning.', relationshipChanges: { target: 'current', suspicion: 15 } } },
-      { id: 'whisper_laugh', text: 'Laugh it off as a common lookalike.', effect: { outcomeText: 'You laughed loudly and joked about having a twin. They seem to buy it for now.', relationshipChanges: { target: 'current', trust: 5, suspicion: -5 } } }
+      { id: 'whisper_ignore', text: 'Ignore it and walk away.', effect: { outcomeText: 'You pretended not to hear anything, but the rumor mill keeps spinning.', relationshipChanges: { target: 'current', suspicion: 15 }, memory: { type: 'exposure_rumor_ignored', intensity: 35, emotionalValue: -15, decayRate: 2, permanent: false } } },
+      { id: 'whisper_laugh', text: 'Laugh it off as a common lookalike.', effect: { outcomeText: 'You laughed loudly and joked about having a twin. They seem to buy it for now.', relationshipChanges: { target: 'current', trust: 5, suspicion: -5 }, memory: { type: 'exposure_rumor_deflected', intensity: 30, emotionalValue: 5, decayRate: 2, permanent: false } } }
     ]
   },
   {

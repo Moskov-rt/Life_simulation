@@ -1,4 +1,4 @@
-import { GameState, Event as GameEvent, Stats, Reputation, Relationship, SocialMediaAccount, Illness, IllnessTemplate, CreatorYearlyActions, CreatorTier } from '../types';
+import { GameState, Event as GameEvent, Stats, Reputation, SocialMediaAccount, Illness, IllnessTemplate, CreatorYearlyActions, CreatorTier, AdultPerformerYearlyActions, ActorYearlyActions } from '../types';
 import { applyYearlyDrift } from './relationshipVectors';
 import { evaluateSecretExposureEvents } from './exposureEvents';
 import { processOngoingEffects } from './ongoingEffects';
@@ -6,15 +6,11 @@ import { evaluateFollowUpFlags } from './followUpFlags';
 import { EVENTS_POOL } from '../events';
 import { SICKNESS_TITLES, SICKNESS_DESCRIPTIONS, IGNORE_TEXTS, PRAY_TEXTS, WATER_TEXTS } from '../healthTexts';
 import { relationshipToNPC } from './saveMigration';
+import { processContextTurnover } from './contextManager';
+import { clampFameCareerMetric, evaluateFameCareerTier, fameCareerTierSalary, fameCareerTierTitle, updateFameCareerConsistency } from './fameCareer';
+import { nextRandom } from './seededRandom';
 
-// Simple Linear Congruential Generator (LCG)
-export function nextRandom(seed: number): { value: number; nextSeed: number } {
-  const a = 1664525;
-  const c = 1013904223;
-  const m = Math.pow(2, 32);
-  const nextSeed = (a * seed + c) % m;
-  return { value: nextSeed / m, nextSeed };
-}
+export { nextRandom } from './seededRandom';
 
 function calculateCreatorActivityScore(actions: CreatorYearlyActions): number {
   return actions.publishCount + (actions.livestreamCount * 2) + (actions.collaborationCount * 3) + (actions.promotionCount * 2);
@@ -49,8 +45,17 @@ export interface AgeUpContext {
   MINOR_ILLNESSES: IllnessTemplate[];
   CHRONIC_ILLNESSES: IllnessTemplate[];
   TERMINAL_ILLNESSES: IllnessTemplate[];
-  generateSchoolContacts: (isHighSchool: boolean) => Relationship[];
+  evaluateCareerTier?: (career: GameState['career'], state: GameState) => number | undefined;
 }
+
+const ADULT_TITLES = ['Adult Film Extra', 'Adult Performer', 'Established Performer', 'Adult Film Star', 'Studio Director', 'Adult Studio Director'];
+const isAdultPerformer = (state: GameState) => state.adultPerformerCareer?.active === true && ((state.career as any).industry === 'entertainment' || ADULT_TITLES.includes(state.career.title));
+const adultActions = (actions: AdultPerformerYearlyActions) => actions.performCount + actions.collaborationCount + actions.promotionCount + actions.networkingCount + actions.skillCount + actions.privacyCount + actions.restCount;
+const isActor = (state: GameState) => state.actorCareer?.active === true && state.career.track === 'actor';
+const actorActions = (actions: ActorYearlyActions) => actions.auditionCount + actions.rolesAccepted + actions.trainCount + actions.networkCount + actions.promoteCount + actions.restCount;
+const ACTOR_TIERS = [{ title: 'Extra', salary: 15000 }, { title: 'Supporting Actor', salary: 60000 }, { title: 'Lead Actor', salary: 150000 }, { title: 'Star', salary: 500000 }, { title: 'Legend', salary: 2000000 }] as const;
+const ADULT_TIERS = [{ title: 'Adult Film Extra', salary: 40000 }, { title: 'Adult Performer', salary: 85000 }, { title: 'Established Performer', salary: 130000 }, { title: 'Adult Film Star', salary: 180000 }, { title: 'Studio Director', salary: 240000 }] as const;
+const fameCareerInactivityPenalty = (career: GameState['career'], consistency: number) => Math.max(2, 6 - ((career.tier || 1) >= 3 ? 1 : 0) - (consistency >= 50 ? 2 : 0) - ((career.yearsInRole || 0) >= 5 ? 1 : 0));
 
 export function runYearlySimulation(gameState: GameState, context: AgeUpContext): YearlySimulationResult {
   // 1. Capture previous values (Deep clone to preserve strict immutability of input state)
@@ -80,6 +85,9 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   // Age increments exactly once
   workingState.age += 1;
   const nextAge = workingState.age;
+  workingState.flags.actorFirstAuditionEligibleThisYear = false;
+  workingState.flags.actorAwardEligibleThisYear = false;
+  if (!isActor(workingState)) workingState.flags.actorAwardEligiblePending = false;
 
   const creatorProfile = workingState.creatorCareer?.active && workingState.career.type === 'job' ? workingState.creatorCareer.profile : null;
   const creatorActions = creatorProfile ? structuredClone(creatorProfile.yearlyActions) : null;
@@ -116,6 +124,61 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     }
   } else if (workingState.career.type === 'job' && workingState.career.performance !== undefined) {
     workingState.career.yearsInRole += 1;
+
+    if (isActor(workingState)) {
+      const profile = workingState.actorCareer!;
+      const actions = profile.yearlyActions;
+      const activity = actorActions(actions);
+      const fameDelta = actions.auditionCount + actions.rolesAccepted * 4 + actions.networkCount * 2 + actions.promoteCount * 3;
+      const performanceDelta = actions.auditionCount + actions.rolesAccepted * 2 + actions.trainCount * 3 + actions.restCount - actions.promoteCount - (activity === 0 ? fameCareerInactivityPenalty(workingState.career, profile.consistency) : 0);
+      profile.consistency = updateFameCareerConsistency(profile.consistency, activity, 3);
+      workingState.fame = clampFameCareerMetric(workingState.fame + fameDelta);
+      workingState.career.performance = clampFameCareerMetric(workingState.career.performance + performanceDelta);
+      workingState.stats.happiness = Math.max(0, Math.min(100, workingState.stats.happiness + actions.restCount * 2 - actions.rolesAccepted));
+      workingState.stats.health = Math.max(0, Math.min(100, workingState.stats.health - actions.rolesAccepted + actions.restCount));
+      newLogs.push(`🎭 Actor year: fame ${fameDelta >= 0 ? '+' : ''}${fameDelta}, performance ${performanceDelta >= 0 ? '+' : ''}${performanceDelta}.`);
+      const score = workingState.fame + workingState.career.performance + profile.consistency + workingState.reputation.online;
+      const tier = evaluateFameCareerTier(score, ACTOR_TIERS, (candidate, total) => candidate === 5 ? total >= 300 && workingState.fame >= 75 : candidate === 4 ? total >= 230 && workingState.fame >= 50 : candidate === 3 ? total >= 165 && workingState.career.performance >= 55 : candidate === 2 ? total >= 100 && actions.rolesAccepted > 0 : true);
+      workingState.flags.actorFirstAuditionEligibleThisYear = (workingState.career.tier || 1) === 1 && actions.auditionCount > 0 && (workingState.flags.actorCareerStartAge === undefined || workingState.flags.actorCareerStartAge === workingState.age - 1);
+      workingState.flags.actorAwardEligibleThisYear = Math.max(workingState.career.tier || 1, tier) >= 3 && workingState.fame >= 45 && workingState.career.performance >= 60;
+      if (workingState.flags.actorAwardEligibleThisYear) workingState.flags.actorAwardEligiblePending = true;
+      if (tier > (workingState.career.tier || 1)) {
+        workingState.career.tier = tier;
+        workingState.career.title = fameCareerTierTitle(tier, ACTOR_TIERS);
+        workingState.career.salary = fameCareerTierSalary(tier, ACTOR_TIERS);
+        workingState.career.performance = 55;
+        workingState.career.yearsInRole = 0;
+        newLogs.push(`🌟 Actor progression: you reached ${workingState.career.title}.`);
+      }
+    }
+
+    if (isAdultPerformer(workingState)) {
+      const profile = workingState.adultPerformerCareer!;
+      const actions = profile.yearlyActions;
+      const activity = adultActions(actions);
+      const fameDelta = actions.performCount * 3 + actions.collaborationCount * 4 + actions.promotionCount * 2 + actions.networkingCount - actions.privacyCount;
+      const performanceDelta = actions.performCount * 2 + actions.collaborationCount * 2 + actions.skillCount * 3 + actions.restCount - actions.privacyCount - (activity === 0 ? fameCareerInactivityPenalty(workingState.career, profile.consistency) : 0);
+      profile.consistency = updateFameCareerConsistency(profile.consistency, activity, 4);
+      workingState.fame = clampFameCareerMetric(workingState.fame + fameDelta);
+      workingState.career.performance = clampFameCareerMetric(workingState.career.performance + performanceDelta);
+      workingState.stats.happiness = Math.max(0, Math.min(100, workingState.stats.happiness + actions.restCount * 2 - actions.performCount - actions.collaborationCount));
+      workingState.stats.health = Math.max(0, Math.min(100, workingState.stats.health - actions.performCount + actions.restCount));
+      newLogs.push(`🎬 Adult Performer year: fame ${fameDelta >= 0 ? '+' : ''}${fameDelta}, performance ${performanceDelta >= 0 ? '+' : ''}${performanceDelta}.`);
+
+      const fame = workingState.fame;
+      const reputation = workingState.reputation.online;
+      const exposure = workingState.secretExposure?.level || 0;
+      const score = fame + workingState.career.performance + profile.consistency + reputation - Math.floor(exposure * 0.5);
+      const targetTier = evaluateFameCareerTier(score, ADULT_TIERS, (candidate, total) => candidate === 5 ? total >= 300 && fame >= 70 && workingState.career.performance >= 70 : candidate === 4 ? total >= 230 && fame >= 50 && workingState.career.performance >= 60 : candidate === 3 ? total >= 165 && fame >= 30 && workingState.career.performance >= 50 : candidate === 2 ? total >= 100 && workingState.career.performance >= 45 : true);
+      if (targetTier > (workingState.career.tier || 1)) {
+        workingState.career.tier = targetTier;
+        workingState.career.title = fameCareerTierTitle(targetTier, ADULT_TIERS);
+        workingState.career.salary = fameCareerTierSalary(targetTier, ADULT_TIERS);
+        workingState.career.performance = 55;
+        workingState.career.yearsInRole = 0;
+        newLogs.push(`🌟 Career progression: you reached ${workingState.career.title}.`);
+      }
+    }
     
     // Social Media
     if (workingState.socialMedia) {
@@ -200,9 +263,12 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
         newLogs.push(`📉 Demotion! Due to poor performance, you were demoted to ${workingState.career.title}. Salary decreased to $${workingState.career.salary.toLocaleString()}/yr.`);
       } else {
         workingState.career = { title: 'Unemployed', salary: 0, type: 'unemployed', yearsInRole: 0, performance: 0 };
+        if (workingState.adultPerformerCareer) workingState.adultPerformerCareer.active = false;
+        if (workingState.actorCareer) workingState.actorCareer.active = false;
+        workingState.flags.actorAwardEligiblePending = false;
         newLogs.push(`❌ Fired! You were fired from your job due to extremely poor performance.`);
       }
-    } else if (workingState.career.performance > 90 && workingState.career.yearsInRole > 2) {
+    } else if (!isAdultPerformer(workingState) && !isActor(workingState) && workingState.career.performance > 90 && workingState.career.yearsInRole > 2) {
       if (!workingState.career.title.includes('Senior ') && !workingState.career.title.includes('President') && !workingState.career.title.includes('Manager')) {
         workingState.career.title = 'Senior ' + workingState.career.title.replace('Junior ', '');
         workingState.career.salary = Math.floor(workingState.career.salary * 1.3);
@@ -218,6 +284,11 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     } else if (workingState.career.performance >= 50) {
       workingState.career.performance = Math.max(0, workingState.career.performance - (Math.floor(roll() * 15) + 5));
     }
+  }
+
+  if (context.evaluateCareerTier) {
+    const evaluatedTier = context.evaluateCareerTier(workingState.career, workingState);
+    if (evaluatedTier !== undefined) workingState.career.tier = evaluatedTier;
   }
 
   // Base Stats
@@ -278,26 +349,23 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     workingState.flags.schoolGrades = 80;
     workingState.flags.schoolPopularity = 50;
     workingState.flags.schoolType = 'public';
-    workingState.relationships = workingState.relationships.filter(r => r.relation !== 'classmate' && r.relation !== 'teacher');
-    workingState.relationships.push(...context.generateSchoolContacts(false));
+    // Turnover handled generically by contextManager
   } else if (nextAge === 12) {
     workingState.career = { title: 'High School Student', salary: 0, type: 'school', yearsInRole: 0, performance: 50 };
     newLogs.push('🎒 I started attending Secondary High School.');
     workingState.flags.schoolGrades = Math.max(50, (workingState.flags.schoolGrades || 80) - 5);
     workingState.flags.schoolPopularity = Math.max(30, (workingState.flags.schoolPopularity || 50));
-    workingState.relationships = workingState.relationships.filter(r => r.relation !== 'classmate' && r.relation !== 'teacher');
-    workingState.relationships.push(...context.generateSchoolContacts(true));
+    // Turnover handled generically by contextManager
   } else if (nextAge === 18) {
     workingState.career = { title: 'Unemployed High School Graduate', salary: 0, type: 'unemployed', yearsInRole: 0, performance: 0 };
     newLogs.push('🎓 I graduated from High School! I am now looking for career opportunities.');
-    workingState.relationships = workingState.relationships.filter(r => r.relation !== 'classmate' && r.relation !== 'teacher');
+    // Turnover handled generically by contextManager
   }
 
-  if (workingState.career.type === 'school' && !workingState.relationships.some(r => r.relation === 'classmate')) {
-    workingState.relationships.push(...context.generateSchoolContacts(nextAge >= 12));
-    if (workingState.flags.schoolGrades === undefined) workingState.flags.schoolGrades = 80;
-    if (workingState.flags.schoolPopularity === undefined) workingState.flags.schoolPopularity = 50;
-    if (workingState.flags.schoolType === undefined) workingState.flags.schoolType = 'public';
+  if (workingState.career.type === 'school' && workingState.flags.schoolGrades === undefined) {
+    workingState.flags.schoolGrades = 80;
+    workingState.flags.schoolPopularity = 50;
+    workingState.flags.schoolType = 'public';
   }
 
   // Illness
@@ -480,13 +548,15 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   // 3. Calculate exposure gain, decay, and new exposure
   if (workingState.secretExposure) {
     const ofPosts = workingState.socialMedia?.onlyfans?.postsCount || 0;
-    const postsVal = creatorActions ? creatorActions.publishCount + creatorActions.livestreamCount + creatorActions.promotionCount : ofPosts > 0 ? ofPosts : 10;
+    const postsVal = creatorActions ? creatorActions.publishCount + creatorActions.livestreamCount + creatorActions.promotionCount : ofPosts;
     const collabsVal = creatorActions ? creatorActions.collaborationCount : ofPosts > 5 ? 2 : 0;
     const mitigationVal = creatorActions ? Math.min(100, 85 + (creatorActions.privacyImprovementCount * 5)) : 85;
     const locationMult = workingState.location.includes('Mumbai') ? 0.8 : 1.0;
-    const luckRoll = Math.floor(roll() * 6) - 3;
-    
-    const calculatedGain = Math.round(((postsVal * 2) + (collabsVal * 4) - (mitigationVal * 0.1)) * locationMult + luckRoll);
+    const performerActions = isAdultPerformer(workingState) ? workingState.adultPerformerCareer!.yearlyActions : null;
+    const performerGain = performerActions ? (performerActions.performCount * 2 + performerActions.collaborationCount * 4 + performerActions.promotionCount - performerActions.privacyCount * 3) : 0;
+    const hasExposureActivity = postsVal > 0 || collabsVal > 0 || performerGain !== 0 || (creatorActions?.privacyImprovementCount || 0) > 0;
+    const luckRoll = hasExposureActivity ? Math.floor(roll() * 6) - 3 : 0;
+    const calculatedGain = hasExposureActivity ? Math.round(((postsVal * 2) + (collabsVal * 4) + performerGain - (mitigationVal * 0.1)) * locationMult + luckRoll) : 0;
     workingState.secretExposure.level = Math.max(0, Math.min(100, workingState.secretExposure.level + calculatedGain));
     workingState.secretExposure.heat = Math.round(workingState.secretExposure.heat * 0.5);
     workingState.secretExposure.history.push(workingState.secretExposure.level);
@@ -519,11 +589,24 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     workingState.relationships.push(npc);
   });
 
+  // 4.5 Process Generic Context Turnover (School, Workplace retention & replenishment)
+  processContextTurnover(workingState, roll);
+
   // 5. Process ongoing effects
   const ongoingResult = processOngoingEffects(workingState.ongoingEffects, workingState);
   workingState.stats.health = Math.max(0, Math.min(100, workingState.stats.health + ongoingResult.statDeltas.health));
   workingState.stats.happiness = Math.max(0, Math.min(100, workingState.stats.happiness + ongoingResult.statDeltas.happiness));
   workingState.ongoingEffects = ongoingResult.updatedEffects;
+
+  // Existing delayed events take priority over follow-ups and random pool selection.
+  const dueDelayedIndex = workingState.delayedEvents.findIndex(delayed => delayed.triggerAge <= nextAge && EVENTS_POOL.some(event => event.id === delayed.eventId));
+  if (dueDelayedIndex >= 0) {
+    const [dueDelayed] = workingState.delayedEvents.splice(dueDelayedIndex, 1);
+    const delayedEvent = EVENTS_POOL.find(event => event.id === dueDelayed.eventId)!;
+    if (triggeredEvent) queuedEvents.unshift(triggeredEvent);
+    triggeredEvent = delayedEvent;
+    newLogs.push(`⏳ A delayed consequence arrived: ${delayedEvent.title}`);
+  }
 
   // 6. Evaluate follow-up flags
   const followUpResult = evaluateFollowUpFlags(workingState);
@@ -579,10 +662,16 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     });
 
     if (eligibleEvents.length > 0 && roll() < 0.95) {
-      const totalWeight = eligibleEvents.reduce((sum, e) => sum + (e.weight || 10), 0);
+      const contextualWeight = (event: GameEvent) => {
+        const baseWeight = event.weight || 10;
+        if (isActor(workingState) && event.id.startsWith('actor_')) return baseWeight * 3;
+        if (isAdultPerformer(workingState) && event.id.startsWith('adult_performer_')) return baseWeight * 3;
+        return baseWeight;
+      };
+      const totalWeight = eligibleEvents.reduce((sum, e) => sum + contextualWeight(e), 0);
       let randomVal = roll() * totalWeight;
       for (const e of eligibleEvents) {
-        const w = e.weight || 10;
+        const w = contextualWeight(e);
         if (randomVal < w) {
           triggeredEvent = e;
           break;
@@ -601,6 +690,18 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     } else if (triggeredEvent.conditions?.hasRelationshipType) {
       const matches = workingState.relationships.filter(r => r.relation === triggeredEvent?.conditions?.hasRelationshipType);
       if (matches.length > 0) workingState.activeRelationshipContextId = matches[Math.floor(roll() * matches.length)].id;
+    } else {
+      const exposureTarget = (() => {
+        if (['whisper', 'snoop', 'full_exposure'].includes(triggeredEvent!.id)) return workingState.relationships.filter(r => r.relation === 'parent' || r.relation === 'sibling');
+        if (triggeredEvent!.id === 'confrontation') {
+          const partners = workingState.relationships.filter(r => r.relation === 'partner' || r.relation === 'spouse');
+          return partners.length > 0 ? partners : workingState.relationships.filter(r => r.relation === 'colleague' || r.relation === 'supervisor');
+        }
+        if (triggeredEvent!.id === 'recognition') return workingState.relationships.filter(r => r.relation === 'friend' || r.relation === 'best_friend' || r.relation === 'colleague');
+        if (triggeredEvent!.id === 'leak') return workingState.relationships.filter(r => r.isEx === true);
+        return [];
+      })();
+      if (exposureTarget.length > 0) workingState.activeRelationshipContextId = exposureTarget[Math.floor(roll() * exposureTarget.length)].id;
     }
     newLogs.push(`❗ EVENT: ${triggeredEvent.title}`);
   } else {
@@ -651,6 +752,12 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   }
   if (workingState.creatorCareer?.profile) {
     workingState.creatorCareer.profile.yearlyActions = { publishCount: 0, livestreamCount: 0, collaborationCount: 0, promotionCount: 0, privacyImprovementCount: 0 };
+  }
+  if (workingState.adultPerformerCareer) {
+    workingState.adultPerformerCareer.yearlyActions = { performCount: 0, collaborationCount: 0, promotionCount: 0, networkingCount: 0, skillCount: 0, privacyCount: 0, restCount: 0 };
+  }
+  if (workingState.actorCareer) {
+    workingState.actorCareer.yearlyActions = { auditionCount: 0, rolesAccepted: 0, networkCount: 0, promoteCount: 0, trainCount: 0, restCount: 0 };
   }
 
   // 12. Advance RNG seed deterministically
