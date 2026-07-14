@@ -638,6 +638,11 @@ export const EVENTS_POOL: Event[] = [
           repChanges: { workplace: -10 },
           flagsSet: { confronted_boss_theft: true },
           outcomeText: 'The room goes dead silent. The executives look intrigued; your boss turns beet red and quickly moves to the next slide. Afterwards, your boss pulls you aside, furious but cautious.',
+          narrativeVariants: { chaotic: [
+            { text: 'Early in your career, speaking up feels like stepping onto a ledge. The executives notice the truth, and your manager notices that you are no longer easy to erase.', careerGroups: ['corporate'], maxAge: 30 },
+            { text: 'After years of work, you recognize the cost of letting someone else own your contribution. The room understands your meaning immediately, even if your manager never forgives the interruption.', careerGroups: ['corporate'], minAge: 40 },
+            { text: 'You reclaim the work in front of everyone. The victory is real, but so is the knowledge that tomorrow you still have to work for the person you embarrassed.', minReputation: { workplace: 40 } }
+          ] },
           logText: 'Publicly claimed ownership of research during a meeting.'
         }
       },
@@ -648,6 +653,11 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { happiness: -20, status: -5 },
           repChanges: { workplace: 15 },
           outcomeText: 'You nod along with the praise. Your boss gives you a subtle, grateful wink. You got a reputation as a loyal team player, but the resentment burns deep.',
+          narrativeVariants: { chaotic: [
+            { text: 'You protect a job you cannot afford to lose, smiling while someone else receives the applause. Security wins today; resentment comes home with you.', wealthBands: ['struggling', 'stable'] },
+            { text: 'You let the meeting move on without correcting the record. The choice preserves your standing, but it makes your own ambition feel increasingly difficult to ignore.', careerGroups: ['corporate'], minAge: 30 },
+            { text: 'Your manager rewards the silence with warmer treatment. It is a useful advantage, bought with a piece of professional pride.' }
+          ] },
           logText: 'Let your manager take credit for your work.'
         }
       },
@@ -658,6 +668,11 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { smarts: 5, happiness: -5 },
           repChanges: { workplace: 5 },
           outcomeText: 'HR begins a formal investigation. The process is slow and bureaucratic, adding tension to your daily routine, but you feel justified in taking the legal route.',
+          narrativeVariants: { chaotic: [
+            { text: 'You document every file, timestamp, and revision before contacting HR. The process is exhausting, but experience has taught you that memory alone rarely protects an employee.', careerGroups: ['corporate'], minAge: 35 },
+            { text: 'The complaint enters a system designed to move slowly. You spend the following weeks balancing ordinary work with the quiet fear of retaliation.', maxAge: 34 },
+            { text: 'HR opens a case and your evidence holds together. Nothing resolves quickly, but you have stopped carrying the injustice alone.' }
+          ] },
           logText: 'Filed an HR complaint against manager for credit theft.'
         }
       }
@@ -730,6 +745,11 @@ export const EVENTS_POOL: Event[] = [
           repChanges: { dating: 20 },
           cashChange: -500,
           outcomeText: 'You look flawless! You glide through conversations with grace, deeply impressing your date and securing their admiration.',
+          narrativeVariants: { chaotic: [
+            { text: 'Five hundred dollars is a frightening expense, but tonight it buys confidence you could not fake. You enter the room feeling briefly fluent in a world built to intimidate you.', wealthBands: ['struggling', 'stable'] },
+            { text: 'The cost barely registers, letting you focus on the social choreography. Your date sees how comfortably you adapt when the room expects polish.', wealthBands: ['wealthy'] },
+            { text: 'The clothes and preparation do their job. Beneath the compliments, you wonder how much of the admiration belongs to you and how much belongs to the performance.' }
+          ] },
           logText: 'Invested heavily to attend a high-society gala in style.'
         }
       },
@@ -740,6 +760,11 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { happiness: 10, status: -5 },
           repChanges: { dating: -5 },
           outcomeText: 'Your outfit is noticeably dated, drawing subtle snickers from elitist guests. However, your date respects your comfort and genuineness, despite the awkwardness.',
+          narrativeVariants: { chaotic: [
+            { text: 'You arrive in the best clothes you already own. A few guests notice the difference in money; your date notices that you refused to pretend.', wealthBands: ['struggling', 'stable'] },
+            { text: 'You could have bought the room\'s approval, but choose not to. The evening is awkward in places and unexpectedly intimate in others.', wealthBands: ['comfortable', 'wealthy'] },
+            { text: 'The outfit draws quiet judgment, yet your date stays close. Their support matters more once you know the room is measuring both of you.' }
+          ] },
           logText: 'Attended a gala in modest clothing, staying true to yourself.'
         }
       },
@@ -750,6 +775,11 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { happiness: -15, smarts: 5 },
           repChanges: { dating: -15 },
           outcomeText: 'You stay home in sweatpants, feeling guilty. Your partner is disappointed and suspicious of your sudden "migraine".',
+          narrativeVariants: { negative: [
+            { text: 'You cancel rather than admit how intimidated you feel. The relief is immediate; the guilt arrives when your date stops asking whether you are all right.' },
+            { text: 'Avoiding the gala protects you from one difficult night and creates a harder conversation at home. Your explanation sounds thin even to you.', minAge: 30 },
+            { text: 'The excuse works badly. Your partner hears fear as dishonesty, and the missed evening becomes a question about whether you trust them with your insecurity.', requiredFlags: ['career_failure'] }
+          ] },
           logText: 'Cancelled a high-profile date at the last minute.'
         }
       }
@@ -775,6 +805,11 @@ export const EVENTS_POOL: Event[] = [
           cashChange: -1000,
           scheduleDelayedEvent: { eventId: 'investment_resolved_win', delayYears: 2 },
           outcomeText: 'You wire the funds. Your contact smiles and nods. Now, you wait for the regulatory decision in two years.',
+          narrativeVariants: { chaotic: [
+            { text: 'One thousand dollars is most of your safety net. The transfer leaves your account feeling dangerously small and your future briefly full of possibility.', wealthBands: ['struggling', 'stable'] },
+            { text: 'You can absorb the loss, which makes the risk feel almost intellectual. Still, the secrecy around the tip follows you home.', wealthBands: ['wealthy'] },
+            { text: 'You send the money and begin the least glamorous part of speculation: waiting two years to learn whether confidence was insight or vanity.', careerGroups: ['corporate'] }
+          ] },
           logText: 'Invested $1,000 in a high-risk biotech stock tip.'
         }
       },
@@ -784,6 +819,11 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           statChanges: { smarts: 10 },
           outcomeText: 'You hold onto your savings. They shrug, muttered something about missed fortunes, and buy another espresso.',
+          narrativeVariants: { positive: [
+            { text: 'You cannot afford for “guaranteed” to be wrong. Keeping the money feels less exciting than the pitch and far more responsible.', wealthBands: ['struggling', 'stable'] },
+            { text: 'You have enough money to take the risk and enough experience to recognize the pressure tactic. You decline without wondering whether caution makes you timid.', wealthBands: ['comfortable', 'wealthy'], minAge: 35 },
+            { text: 'You choose predictable savings over somebody else\'s urgency. The acquaintance calls it fear; you recognize it as discipline.' }
+          ] },
           logText: 'Declined a risky stock market speculation tip.'
         }
       }
@@ -832,6 +872,7 @@ export const EVENTS_POOL: Event[] = [
           repChanges: { family: -20, online: 20 },
           flagsSet: { started_fansite: true },
           outcomeText: 'You start the page and your arch photography goes viral! Foot-connoisseurs rave about your pristine pedicure. You pocket a clean $2,500, though you live in constant terror of your mother ever discovering your side-hustle.',
+          narrativeVariants: { chaotic: [{ text: 'The rent is covered before the week is over, but every notification now carries the same question: how much of your private life can stay private?', wealthBands: ['struggling', 'stable'], maxFame: 35 }, { text: 'The money is almost absurdly easy. So is the temptation to let a side hustle become the identity everyone remembers.', wealthBands: ['comfortable', 'wealthy'], minFame: 20 }, { text: 'You make the practical choice and immediately discover that practicality can still feel intimate when strangers are paying attention.', careers: ['creator', 'adult_performer'] }] },
           logText: 'Started an anonymous premium feet-modeling channel to pay the rent.'
         }
       },
@@ -842,6 +883,7 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { smarts: 5 },
           repChanges: { family: 15 },
           outcomeText: 'You stick to your integrity and decline. Your feet remain private, and your family reputation stays pristine.',
+          narrativeVariants: { positive: [{ text: 'With bills waiting, declining feels less like a moral victory than a promise to solve the problem on your own terms.', wealthBands: ['struggling', 'stable'] }, { text: 'You can afford to say no, and the privacy feels worth more than the novelty of easy money.', wealthBands: ['comfortable', 'wealthy'] }, { text: 'You decline without judging the people who said yes. Boundaries are easier to keep when they are yours.', careers: ['creator', 'adult_performer'] }] },
           logText: 'Proudly declined a suggestion to sell feet pictures online.'
         }
       },
@@ -853,6 +895,7 @@ export const EVENTS_POOL: Event[] = [
           repChanges: { family: -45, online: -35, workplace: -25 },
           flagsSet: { fansite_disaster: true },
           outcomeText: 'OH NO! In a sleep-deprived daze, you post your debut foot album directly to your public Instagram story. Your boss, your uncle, and your old high school chemistry teacher all view it before you delete it. The pure embarrassment is absolute.',
+          narrativeVariants: { negative: [{ text: 'The post is deleted, but screenshots outlive the panic. You spend the next month deciding who deserves an explanation and who only wants a story.', careers: ['corporate'], minReputation: { workplace: 20 } }, { text: 'A private experiment becomes public before you have decided what it means. The embarrassment is loud; the questions about money are quieter and harder.', wealthBands: ['struggling', 'stable'] }, { text: 'You learn that anonymity is not the same thing as control. The lesson arrives in every awkward glance afterward.' }] },
           logText: 'Accidentally published intimate foot-modeling photos to personal social media, causing a total social meltdown.'
         }
       }
@@ -878,6 +921,7 @@ export const EVENTS_POOL: Event[] = [
           repChanges: { family: -25, dating: -10 },
           flagsSet: { has_sugar_daddy: true },
           outcomeText: 'You accept! You spend a weekend drinking champagne on a triple-deck yacht in Saint-Tropez. Lord Bentley wires you $4,000. It\'s fabulous, but his repetitive stories about his 1980s real-estate conquests are mind-numbing.',
+          narrativeVariants: { chaotic: [{ text: 'The allowance changes what “a tight month” means, but the arrangement still asks you to perform a version of yourself at every dinner.', wealthBands: ['struggling', 'stable'], maxAge: 25 }, { text: 'You know how to read a room and how to leave one. The luxury is real; so is the calculation behind every invitation.', wealthBands: ['comfortable', 'wealthy'], minAge: 26 }, { text: 'The arrangement feels glamorous until you notice how often companionship is being treated like a service with a return policy.', careers: ['creator', 'adult_performer'] }] },
           logText: 'Became a companion to an elderly billionaire for a lavish allowance.'
         }
       },
@@ -890,6 +934,7 @@ export const EVENTS_POOL: Event[] = [
           repChanges: { online: -15 },
           flagsSet: { scammed_sugar: true },
           outcomeText: 'You talk him into sending a $1,500 "travel deposit" first, then immediately block him. Hustling the billionaire feels absolutely amazing!',
+          narrativeVariants: { chaotic: [{ text: 'The deposit solves an immediate problem and creates a longer memory: you are proud of the nerve, uneasy about the person it required you to become.', wealthBands: ['struggling', 'stable'] }, { text: 'The money is less important than proving you could outmaneuver someone who assumed you were for sale.', wealthBands: ['comfortable', 'wealthy'] }, { text: 'You call it a hustle until the story starts sounding like a warning when you tell it later.', careers: ['creator', 'adult_performer'] }] },
           logText: 'Scammed an online sugar-dating solicitor out of a $1,500 deposit.'
         }
       },
@@ -900,6 +945,7 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { smarts: 5, status: 5 },
           repChanges: { family: 10 },
           outcomeText: 'You hit report and block. You don\'t need easy money; you are building a real career.',
+          narrativeVariants: { positive: [{ text: 'You choose the slower path because you want a life whose best opportunities do not depend on pretending to be available.', careers: ['corporate', 'education', 'medical'] }, { text: 'The message is deleted, and the evening returns to ordinary work. Ordinary suddenly feels like a choice rather than a limitation.', wealthBands: ['struggling', 'stable'] }, { text: 'You report the account, keep the evidence, and move on without turning the encounter into your identity.', minAge: 26 }] },
           logText: 'Rejected and reported an unsolicited sugar-companion proposal.'
         }
       }
@@ -1013,6 +1059,11 @@ export const EVENTS_POOL: Event[] = [
           flagsSet: { affair_active: true },
           scheduleDelayedEvent: { eventId: 'affair_fallout', delayYears: 1 },
           outcomeText: 'The parking lot is freezing, but the chemistry is boiling. You spend an unforgettable hour in the back of a luxury SUV. The thrill is unmatched, but your career now rests on a razor\'s edge.',
+          narrativeVariants: { chaotic: [
+            { text: 'You mistake being desired for being untouchable. The secret feels intoxicating tonight, while tomorrow\'s workplace consequences remain just far enough away to ignore.', maxAge: 30 },
+            { text: 'You know exactly how much professional history this could destroy and go anyway. Experience does not prevent the mistake; it only makes the stakes clearer.', minAge: 40, careerGroups: ['corporate'] },
+            { text: 'The encounter gives you the rush you wanted and a secret that now owns part of every future meeting. Ambition and impulse have become enemies.' }
+          ] },
           logText: 'Began a highly reckless secret affair with the boss\'s spouse.'
         }
       },
@@ -1023,6 +1074,11 @@ export const EVENTS_POOL: Event[] = [
           statChanges: { smarts: 15, status: 10 },
           repChanges: { workplace: 20, family: 15 },
           outcomeText: 'You pull back, stammer an excuse about having to check on a spreadsheet, and walk away. It was a close call, but your career and family standings remain safe.',
+          narrativeVariants: { positive: [
+            { text: 'You leave before attraction becomes a decision other people must pay for. The restraint feels unglamorous and deeply adult.', minAge: 30 },
+            { text: 'Your career is finally gaining traction, and you refuse to hand its future to one reckless hour. The temptation passes; the relief stays.', careerGroups: ['corporate'], maxAge: 35 },
+            { text: 'You step away from the invitation and from the version of yourself that wanted the danger. Nothing explodes, which is its own kind of victory.' }
+          ] },
           logText: 'Prudently declined an inappropriate advance from a boss\'s spouse.'
         }
       },
@@ -1034,6 +1090,11 @@ export const EVENTS_POOL: Event[] = [
           repChanges: { workplace: -10, family: -10 },
           flagsSet: { blackmailing_boss: true },
           outcomeText: 'You discreetly activate your voice recorder. Armed with this audio, you drop a subtle hint during your performance review. Your boss looks terrified and promises your promotion is "being accelerated".',
+          narrativeVariants: { chaotic: [
+            { text: 'You convert an inappropriate advance into leverage. The accelerated promotion arrives carrying the knowledge that your new authority began as a threat.', careerGroups: ['corporate'] },
+            { text: 'The recording protects you and compromises you at the same time. Your boss yields, but every later success now has a shadow beside it.', minReputation: { workplace: 40 } },
+            { text: 'You win the negotiation without ever naming it. The power feels useful, corrosive, and difficult to put down.' }
+          ] },
           logText: 'Blackmailed the vice-president using recorded advances from their spouse to secure a promotion.'
         }
       }
@@ -1054,6 +1115,11 @@ export const EVENTS_POOL: Event[] = [
           flagsSet: { fired_from_affair: true, unemployed: true },
           flagsRemove: ['affair_active'],
           outcomeText: 'There is no explaining this. You are immediately fired for gross professional misconduct without severance, and your boss promises to blackball you from the entire industry. Your name is mud in professional circles.',
+          narrativeVariants: { negative: [
+            { text: 'The meeting ends your job, your references, and the professional identity you spent years building. Regret stops being abstract when security escorts you past your former desk.', careerGroups: ['corporate'], minAge: 35 },
+            { text: 'You lose the position before you had enough savings to survive the fall. The scandal is public at work; the financial panic waits for you at home.', wealthBands: ['struggling', 'stable'] },
+            { text: 'The secret finally demands payment. Losing the job hurts; realizing how many people were pulled into the damage hurts longer.' }
+          ] },
           logText: 'Was fired in disgrace and blackballed from the industry after a secret affair with the boss\'s spouse was exposed.'
         }
       },
@@ -1067,6 +1133,11 @@ export const EVENTS_POOL: Event[] = [
           flagsSet: { fired_from_affair: true, unemployed: true },
           flagsRemove: ['affair_active'],
           outcomeText: 'Using some quick legal bluffing, you negotiate a quiet exit with a modest $3,000 package to keep the story out of the courts. You lost your job, but at least you walked away with cash.',
+          narrativeVariants: { chaotic: [
+            { text: 'Three thousand dollars buys time, not absolution. You leave quietly with enough money to breathe and no honest way to explain why the career ended.', wealthBands: ['struggling', 'stable'] },
+            { text: 'The severance is financially trivial, but the NDA contains the scandal. You preserve your public options while privately confronting what ambition allowed you to become.', wealthBands: ['wealthy'] },
+            { text: 'You negotiate the ending like a professional, even though professionalism is what the room believes you abandoned. The deal limits the damage without repairing it.' }
+          ] },
           logText: 'Negotiated a quiet resignation and a $3,000 package after the affair was discovered.'
         }
       }
@@ -1262,24 +1333,24 @@ export const EVENTS_POOL: Event[] = [
         id: 'roommate_talk',
         text: 'Have a calm, adult conversation about boundaries.',
         outcomes: [
-          { weight: 70, effect: { statChanges: { smarts: 15, happiness: 10 }, outcomeText: 'They are totally receptive! They stop the morning metal, start using the office microwave for fish, and only introduce you to three plants per week. Progress!', logText: 'Successfully set apartment boundaries with an unusual roommate.' } },
-          { weight: 30, effect: { statChanges: { happiness: -15, willpower: -10 }, outcomeText: 'They get incredibly offended. They claim the plants need the metal music to photosynthesize. They stop talking to you and leave passive-aggressive sticky notes everywhere.', logText: 'Failed to reason with an eccentric roommate, resulting in a toxic living environment.' } }
+          { weight: 70, effect: { statChanges: { smarts: 15, happiness: 10 }, outcomeText: 'They are totally receptive! They stop the morning metal, start using the office microwave for fish, and only introduce you to three plants per week. Progress!', narrativeVariants: { positive: [{ text: 'You are young enough to still believe a direct conversation can save a home, and this time it does. The apartment becomes livable without becoming boring.', maxAge: 23 }, { text: 'The boundary talk works because you arrive with rent paid, patience intact, and a little practice at saying what you need.', minAge: 24 }, { text: 'A shared address becomes a small lesson in adulthood: kindness is useful, but clarity is what makes it sustainable.', wealthBands: ['stable', 'comfortable', 'wealthy'] }] }, logText: 'Successfully set apartment boundaries with an unusual roommate.' } },
+          { weight: 30, effect: { statChanges: { happiness: -15, willpower: -10 }, outcomeText: 'They get incredibly offended. They claim the plants need the metal music to photosynthesize. They stop talking to you and leave passive-aggressive sticky notes everywhere.', narrativeVariants: { negative: [{ text: 'You chose a calm conversation because you thought adulthood rewarded calm conversations. The silence afterward is more exhausting than the music.', maxAge: 23 }, { text: 'You have had difficult colleagues and difficult family members; neither prepared you for sharing a kitchen with someone who weaponizes sticky notes.', minAge: 24 }, { text: 'The lease is affordable, but the emotional cost keeps appearing in small deductions from every good day.', wealthBands: ['struggling', 'stable'] }] }, logText: 'Failed to reason with an eccentric roommate, resulting in a toxic living environment.' } }
         ]
       },
       {
         id: 'roommate_retaliate',
         text: 'Fight fire with fire: play bagpipe music at 3am.',
         outcomes: [
-          { weight: 40, effect: { statChanges: { happiness: 20, status: -10 }, repChanges: { family: -5 }, outcomeText: 'You spend a week in a noise war that escalates into a legend the whole building tells. You eventually both collapse in exhausted laughter and become best friends.', logText: 'Waged a musical noise war with my roommate. We are now best friends.' } },
-          { weight: 60, effect: { statChanges: { happiness: -20, cashChange: -300 }, outcomeText: 'The landlord receives 14 noise complaints. You are fined $300 and both issued a final eviction warning. The apartment is dead silent forever after.', logText: 'Fined $300 by the landlord for engaging in a noise war with my roommate.' } }
+          { weight: 40, effect: { statChanges: { happiness: 20, status: -10 }, repChanges: { family: -5 }, outcomeText: 'You spend a week in a noise war that escalates into a legend the whole building tells. You eventually both collapse in exhausted laughter and become best friends.', narrativeVariants: { chaotic: [{ text: 'The feud becomes a story the building tells about you, then a friendship neither of you planned. Some adult mistakes become social glue.', maxAge: 25 }, { text: 'You are old enough to know retaliation is a bad plan and young enough to try it anyway. The laughter afterward is real.', minAge: 26 }, { text: 'The rent is still due, the neighbors are still furious, and somehow this is the first place in months that feels like home.', wealthBands: ['struggling', 'stable'] }] }, logText: 'Waged a musical noise war with my roommate. We are now best friends.' } },
+          { weight: 60, effect: { statChanges: { happiness: -20, cashChange: -300 }, outcomeText: 'The landlord receives 14 noise complaints. You are fined $300 and both issued a final eviction warning. The apartment is dead silent forever after.', narrativeVariants: { negative: [{ text: 'The joke ends where adult life often ends jokes: with a fine, an eviction warning, and a budget that cannot absorb either.', wealthBands: ['struggling', 'stable'] }, { text: 'You can pay the fine, but not the embarrassment of having to explain it to a landlord who has seen this exact fight before.', wealthBands: ['comfortable', 'wealthy'] }, { text: 'The silence is not peace. It is two people waiting for the next lease decision to make the conflict official.', minAge: 24 }] }, logText: 'Fined $300 by the landlord for engaging in a noise war with my roommate.' } }
         ]
       },
       {
         id: 'roommate_accept',
         text: 'Learn the plants\' names and join the chaos.',
         outcomes: [
-          { weight: 50, effect: { statChanges: { happiness: 30, smarts: 5 }, outcomeText: 'You learn that "Gerald" the fiddle-leaf fig is actually fascinating. Your roommate is eccentric but incredibly loyal. This becomes the best living situation you ever have.', logText: 'Embraced chaotic roommate energy. Best apartment ever.' } },
-          { weight: 50, effect: { statChanges: { smarts: -15, health: -10 }, outcomeText: 'You try to embrace the chaos, but you develop severe allergies to the plants, and the death metal gives you chronic migraines. You are miserable.', logText: 'Tried to embrace eccentric roommate life but suffered health issues instead.' } }
+          { weight: 50, effect: { statChanges: { happiness: 30, smarts: 5 }, outcomeText: 'You learn that "Gerald" the fiddle-leaf fig is actually fascinating. Your roommate is eccentric but incredibly loyal. This becomes the best living situation you ever have.', narrativeVariants: { positive: [{ text: 'You are building a life on a budget, and the unexpected luxury is finding someone whose strange habits come with real loyalty.', wealthBands: ['struggling', 'stable'] }, { text: 'The apartment is not polished, but it is full of the kind of belonging money cannot schedule.', wealthBands: ['comfortable', 'wealthy'] }, { text: 'You remember the plants, the music, and the person who made a crowded home feel generous.', maxAge: 26 }] }, logText: 'Embraced chaotic roommate energy. Best apartment ever.' } },
+          { weight: 50, effect: { statChanges: { smarts: -15, health: -10 }, outcomeText: 'You try to embrace the chaos, but you develop severe allergies to the plants, and the death metal gives you chronic migraines. You are miserable.', narrativeVariants: { negative: [{ text: 'You wanted to be flexible. Your sinuses, sleep, and work schedule interpret flexibility as surrender.', careers: ['corporate', 'education', 'medical'] }, { text: 'The arrangement looked affordable until health costs and lost sleep started appearing in every other part of your life.', wealthBands: ['struggling', 'stable'] }, { text: 'Good intentions do not make a home compatible. You learn that before resentment has time to harden.', minAge: 24 }] }, logText: 'Tried to embrace eccentric roommate life but suffered health issues instead.' } }
         ]
       }
     ]
@@ -1318,9 +1389,9 @@ export const EVENTS_POOL: Event[] = [
     conditions: { minAge: 20, maxAge: 38 },
     weight: 30,
     choices: [
-      { id: 'speech_improvise', text: 'Wing it from the heart — pure improvisation.', effect: { statChanges: { happiness: 25, status: 20, willpower: 25 }, repChanges: { dating: 15 }, outcomeText: 'You speak from pure emotion. Four people cry. The bride says it was better than any written speech could have been. You find out later someone filmed it and it got posted to a wedding blog.', logText: 'Improvised a wedding speech that made four people cry.' } },
-      { id: 'speech_honest', text: 'Tell the crowd you forgot your notes and ask for forgiveness.', effect: { statChanges: { karma: 1, happiness: 15 }, outcomeText: 'Everyone laughs with you, not at you. You muddle through warmly and the couple loves you for it. The wedding photographer captures your honest panic face for the album.', logText: 'Admitted to forgetting wedding speech notes. Crowd laughed with me.' } },
-      { id: 'speech_quote', text: 'Fill three minutes with inspirational quotes you barely remember.', effect: { statChanges: { status: -10, happiness: -5, smarts: 5 }, outcomeText: 'You butcher a Winston Churchill quote badly, attribute a Gandhi line to Einstein, and finish with something you think is from Rumi but is actually a mug from TJ Maxx. Still applauded.', logText: 'Filled a forgotten wedding speech with misattributed inspirational quotes.' } }
+      { id: 'speech_improvise', text: 'Wing it from the heart — pure improvisation.', effect: { statChanges: { happiness: 25, status: 20, willpower: 25 }, repChanges: { dating: 15 }, outcomeText: 'You speak from pure emotion. Four people cry. The bride says it was better than any written speech could have been. You find out later someone filmed it and it got posted to a wedding blog.', narrativeVariants: { positive: [{ text: 'You speak about the years when success, grief, and bad decisions tested the friendship. The room hears a history no polished quotation could replace.', minAge: 30 }, { text: 'You are young enough to be terrified and close enough to tell the truth. The speech becomes a promise that the friendship will survive the lives both of you are building.', maxAge: 25 }, { text: 'Without notes, you rely on memory. The stories are imperfect, specific, and full of the loyalty that brought you to the microphone.' }] }, logText: 'Improvised a wedding speech that made four people cry.' } },
+      { id: 'speech_honest', text: 'Tell the crowd you forgot your notes and ask for forgiveness.', effect: { statChanges: { karma: 1, happiness: 15 }, outcomeText: 'Everyone laughs with you, not at you. You muddle through warmly and the couple loves you for it. The wedding photographer captures your honest panic face for the album.', narrativeVariants: { positive: [{ text: 'You admit the mistake before pretending confidence. Your friend laughs first, giving the entire room permission to see the panic as affection rather than failure.' }, { text: 'The confession breaks the tension. What follows is less a speech than a warm, clumsy account of why this friendship has lasted.' }] }, logText: 'Admitted to forgetting wedding speech notes. Crowd laughed with me.' } },
+      { id: 'speech_quote', text: 'Fill three minutes with inspirational quotes you barely remember.', effect: { statChanges: { status: -10, happiness: -5, smarts: 5 }, outcomeText: 'You butcher a Winston Churchill quote badly, attribute a Gandhi line to Einstein, and finish with something you think is from Rumi but is actually a mug from TJ Maxx. Still applauded.', narrativeVariants: { chaotic: [{ text: 'You hide behind borrowed wisdom until the quotations collapse into accidental comedy. Your friend recognizes the panic and applauds hardest.' }, { text: 'The speech becomes a procession of misremembered lines and sincere intentions. It is embarrassing now and destined to become friendship folklore later.' }] }, logText: 'Filled a forgotten wedding speech with misattributed inspirational quotes.' } }
     ]
   },
   {
@@ -1346,9 +1417,9 @@ export const EVENTS_POOL: Event[] = [
     conditions: { minAge: 21, maxAge: 45 },
     weight: 30,
     choices: [
-      { id: 'reply_apologize', text: 'Send an immediate company-wide apology email.', effect: { statChanges: { karma: 1, status: -15, happiness: -20 }, repChanges: { workplace: -20 }, outcomeText: 'Your apology goes to all 340 people too. Your boss calls you into his office. Somehow, three colleagues quietly thank you for saying what everyone was thinking.', logText: 'Sent accidental reply-all rant about boss to entire company. Apologized company-wide.' } },
-      { id: 'reply_own', text: 'Own it. Send a follow-up: "I stand by every word."', effect: { statChanges: { willpower: 20, status: 10, happiness: 15 }, repChanges: { workplace: -30 }, outcomeText: 'This is either the bravest or stupidest thing you have ever done. HR calls you in. Somehow you still have your job. The story becomes office legend.', logText: 'Doubled down after an accidental reply-all rant about the boss.' } },
-      { id: 'reply_deny', text: 'Claim your account was hacked and file an IT ticket immediately.', effect: { statChanges: { smarts: 15, karma: -15 }, repChanges: { workplace: -5 }, outcomeText: 'IT reviews the logs, finds it was absolutely you, and sends you a politely devastating report. Your boss says nothing, but starts cc\'ing every email you send.', logText: 'Blamed a hack for a damning reply-all email. IT proved it was me.' } }
+      { id: 'reply_apologize', text: 'Send an immediate company-wide apology email.', effect: { statChanges: { karma: 1, status: -15, happiness: -20 }, repChanges: { workplace: -20 }, outcomeText: 'Your apology goes to all 340 people too. Your boss calls you into his office. Somehow, three colleagues quietly thank you for saying what everyone was thinking.', narrativeVariants: { negative: [{ text: 'Early in your career, the mistake feels large enough to define you. The apology is sincere, public, and followed by the longest walk to a manager\'s office you have ever taken.', maxAge: 28, careerGroups: ['corporate'] }, { text: 'Years of workplace credibility cannot unsend the message, but they keep one mistake from becoming your entire reputation. The apology still costs you authority.', minAge: 40, minReputation: { workplace: 50 } }, { text: 'You apologize to everyone at once. A few private messages offer solidarity, but none can spare you the meeting waiting behind your boss\'s door.' }] }, logText: 'Sent accidental reply-all rant about boss to entire company. Apologized company-wide.' } },
+      { id: 'reply_own', text: 'Own it. Send a follow-up: "I stand by every word."', effect: { statChanges: { willpower: 20, status: 10, happiness: 15 }, repChanges: { workplace: -30 }, outcomeText: 'This is either the bravest or stupidest thing you have ever done. HR calls you in. Somehow you still have your job. The story becomes office legend.', narrativeVariants: { chaotic: [{ text: 'You turn an accident into a public stand. Coworkers admire the nerve, management documents the insubordination, and your career becomes more interesting in all the wrong ways.', careerGroups: ['corporate'] }, { text: 'Your reputation gives the criticism weight and makes the defiance harder to dismiss. It also ensures every senior leader remembers your name.', minReputation: { workplace: 55 } }, { text: 'The second email removes any possibility of misunderstanding. You keep the job, lose political safety, and become the person colleagues quote in whispers.' }] }, logText: 'Doubled down after an accidental reply-all rant about the boss.' } },
+      { id: 'reply_deny', text: 'Claim your account was hacked and file an IT ticket immediately.', effect: { statChanges: { smarts: 15, karma: -15 }, repChanges: { workplace: -5 }, outcomeText: 'IT reviews the logs, finds it was absolutely you, and sends you a politely devastating report. Your boss says nothing, but starts cc\'ing every email you send.', narrativeVariants: { chaotic: [{ text: 'The lie survives only until IT opens the logs. What might have been one embarrassing message becomes evidence that your judgment fails under pressure.', careerGroups: ['corporate'], maxAge: 30 }, { text: 'You have spent years building credibility and spend part of it on a denial nobody believes. The quiet monitoring afterward feels worse than open discipline.', minAge: 40 }, { text: 'IT proves the obvious with clinical precision. Your boss does not confront you; they simply stop trusting any message that arrives without witnesses.' }] }, logText: 'Blamed a hack for a damning reply-all email. IT proved it was me.' } }
     ]
   },
   {
@@ -1462,9 +1533,9 @@ export const EVENTS_POOL: Event[] = [
     conditions: { minAge: 58, maxAge: 70 },
     weight: 30,
     choices: [
-      { id: 'retire_speech', text: 'Give an emotional speech about your career journey.', effect: { statChanges: { happiness: 35, status: 20, willpower: 15 }, repChanges: { workplace: 25, family: 20 }, outcomeText: 'You speak for 15 minutes. Three people cry. Your boss says it was the best farewell speech in company history. You feel a profound sense of completion.', logText: 'Gave an emotional retirement speech that moved the entire office.' } },
-      { id: 'retire_dance', text: 'Immediately put on music and start dancing.', effect: { statChanges: { happiness: 45, health: 5 }, outcomeText: 'You request "I Will Survive" and dance for an hour straight. Everyone joins in. You are the first person in company history to retire with a mosh pit.', logText: 'Started a retirement party mosh pit. Historic.' } },
-      { id: 'retire_quiet', text: 'Quietly thank everyone and ask to just enjoy the cake and company.', effect: { statChanges: { happiness: 30, karma: 2 }, repChanges: { family: 15 }, outcomeText: 'No fanfare, just warmth. You spend three hours in genuine conversation with people who shaped your life. It\'s perfect.', logText: 'Had a quiet, deeply meaningful retirement party.' } }
+      { id: 'retire_speech', text: 'Give an emotional speech about your career journey.', effect: { statChanges: { happiness: 35, status: 20, willpower: 15 }, repChanges: { workplace: 25, family: 20 }, outcomeText: 'You speak for 15 minutes. Three people cry. Your boss says it was the best farewell speech in company history. You feel a profound sense of completion.', narrativeVariants: { positive: [{ text: 'You speak about the promotions and failures, but also the ordinary Tuesdays that slowly became a career. Recognition feels deserved because you remember what it cost.', requiredFlags: ['career_milestone_complete'] }, { text: 'The speech includes mistakes you once tried to hide and people who helped you recover from them. Retirement feels less like an ending than an honest accounting.', requiredFlags: ['career_failure'] }, { text: 'You look across the room at decades of colleagues and finally understand how much of your life was built together rather than alone.', careerGroups: ['corporate', 'medical', 'education'] }] }, logText: 'Gave an emotional retirement speech that moved the entire office.' } },
+      { id: 'retire_dance', text: 'Immediately put on music and start dancing.', effect: { statChanges: { happiness: 45, health: 5 }, outcomeText: 'You request "I Will Survive" and dance for an hour straight. Everyone joins in. You are the first person in company history to retire with a mosh pit.', narrativeVariants: { positive: [{ text: 'After decades of being responsible, you choose joy without needing to justify it. The dance floor fills with people who have never seen you this unguarded.' }, { text: 'Your knees object before your spirit does. Coworkers from every chapter of the career join in, turning the farewell into one last shared act of rebellion.' }] }, logText: 'Started a retirement party mosh pit. Historic.' } },
+      { id: 'retire_quiet', text: 'Quietly thank everyone and ask to just enjoy the cake and company.', effect: { statChanges: { happiness: 30, karma: 2 }, repChanges: { family: 15 }, outcomeText: 'No fanfare, just warmth. You spend three hours in genuine conversation with people who shaped your life. It\'s perfect.', narrativeVariants: { positive: [{ text: 'You skip the grand summary and spend the afternoon exchanging small, specific thanks. The quiet makes room for the relationships the résumé could never show.' }, { text: 'There is no final performance. Just cake, old stories, and conversations with people who remember versions of you that no longer exist.' }] }, logText: 'Had a quiet, deeply meaningful retirement party.' } }
     ]
   },
   {
@@ -1475,9 +1546,9 @@ export const EVENTS_POOL: Event[] = [
     conditions: { minAge: 35 },
     weight: 30,
     choices: [
-      { id: 'health_change', text: 'Commit to a complete lifestyle overhaul starting today.', effect: { statChanges: { health: 20, happiness: 15, willpower: 25 }, outcomeText: 'You quit the junk food, start walking every morning, and actually go to sleep before midnight. Six months later, your next checkup shows dramatic improvement.', logText: 'Doctor\'s warning triggered a complete and successful lifestyle overhaul.' } },
-      { id: 'health_ignore', text: 'Nod politely and immediately eat a cheeseburger.', effect: { statChanges: { health: -15, happiness: 10 }, outcomeText: 'The cheeseburger is magnificent. You tell yourself you will start next Monday. Next Monday comes and goes. The cycle continues.', logText: 'Responded to a health scare with a cheeseburger. Starting healthy habits "next Monday".' } },
-      { id: 'health_research', text: 'Deep-dive into health research and consult a specialist.', effect: { statChanges: { smarts: 20, health: 15, willpower: 15 }, outcomeText: 'You become extremely knowledgeable about your condition and put together a solid personalized plan with a nutritionist. People start coming to you for health advice.', logText: 'Researched health scare extensively and developed a specialist-guided plan.' } }
+      { id: 'health_change', text: 'Commit to a complete lifestyle overhaul starting today.', effect: { statChanges: { health: 20, happiness: 15, willpower: 25 }, outcomeText: 'You quit the junk food, start walking every morning, and actually go to sleep before midnight. Six months later, your next checkup shows dramatic improvement.', narrativeVariants: { positive: [{ text: 'The warning arrives while your career is consuming every spare hour. You begin treating sleep, food, and movement as obligations as real as any deadline.', careerGroups: ['actor', 'creator', 'adult_performer', 'corporate'] }, { text: 'You have ignored smaller warnings before. This time, the memory of those failures turns motivation into routine instead of another temporary promise.', requiredFlags: ['health_warning_ignored'] }, { text: 'The first weeks are uncomfortable and ordinary. Months later, the improved results feel less like luck than proof that your future can still be influenced.' }] }, logText: 'Doctor\'s warning triggered a complete and successful lifestyle overhaul.' } },
+      { id: 'health_ignore', text: 'Nod politely and immediately eat a cheeseburger.', effect: { statChanges: { health: -15, happiness: 10 }, outcomeText: 'The cheeseburger is magnificent. You tell yourself you will start next Monday. Next Monday comes and goes. The cycle continues.', narrativeVariants: { chaotic: [{ text: 'The meal is comforting precisely because the appointment was frightening. You postpone change until Monday, then use work, money, and exhaustion to postpone it again.', careerGroups: ['corporate', 'creator', 'actor'] }, { text: 'You can afford every specialist and still cannot purchase the willingness to change. The contradiction follows you through another indulgent meal.', wealthBands: ['wealthy'] }, { text: 'Denial tastes good for an evening. By the next week, the doctor\'s warning has become background noise and the cycle has resumed.' }] }, logText: 'Responded to a health scare with a cheeseburger. Starting healthy habits "next Monday".' } },
+      { id: 'health_research', text: 'Deep-dive into health research and consult a specialist.', effect: { statChanges: { smarts: 20, health: 15, willpower: 15 }, outcomeText: 'You become extremely knowledgeable about your condition and put together a solid personalized plan with a nutritionist. People start coming to you for health advice.', narrativeVariants: { positive: [{ text: 'Money gives you access to specialists, but the real change comes from asking better questions and following the plan after the appointments end.', wealthBands: ['comfortable', 'wealthy'] }, { text: 'Specialist care strains the budget, so you arrive prepared and make every appointment count. Knowledge becomes a form of control when money cannot be.', wealthBands: ['struggling', 'stable'] }, { text: 'You turn fear into research, then research into a routine built for your actual life rather than an idealized one.' }] }, logText: 'Researched health scare extensively and developed a specialist-guided plan.' } }
     ]
   },
   {
@@ -1488,9 +1559,9 @@ export const EVENTS_POOL: Event[] = [
     conditions: { minAge: 18 },
     weight: 45,
     choices: [
-      { id: 'scam_pay', text: 'Panic and wire them the $1,500 fine to avoid jail.', effect: { statChanges: { happiness: -40, smarts: -15 }, cashChange: -1500, outcomeText: 'You wire the money in a complete panic. Two hours later, you call the real tax agency to confirm... it was a scam. Your money is gone, and you feel incredibly foolish.', logText: 'Fell for a terrifying government tax scam call and lost $1,500.' } },
-      { id: 'scam_yell', text: 'Yell at them and hang up the phone.', effect: { statChanges: { willpower: 10, karma: -5 }, outcomeText: 'You scream profanities into the phone and slam it down. Your heart is pounding. You check your actual tax portal just in case—you\'re clear. It was a scam.', logText: 'Yelled at a tax scammer over the phone and hung up.' } },
-      { id: 'scam_ignore', text: 'Just block the number and go back to sleep.', effect: { statChanges: { happiness: 5 }, outcomeText: 'You block the number without a second thought. If the government wants you, they can send a letter. You take a fantastic nap.', logText: 'Ignored a government scam call and took a nap.' } }
+      { id: 'scam_pay', text: 'Panic and wire them the $1,500 fine to avoid jail.', effect: { statChanges: { happiness: -40, smarts: -15 }, cashChange: -1500, outcomeText: 'You wire the money in a complete panic. Two hours later, you call the real tax agency to confirm... it was a scam. Your money is gone, and you feel incredibly foolish.', narrativeVariants: { negative: [{ text: 'The transfer empties the money you kept for rent and emergencies. Shame arrives beside a practical crisis: the scam will affect the rest of the month.', wealthBands: ['struggling', 'stable'] }, { text: 'The loss is affordable, which does nothing to soften the humiliation. You keep replaying the moment fear overruled experience.', wealthBands: ['wealthy'] }, { text: 'The caller understands exactly how to make adulthood feel like one missed notice away from disaster. By the time you verify the story, the money and your confidence are gone.' }] }, logText: 'Fell for a terrifying government tax scam call and lost $1,500.' } },
+      { id: 'scam_yell', text: 'Yell at them and hang up the phone.', effect: { statChanges: { willpower: 10, karma: -5 }, outcomeText: 'You scream profanities into the phone and slam it down. Your heart is pounding. You check your actual tax portal just in case—you\'re clear. It was a scam.', narrativeVariants: { chaotic: [{ text: 'You recognize the script but not before it reaches your nerves. Anger gets you off the call; checking the real account is what finally lets you breathe.' }, { text: 'Experience tells you the threat is false, while your body reacts as if police are already outside. You hang up furious and verify everything twice.', minAge: 40 }] }, logText: 'Yelled at a tax scammer over the phone and hung up.' } },
+      { id: 'scam_ignore', text: 'Just block the number and go back to sleep.', effect: { statChanges: { happiness: 5 }, outcomeText: 'You block the number without a second thought. If the government wants you, they can send a letter. You take a fantastic nap.', narrativeVariants: { positive: [{ text: 'Years of bills and official correspondence have taught you one useful rule: real institutions leave a paper trail. You block the number and protect your afternoon.', minAge: 35 }, { text: 'The caller demands urgency; you answer with indifference. The number disappears into the block list, taking its manufactured crisis with it.' }] }, logText: 'Ignored a government scam call and took a nap.' } }
     ]
   },
   {
@@ -1521,6 +1592,7 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           statChanges: { happiness: -5 },
           outcomeText: 'You stick to your grinding schedule. Your views are flat, you get buried by the new algorithm, and you feel completely exhausted.',
+          narrativeVariants: { negative: [{ text: 'The schedule becomes a second job: visible, measurable, and difficult to stop even when your body asks for a weekend.', careers: ['creator', 'adult_performer'], wealthBands: ['struggling', 'stable'] }, { text: 'The numbers stay flat because you keep showing up to an audience that is no longer being shown your work.', careers: ['creator', 'adult_performer'], minFame: 40 }, { text: 'You learn the first public lesson of growth: momentum feels like success until it starts choosing your hours for you.' }] },
           logText: 'Chose to grind posts daily despite the negative algorithm shift.'
         }
       },
@@ -1530,6 +1602,7 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           statChanges: { happiness: 5 },
           outcomeText: 'Your fans complain about the lack of content, but your new weekly uploads look incredibly professional and get double reach.',
+          narrativeVariants: { positive: [{ text: 'A smaller schedule gives you enough room to remember why you started. The audience that stays feels more like a community than a metric.', careers: ['creator', 'adult_performer'] }, { text: 'You stop treating rest as an apology. The work is steadier because your life has somewhere else to go.', minFame: 35 }, { text: 'The compromise is not glamorous, but it lets ambition share a house with sleep.', wealthBands: ['struggling', 'stable'] }] },
           logText: 'Pivoted to weekly high-quality uploads following the algorithm update.'
         }
       },
@@ -1539,6 +1612,7 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           cashChange: -500,
           outcomeText: 'The algorithm boost delivers thousands of bot views, but your organic reach modifier drops permanently.',
+          narrativeVariants: { negative: [{ text: 'The reach is real for a week and the cost is immediate. Growth starts to feel like a wager made with rent money.', wealthBands: ['struggling', 'stable'] }, { text: 'You can absorb the bill, but the sudden attention still leaves you wondering whether people found the work or the advertisement.', wealthBands: ['comfortable', 'wealthy'] }, { text: 'Buying momentum works just well enough to make the next boost feel inevitable.', careers: ['creator', 'adult_performer'] }] },
           logText: 'Paid $500 for a temporary algorithm traffic boost.'
         }
       }
@@ -1556,6 +1630,7 @@ export const EVENTS_POOL: Event[] = [
         text: 'appeal the Strike',
         effect: {
           outcomeText: 'Appeal rejected! The moderators warn you to keep it clean. Your stress level is through the roof.',
+          narrativeVariants: { neutral: [{ text: 'The appeal disappears into a moderation queue. You are left translating an automated warning into a new set of creative boundaries.', careers: ['creator', 'adult_performer'] }, { text: 'The rejection is impersonal, which somehow makes it harder to argue with. Your audience waits while you rewrite the plan.', minFame: 40 }, { text: 'A platform rule becomes a career question: adapt, move, or accept that the audience does not belong entirely to you.' }] },
           logText: 'Unsuccessfully appealed a SpicyChat content strike.'
         }
       },
@@ -1565,6 +1640,7 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           cashChange: -200,
           outcomeText: 'You deleted the evidence. The warning strike is removed, but your fans are disappointed that you folded.',
+          narrativeVariants: { negative: [{ text: 'You spend the money to keep the account alive and discover that survival can still look like retreat to the people watching.', wealthBands: ['struggling', 'stable'] }, { text: 'The strike disappears. The screenshot of it does not, and your audience starts debating what you will compromise next.', minFame: 45 }, { text: 'Protecting the platform means accepting that the platform gets a vote in your creative life.', careers: ['creator', 'adult_performer'] }] },
           logText: 'Deleted flagged post, taking a temporary PPV refund hit.'
         }
       },
@@ -1573,6 +1649,7 @@ export const EVENTS_POOL: Event[] = [
         text: 'Move to RedStage',
         effect: {
           outcomeText: 'You announce your migration. Your RedStage subscriber count jumps, but your cashflow takes a temporary hit.',
+          narrativeVariants: { neutral: [{ text: 'The audience follows, but not all at once. You are rebuilding a business while pretending the move was always part of the plan.', careers: ['creator', 'adult_performer'] }, { text: 'A new platform offers fresh control and fresh uncertainty. The first week is less a victory than a test of who actually follows you.', minFame: 35 }, { text: 'You leave before the ban can decide your future, accepting that independence often begins with an inconvenient invoice.' }] },
           logText: 'Announced migration to RedStage to avoid permanent SpicyChat ban.'
         }
       }
@@ -2217,6 +2294,7 @@ export const EVENTS_POOL: Event[] = [
         text: '🗣️ Tell Her the Truth',
         effect: {
           outcomeText: 'She is horrified and calls it "sinful money," but you feel relieved the secret is out.',
+          narrativeVariants: { neutral: [{ text: 'The truth lands badly, but it is no longer taking up space between every call and every family silence.', careers: ['creator', 'adult_performer'] }, { text: 'Her reaction is shaped by fear as much as judgment. You leave the conversation bruised, relieved, and newly visible.', minFame: 40 }, { text: 'You choose honesty before the secret can become a second relationship in the family.' }] },
           logText: 'Disclosed adult platform creator earnings directly to family.'
         }
       },
@@ -2225,6 +2303,7 @@ export const EVENTS_POOL: Event[] = [
         text: '🤥 Lie and Say it is a Bug',
         effect: {
           outcomeText: 'She believes you for now, but she starts looking at you suspiciously.',
+          narrativeVariants: { neutral: [{ text: 'The lie buys one quiet evening and spends a little trust every time your phone lights up.', careers: ['creator', 'adult_performer'] }, { text: 'You protect the account by making the relationship less honest. That trade feels manageable until the next question.', minFame: 35 }, { text: 'The explanation is plausible enough to survive the night, not the history that follows it.' }] },
           logText: 'Concealed phone earnings from parents, claiming UI bug.'
         }
       },
@@ -2233,6 +2312,7 @@ export const EVENTS_POOL: Event[] = [
         text: '🛑 Cut Off Contact',
         effect: {
           outcomeText: 'You block her number. You are alone, but nobody can control you anymore.',
+          narrativeVariants: { negative: [{ text: 'The block creates immediate peace and a much longer silence. Independence is easier to announce than to live with.', careers: ['creator', 'adult_performer'] }, { text: 'You choose control over reconciliation, then discover that control cannot answer when the evening gets quiet.', minFame: 40 }, { text: 'The secret is yours again. So is the responsibility for what the family no longer gets to know.' }] },
           logText: 'Severed family ties following phone disclosure.'
         }
       }
@@ -2250,6 +2330,7 @@ export const EVENTS_POOL: Event[] = [
         text: '❤️ Delete Accounts for Love',
         effect: {
           outcomeText: 'You deleted everything. You are broke but together. You feel a seed of resentment.',
+          narrativeVariants: { neutral: [{ text: 'You save the relationship by giving up the work, then notice the resentment arriving before the relief has finished.', careers: ['creator', 'adult_performer'], wealthBands: ['struggling', 'stable'] }, { text: 'Love wins the argument and loses a piece of the future you were building. Both facts remain true over dinner.', minFame: 45 }, { text: 'The account is gone, the partner is still there, and the question of whose life this is has only become quieter.' }] },
           logText: 'Deactivated platforms to resolve partner relationship ultimatum.'
         }
       },
@@ -2258,6 +2339,7 @@ export const EVENTS_POOL: Event[] = [
         text: '🍑 Choose Your Career',
         effect: {
           outcomeText: 'They pack their bags. You cry alone, but your evening content session goes smoothly.',
+          narrativeVariants: { negative: [{ text: 'The work continues because deadlines do not attend breakups. Success that night feels uncomfortably close to proof.', careers: ['creator', 'adult_performer'] }, { text: 'You choose the career, then spend the first successful evening wishing someone specific were proud of it.', minFame: 45 }, { text: 'The audience rewards consistency while your private life records the cost of it.' }] },
           logText: 'Ended relationship to maintain creator profile.'
         }
       },
@@ -2266,6 +2348,7 @@ export const EVENTS_POOL: Event[] = [
         text: '💬 Negotiate Open Boundary',
         effect: {
           outcomeText: 'Negotiation failed! They throw their key at you and block your number.',
+          narrativeVariants: { negative: [{ text: 'You offered a compromise because you wanted both lives. The slammed door makes the choice feel less thoughtful and more final.', careers: ['creator', 'adult_performer'] }, { text: 'The boundary was honest, but honesty cannot make another person want the same relationship.', minAge: 30 }, { text: 'The career remains; the future you imagined around it does not.' }] },
           logText: 'Unsuccessfully suggested open relationship boundary alternative.'
         }
       }
@@ -2627,6 +2710,7 @@ export const EVENTS_POOL: Event[] = [
         text: '🍑 Re-open OnlyFans Account',
         effect: {
           outcomeText: 'You went back to work. Your partner leaves you, but your fans welcome you back.',
+          narrativeVariants: { neutral: [{ text: 'The audience welcomes the return as a comeback. You experience it as a decision that finally stopped asking permission.', careers: ['creator', 'adult_performer'], minFame: 35 }, { text: 'Work gives the breakup a shape: public, measurable, and easier to explain than the private argument that caused it.', minAge: 30 }, { text: 'You reopen the account knowing freedom can still feel like grief when someone had planned a different future with you.' }] },
           logText: 'Reopened OnlyFans profile, ending partner relationship.'
         }
       },
@@ -2636,6 +2720,7 @@ export const EVENTS_POOL: Event[] = [
         effect: {
           statChanges: { happiness: -20 },
           outcomeText: 'You stay home. You feel depressed and useless.',
+          narrativeVariants: { negative: [{ text: 'The quiet is supposed to protect the relationship. Instead it turns every unpaid bill and empty afternoon into an argument you have with yourself.', wealthBands: ['struggling', 'stable'] }, { text: 'You are not failing at rest; you are stranded without a plan that belongs to you.', minAge: 30 }, { text: 'The audience has moved on, the household is tense, and your own ambition has become difficult to hear.' }] },
           logText: 'Stayed unemployed, leading to deep depression.'
         }
       },
@@ -2644,6 +2729,7 @@ export const EVENTS_POOL: Event[] = [
         text: '💔 Break Up',
         effect: {
           outcomeText: 'You packed your bags. You are single, but free to build your empire.',
+          narrativeVariants: { neutral: [{ text: 'The breakup gives your ambition room, but freedom arrives carrying boxes, deposits, and the memory of what it cost.', wealthBands: ['struggling', 'stable'] }, { text: 'You call it an empire because the word is easier than admitting you are rebuilding from one room.', careers: ['creator', 'adult_performer'] }, { text: 'For once, the future is entirely yours. That is exhilarating until you realize it is also entirely your responsibility.' }] },
           logText: 'Ended relationship over ambition differences.'
         }
       }
@@ -2986,8 +3072,8 @@ export const EVENTS_POOL: Event[] = [
     id: 'actor_first_audition', title: 'First Audition', text: 'Your first serious casting call is tomorrow, and the room will be full of more experienced performers.', category: 'career', weight: 20,
     conditions: { minAge: 18, flagsFalse: ['actor_first_audition_resolved'], customCheck: state => state.actorCareer?.active === true && state.flags.actorFirstAuditionEligibleThisYear === true },
     choices: [
-      { id: 'actor_first_audition_prepare', text: 'Rehearse until you know every beat.', effect: { statChanges: { smarts: 2, happiness: -2 }, repChanges: { workplace: 5 }, flagsSet: { actor_first_audition_resolved: true }, outcomeText: 'You arrive prepared and leave a strong first impression.', logText: 'Prepared thoroughly for a first acting audition.' } },
-      { id: 'actor_first_audition_improvise', text: 'Trust your instincts and improvise.', effect: { statChanges: { status: 3 }, flagsSet: { actor_first_audition_resolved: true }, outcomeText: 'Your bold choice gets the casting team talking.', logText: 'Took an instinctive approach to a first acting audition.' } }
+      { id: 'actor_first_audition_prepare', text: 'Rehearse until you know every beat.', effect: { statChanges: { smarts: 2, happiness: -2 }, repChanges: { workplace: 5 }, flagsSet: { actor_first_audition_resolved: true }, outcomeText: 'You arrive prepared and leave a strong first impression.', narrativeVariants: { positive: [{ text: 'You walk into the room carrying the nerves of a newcomer and the discipline of someone who intends to stay. The panel notices both.', careers: ['actor'], maxAge: 25 }, { text: 'Preparation steadies you when the room feels intimidating. The first impression is not glamorous, but it is professional.', careers: ['actor'], minAge: 26 }, { text: 'You give the casting team something reliable to remember: a performer who did the work before asking for the opportunity.', careers: ['actor'] }] }, logText: 'Prepared thoroughly for a first acting audition.' } },
+      { id: 'actor_first_audition_improvise', text: 'Trust your instincts and improvise.', effect: { statChanges: { status: 3 }, flagsSet: { actor_first_audition_resolved: true }, outcomeText: 'Your bold choice gets the casting team talking.', narrativeVariants: { positive: [{ text: 'The risk feels enormous for a first audition, but your instincts turn the unfamiliar room into a conversation.', careers: ['actor'], maxAge: 25 }, { text: 'You have learned that experience is useful only when it leaves room for surprise. The panel keeps talking after you leave.', careers: ['actor'], minAge: 26 }, { text: 'The choice is bold enough to be remembered, and measured enough not to look like panic.', careers: ['actor'] }] }, logText: 'Took an instinctive approach to a first acting audition.' } }
     ]
   },
   {
@@ -3004,6 +3090,258 @@ export const EVENTS_POOL: Event[] = [
     choices: [
       { id: 'actor_scandal_joint', text: 'Issue a calm joint statement.', effect: { repChanges: { online: 4 }, relationshipChanges: { target: 'current', trust: 8, suspicion: -6, resentment: -5, knowledge: 10 }, flagsSet: { actor_scandal_resolved: true }, outcomeText: 'The statement settles the story and shows your colleague you have their back.', narrativeVariants: { positive: [{ text: 'You and your colleague take the rumor seriously without feeding it. The unified response gives the story less room to grow.', careers: ['actor'], relationshipTypes: ['colleague'], minFame: 30 }, { text: 'The statement is calm, specific, and shared. Your colleague remembers that you stood beside them when silence would have been easier.', relationshipTypes: ['colleague'], npcArchetypes: ['supportive friend', 'mentor', 'average'] }] }, logText: 'Addressed a set rumor with a colleague.' } },
       { id: 'actor_scandal_silent', text: 'Stay silent and let it burn out.', effect: { statChanges: { happiness: -4 }, relationshipChanges: { target: 'current', trust: -6, suspicion: 7, resentment: 8 }, flagsSet: { actor_scandal_resolved: true }, outcomeText: 'The headlines fade, but your colleague feels left alone in the fallout.', narrativeVariants: { negative: [{ text: 'The rumor eventually loses heat, but your colleague remembers who was absent while it was hottest. The professional cost is quieter than the headlines.', careers: ['actor'], relationshipTypes: ['colleague'] }, { text: 'Silence keeps you out of the immediate mess. It also leaves your colleague to carry a story that involved both of you.', relationshipTypes: ['colleague'], minRelationshipTrust: 40 }] }, logText: 'Stayed silent during a set-rumor scandal.' } }
+    ]
+  },
+  {
+    id: 'royal_childhood_expectations', title: 'Lessons of the Crown', text: 'Your household has arranged a demanding schedule of tutors, languages, and public etiquette. Even childhood carries an audience.', category: 'career', weight: 12,
+    conditions: { minAge: 6, maxAge: 12, customCheck: state => state.origin?.status === 'royal' && state.origin.country !== 'Unknown' },
+    choices: [
+      { id: 'royal_study', text: 'Commit to the lessons.', effect: { statChanges: { smarts: 5, happiness: -3 }, approvalChange: 3, outcomeText: 'You master another difficult lesson. The household praises your discipline, though you wonder when an achievement becomes simply expected.', logText: 'Accepted demanding royal education expectations.' } },
+      { id: 'royal_play', text: 'Ask for time to play like other children.', effect: { statChanges: { happiness: 8, status: -2 }, approvalChange: -2, outcomeText: 'A little ordinary time is granted. The relief is private, but it feels like the first decision that belongs entirely to you.', logText: 'Asked the royal household for ordinary childhood time.' } }
+    ]
+  },
+  {
+    id: 'royal_teen_privacy', title: 'A Photograph in the Papers', text: 'A photographer has captured you leaving a private gathering. Advisors want a response before the story grows.', category: 'relationship', weight: 14,
+    conditions: { minAge: 13, maxAge: 19, customCheck: state => state.origin?.status === 'royal' },
+    choices: [
+      { id: 'royal_privacy_statement', text: 'Ask the household to defend your privacy.', effect: { approvalChange: 2, repChanges: { online: 3 }, outcomeText: 'The statement is restrained but firm. The story fades, while your supporters appreciate that the household treated your boundaries as real.', logText: 'Defended royal privacy through a measured statement.' } },
+      { id: 'royal_own_story', text: 'Address the public yourself.', effect: { approvalChange: 6, repChanges: { online: 5 }, statChanges: { happiness: -4 }, outcomeText: 'You speak plainly about being young, visible, and imperfect. The honesty earns warmth from some people and scrutiny from others.', logText: 'Addressed public attention personally as a young royal.' } },
+      { id: 'royal_hide', text: 'Say nothing and retreat from public life.', effect: { approvalChange: -4, statChanges: { happiness: 3 }, outcomeText: 'Silence protects the evening but leaves the public story to strangers. Privacy returns slowly, carrying a cost in trust.', logText: 'Withdrew from public attention after a royal privacy incident.' } }
+    ]
+  },
+  {
+    id: 'royal_adult_duty', title: 'The Public Duty', text: 'As an adult royal, you are asked to attend a difficult community event where your presence could reassure people.', category: 'career', weight: 10,
+    conditions: { minAge: 20, minRep: { online: 0 }, customCheck: state => state.origin?.status === 'royal' && (state.publicApproval ?? 50) >= 35 },
+    choices: [
+      { id: 'royal_duty_attend', text: 'Attend and listen without turning it into a speech.', effect: { approvalChange: 8, statChanges: { happiness: -2 }, outcomeText: 'You listen longer than you speak. The photographs show a public figure present for the people rather than performing at them.', logText: 'Fulfilled a public royal duty with a listening-first approach.' } },
+      { id: 'royal_duty_delegate', text: 'Send an advisor in your place.', effect: { approvalChange: -5, statChanges: { happiness: 2 }, outcomeText: 'The advisor is capable, but absence is noticed. You keep your schedule and lose a little of the public trust that schedule was meant to protect.', logText: 'Delegated a difficult royal public duty.' } }
+    ]
+  },
+  {
+    id: 'royal_parent_expectations', title: 'A Private Conversation', text: 'One of your royal parents asks whether you are prepared to keep choosing duty when nobody is applauding.', category: 'relationship', weight: 12, involvedRelationshipType: 'parent',
+    conditions: { minAge: 13, hasRelationshipType: 'parent', customCheck: state => state.origin?.status === 'royal' && (state.publicApproval ?? 50) < 75 },
+    choices: [
+      { id: 'royal_parent_reassure', text: 'Promise to take the responsibility seriously.', effect: { approvalChange: 3, relationshipChanges: { target: 'current', trust: 8, suspicion: -4, resentment: -3 }, outcomeText: 'Your parent hears the promise as a commitment rather than a performance. The expectations remain, but the relationship feels steadier.', logText: 'Reassured a royal parent about public responsibility.' } },
+      { id: 'royal_parent_boundary', text: 'Explain that duty needs boundaries.', effect: { approvalChange: -2, relationshipChanges: { target: 'current', trust: 2, suspicion: 2, resentment: 5 }, statChanges: { happiness: 5 }, outcomeText: 'The conversation is tense, but honest. Your parent dislikes the limit and understands why you need one.', logText: 'Set a boundary with a royal parent about duty.' } }
+    ]
+  },
+  {
+    id: 'royal_regency_transition', title: 'The Regency Ends', text: 'You are old enough to rule in your own name. Your regent asks what role they should have now.', category: 'relationship', weight: 14, involvedRelationshipType: 'mentor',
+    conditions: { minAge: 18, flagsTrue: ['royal_regency_ended'], customCheck: state => state.royalSuccession?.rank === 'monarch' && !state.royalSuccession.regencyActive && !!state.royalSuccession.regentId },
+    choices: [
+      { id: 'regency_keep_advisor', text: 'Keep the regent as a trusted advisor.', effect: { relationshipChanges: { target: 'current', trust: 8, resentment: -6 }, approvalChange: 3, flagsSet: { royal_regency_ended: false }, outcomeText: 'The regent steps back without disappearing. The transition feels like gratitude rather than dismissal.', logText: 'Kept a former regent as a trusted royal advisor.' } },
+      { id: 'regency_distance', text: 'Create distance and rule independently.', effect: { relationshipChanges: { target: 'current', trust: -5, resentment: 8 }, approvalChange: -2, statChanges: { happiness: 4 }, flagsSet: { royal_regency_ended: false }, outcomeText: 'You take full control, and the household understands that independence can still feel like rejection.', logText: 'Chose independence after a royal regency.' } }
+    ]
+  },
+  {
+    id: 'royal_sibling_claim', title: 'A Sibling Questions the Succession', text: 'A sibling privately argues that the family should reconsider who deserves the future crown.', category: 'relationship', weight: 10, involvedRelationshipType: 'sibling',
+    conditions: { minAge: 13, hasRelationshipType: 'sibling', customCheck: state => state.origin?.status === 'royal' && state.royalSuccession?.rank === 'monarch' && (state.publicApproval ?? 50) < 65 },
+    choices: [
+      { id: 'sibling_listen', text: 'Listen and acknowledge the hurt.', effect: { relationshipChanges: { target: 'current', trust: 6, suspicion: -4, resentment: -5 }, approvalChange: 2, outcomeText: 'You do not surrender the succession, but you stop treating your sibling’s resentment as treason. The family tension loosens.', logText: 'Listened to a sibling dispute about royal succession.' } },
+      { id: 'sibling_dismiss', text: 'Dismiss the challenge as disloyalty.', effect: { relationshipChanges: { target: 'current', trust: -8, suspicion: 8, resentment: 12 }, approvalChange: -3, outcomeText: 'The claim is dismissed publicly and remembered privately. The succession remains clear; the relationship does not.', logText: 'Dismissed a sibling succession challenge.' } }
+    ]
+  },
+  {
+    id: 'royal_governance_choice', title: 'The Shape of the Crown', text: 'As a high-ranking royal, you must choose whether to preserve a familiar tradition or begin a careful modernization effort.', category: 'career', weight: 12,
+    conditions: { minAge: 18, customCheck: state => state.origin?.status === 'royal' && ['monarch', 'heir'].includes(state.royalSuccession?.rank || '') },
+    choices: [
+      { id: 'royal_preserve_tradition', text: 'Preserve the tradition.', effect: { approvalChange: 4, authorityChange: 3, relationshipChanges: { target: 'all', trust: 2 }, outcomeText: 'You protect the familiar ceremony. Traditional supporters feel reassured, while younger voices wait to see whether continuity can still make room for them.', narrativeVariants: { positive: [{ text: 'With authority still new, continuity gives your household a stable first promise.', minAuthority: 0, maxAuthority: 45 }, { text: 'You have enough authority to choose tradition deliberately rather than defensively. The ceremony feels like stewardship.', minAuthority: 46 }] }, logText: 'Chose to preserve a royal tradition.' } },
+      { id: 'royal_reform_tradition', text: 'Modernize the institution carefully.', effect: { approvalChange: -2, authorityChange: 7, relationshipChanges: { target: 'all', trust: -2, resentment: 2 }, outcomeText: 'The changes are measured, but change still unsettles people who believed the old form was the point. Your authority grows as your family debates what you are becoming.', narrativeVariants: { chaotic: [{ text: 'You spend authority to make the institution more legible to a new generation. The applause is mixed, but the decision is unmistakably yours.', minAuthority: 46 }, { text: 'You are still earning the right to change the symbols everyone inherited. The first reform creates as much family conversation as public approval.', maxAuthority: 45 }] }, logText: 'Introduced careful reforms to royal tradition.' } },
+      { id: 'royal_public_service', text: 'Put the crown behind a public project.', effect: { approvalChange: 8, authorityChange: 4, statChanges: { happiness: -2 }, outcomeText: 'You attach the crown to a practical public project. The work outlasts the photographs, and supporters begin to measure your reign by results.', narrativeVariants: { positive: [{ text: 'The project gives your authority somewhere useful to go: into schools, hospitals, and promises people can visit.', minAuthority: 35 }, { text: 'Public service turns recognition into support. The crown feels less like a symbol and more like an obligation with witnesses.', minFame: 20 }] }, logText: 'Committed royal authority to a public service project.' } }
+    ]
+  },
+  {
+    id: 'royal_advisor_disagreement', title: 'The Advisor’s Objection', text: 'Your royal advisor believes your latest decision is too risky. They ask whether you want counsel or obedience.', category: 'relationship', weight: 13, involvedRelationshipType: 'mentor',
+    conditions: { minAge: 18, hasRelationshipType: 'mentor', customCheck: state => state.origin?.status === 'royal' && (state.royalAuthority ?? 0) >= 35 },
+    choices: [
+      { id: 'royal_advisor_listen', text: 'Listen before deciding.', effect: { approvalChange: 2, authorityChange: 2, relationshipChanges: { target: 'current', trust: 8, suspicion: -4, resentment: -4 }, outcomeText: 'You hear the concern without surrendering the decision. The advisor leaves convinced that counsel still matters under your authority.', narrativeVariants: { positive: [{ text: 'A cautious advisor is easiest to dismiss when authority feels exciting. You listen anyway, and the relationship becomes a stabilizer rather than a brake.', npcPersonalityAny: ['cautious', 'loyal'] }, { text: 'You have enough authority to disagree without humiliating the person who warned you.', minAuthority: 60 }] }, logText: 'Listened to a royal advisor before making a decision.' } },
+      { id: 'royal_advisor_override', text: 'Override the advice publicly.', effect: { approvalChange: -3, authorityChange: 6, relationshipChanges: { target: 'current', trust: -8, suspicion: 4, resentment: 9 }, outcomeText: 'The decision is yours, and everyone knows it. The advisor remains loyal for now, but the public disagreement becomes a memory with a long half-life.', narrativeVariants: { negative: [{ text: 'Authority can end an argument instantly. It cannot make the person who lost it forget the room.', npcPersonalityAny: ['loyal', 'traditional'] }, { text: 'You win the decision and spend some of the trust that made the decision possible.', minAuthority: 35, maxAuthority: 59 }] }, logText: 'Overrode a royal advisor in public.' } }
+    ]
+  },
+  {
+    id: 'royal_public_reaction', title: 'The Public Reaction', text: 'Your latest royal decision has become the subject of national conversation. Supporters want reassurance; critics want an explanation.', category: 'random', weight: 11,
+    conditions: { minAge: 18, customCheck: state => state.origin?.status === 'royal' && (state.royalAuthority ?? 0) >= 30 },
+    choices: [
+      { id: 'royal_reaction_explain', text: 'Explain the decision plainly.', effect: { approvalChange: 6, authorityChange: 1, outcomeText: 'The explanation does not satisfy everyone, but it gives the public a coherent reason to disagree with you rather than inventing one.', narrativeVariants: { positive: [{ text: 'Recognition brought the question to you; authority lets you answer without hiding behind ceremony.', minFame: 30, minAuthority: 50 }, { text: 'You are still learning how much honesty a public role can carry. The answer lands because it sounds like a person made it.', maxAuthority: 49 }] }, logText: 'Explained a royal decision to the public.' } },
+      { id: 'royal_reaction_silence', text: 'Let the household statement speak.', effect: { approvalChange: -2, authorityChange: 3, outcomeText: 'The official statement is polished and defensible. It also leaves people wondering whether the crown is listening or merely speaking.', logText: 'Allowed a royal household statement to answer public criticism.' } }
+    ]
+  },
+  {
+    id: 'royal_relationship_scandal', title: 'A Private Life in Public', text: 'A photograph of your partner leaving a private gathering has become a royal scandal. The household wants a statement.', category: 'relationship', weight: 12, involvedRelationshipType: 'partner',
+    conditions: { minAge: 18, hasRelationshipType: 'partner', customCheck: state => state.origin?.status === 'royal' && ['heir', 'monarch'].includes(state.royalSuccession?.rank || '') },
+    choices: [
+      { id: 'royal_scandal_protect', text: 'Protect your partner and acknowledge the relationship.', effect: { approvalChange: 3, authorityChange: 1, relationshipChanges: { target: 'current', trust: 8, suspicion: -5, resentment: -4 }, outcomeText: 'You take responsibility for the story without offering your partner as its explanation. The public debate continues, but the relationship feels protected.', narrativeVariants: { positive: [{ text: 'Royal life has made privacy expensive. You spend some approval to make sure the cost is not paid by the person beside you.', minAuthority: 35 }, { text: 'The statement is careful without being evasive. Your partner remembers that the institution did not come first this time.', minRelationshipTrust: 60 }] }, logText: 'Protected a partner during a royal relationship scandal.' } },
+      { id: 'royal_scandal_distance', text: 'Distance yourself from the controversy.', effect: { approvalChange: 1, authorityChange: 2, personalFreedomChange: -5, relationshipChanges: { target: 'current', trust: -8, suspicion: 5, resentment: 10 }, outcomeText: 'The official story becomes cleaner. The private relationship becomes colder, watched by the same people who praised your discipline.', logText: 'Prioritized royal reputation over a partner during a scandal.' } }
+    ]
+  },
+  {
+    id: 'royal_marriage_expectations', title: 'The Marriage Question', text: 'Your family believes a public marriage would steady the succession and reassure traditional supporters.', category: 'relationship', weight: 10,
+    conditions: { minAge: 25, customCheck: state => state.origin?.status === 'royal' && ['heir', 'monarch'].includes(state.royalSuccession?.rank || '') },
+    choices: [
+      { id: 'royal_marriage_accept', text: 'Accept the expectation and begin introductions.', effect: { approvalChange: 5, authorityChange: 1, personalFreedomChange: -10, outcomeText: 'The household celebrates the possibility. You gain approval and lose a little of the right to keep your romantic life unobserved.', logText: 'Accepted family pressure to explore a royal marriage.' } },
+      { id: 'royal_marriage_decline', text: 'Decline and set a personal boundary.', effect: { approvalChange: -4, authorityChange: 2, personalFreedomChange: 10, outcomeText: 'The refusal disappoints the family, but the boundary is unmistakably yours. For once, the future feels private enough to imagine.', logText: 'Declined a royal marriage expectation.' } }
+    ]
+  },
+  {
+    id: 'royal_abdication', title: 'The Crown and the Person', text: 'The duties of the crown have begun to consume the life you wanted to live. You can continue, or formally step away.', category: 'career', weight: 8,
+    conditions: { minAge: 25, customCheck: state => state.origin?.status === 'royal' && state.royalSuccession?.rank === 'monarch' && (state.personalFreedom ?? 45) <= 35 },
+    choices: [
+      { id: 'royal_continue', text: 'Continue serving despite the cost.', effect: { approvalChange: 4, authorityChange: 2, personalFreedomChange: -5, outcomeText: 'You remain. The institution steadies, and the personal cost becomes something you carry rather than resolve.', logText: 'Continued royal duties despite personal freedom pressure.' } },
+      { id: 'royal_abdicate', text: 'Abdicate and live as a former royal.', effect: { approvalChange: -12, authorityChange: -100, personalFreedomChange: 55, relationshipChanges: { target: 'all', trust: -3, resentment: 5 }, flagsSet: { royal_abdicated: true }, outcomeText: 'You surrender the title and the privileges with it. Fame, memories, and relationships remain; the duties no longer do.', logText: 'Abdicated the crown to reclaim a private life.' } }
+    ]
+  },
+  {
+    id: 'royal_celebrity_appearance', title: 'The Celebrity Invitation', text: 'A famous performer invites you to a private event. Attending could humanize the crown, but every photograph will be interpreted.', category: 'random', weight: 9,
+    conditions: { minAge: 18, customCheck: state => state.origin?.status === 'royal' && ['prince_princess', 'heir', 'monarch'].includes(state.royalSuccession?.rank || '') },
+    choices: [
+      { id: 'royal_celebrity_attend', text: 'Attend openly and accept the attention.', effect: { approvalChange: 2, authorityChange: 1, personalFreedomChange: -3, outcomeText: 'The appearance makes the crown feel younger and less distant. It also turns a private evening into public property.', logText: 'Attended a celebrity event as a public royal appearance.' } },
+      { id: 'royal_celebrity_decline', text: 'Decline to protect your private life.', effect: { approvalChange: -1, personalFreedomChange: 4, outcomeText: 'You keep the evening private. The public receives no new image of you, which is its own kind of relief.', logText: 'Declined a celebrity invitation to preserve privacy.' } }
+    ]
+  },
+  {
+    id: 'royal_foreign_visit', title: 'A Foreign Visit', text: 'A neighboring monarchy invites you for a formal visit. Your presence could strengthen a relationship that is larger than either family.', category: 'career', weight: 9,
+    conditions: { minAge: 18, customCheck: state => state.origin?.status === 'royal' && ['heir', 'monarch'].includes(state.royalSuccession?.rank || '') },
+    choices: [
+      { id: 'royal_visit_accept', text: 'Accept the invitation and represent the crown.', effect: { approvalChange: 4, authorityChange: 3, personalFreedomChange: -4, outcomeText: 'The visit is formal, exhausting, and quietly effective. You return with better relationships and a clearer sense of what your presence can do.', logText: 'Completed an international royal visit.' } },
+      { id: 'royal_visit_decline', text: 'Decline and focus on domestic duties.', effect: { approvalChange: 1, authorityChange: -1, personalFreedomChange: 4, outcomeText: 'You keep your schedule and your privacy. The invitation is graciously declined, though the opportunity will not wait forever.', logText: 'Declined an international royal visit.' } }
+    ]
+  },
+  {
+    id: 'royal_wedding_diplomacy', title: 'The Royal Wedding', text: 'A royal wedding abroad offers celebration, family visibility, and a diplomatic room full of cameras.', category: 'relationship', weight: 8,
+    conditions: { minAge: 18, customCheck: state => state.origin?.status === 'royal' && (state.publicApproval ?? 50) >= 35 },
+    choices: [
+      { id: 'royal_wedding_attend', text: 'Attend and make the family connection visible.', effect: { approvalChange: 5, authorityChange: 2, personalFreedomChange: -3, outcomeText: 'The celebration becomes a public bridge between two families. You leave with memories that feel personal despite the cameras.', logText: 'Attended an international royal wedding.' } },
+      { id: 'royal_wedding_private', text: 'Send a private message instead.', effect: { approvalChange: -1, personalFreedomChange: 3, outcomeText: 'Your message is sincere, but your absence is noticed. The relationship survives without the ceremony becoming part of your public story.', logText: 'Sent private congratulations instead of attending a royal wedding.' } }
+    ]
+  },
+  {
+    id: 'royal_power_response', title: 'The Objection', text: 'An advisor challenges a decision you made in private. The room is quiet enough for respect, ego, or fear to decide what happens next.', category: 'relationship', weight: 12, involvedRelationshipType: 'mentor',
+    conditions: { minAge: 18, hasRelationshipType: 'mentor', customCheck: state => state.origin?.status === 'royal' && (state.royalAuthority ?? 0) >= 35 },
+    choices: [
+      { id: 'royal_response_respect', text: 'Hear the objection and respond with respect.', effect: { approvalChange: 4, authorityChange: 1, integrityChange: 5, royalTendencyChanges: { benevolent: 5, ambitious: 1 }, relationshipChanges: { target: 'current', trust: 8, suspicion: -5, resentment: -5 }, memory: { type: 'royal_respect', intensity: 50, emotionalValue: 20, decayRate: 1, permanent: true }, outcomeText: 'You let the advisor finish. The decision may still stand, but the relationship survives with its dignity intact.', logText: 'Responded respectfully to an advisor’s objection.' } },
+      { id: 'royal_response_ego', text: 'Make the advisor regret embarrassing you.', effect: { approvalChange: -4, authorityChange: 3, integrityChange: -8, fearChange: 5, royalTendencyChanges: { ambitious: 4, reckless: 3, ruthless: 2 }, relationshipChanges: { target: 'current', trust: -10, suspicion: 5, resentment: 12 }, memory: { type: 'royal_humiliation', intensity: 70, emotionalValue: -30, decayRate: 0, permanent: true }, outcomeText: 'The advisor leaves with the answer you wanted and a memory you did not intend to create. Compliance arrives faster than trust.', narrativeVariants: { negative: [{ text: 'You win the room by making one person smaller. The victory is immediate; the silence afterward is not.', maxFear: 5 }, { text: 'The advisor nods because the crown is still powerful. Their faith in your judgment does not survive the meeting.', minFear: 6 }] }, logText: 'Used ego and humiliation to silence an advisor.' } },
+      { id: 'royal_response_abuse', text: 'Use your authority to threaten consequences.', conditions: { customCheck: state => (state.royalAuthority ?? 0) >= 60 && ((state.royalBehavior?.corrupt || 0) >= 60 || (state.royalBehavior?.ruthless || 0) >= 60) }, effect: { approvalChange: -12, authorityChange: -8, integrityChange: -20, fearChange: 18, personalFreedomChange: -4, royalTendencyChanges: { corrupt: 8, ruthless: 8, benevolent: -5 }, relationshipChanges: { target: 'current', trust: -20, suspicion: 12, resentment: 25 }, memory: { type: 'royal_abuse_of_power', intensity: 95, emotionalValue: -60, decayRate: 0, permanent: true }, flagsSet: { royal_abuse_allegation: true }, outcomeText: 'The threat works. That is the problem. The advisor obeys because refusal now feels dangerous, and the memory becomes a private accusation waiting for a witness.', logText: 'Abused royal authority to threaten an advisor.' } }
+    ]
+  },
+  {
+    id: 'royal_leaked_information', title: 'The Leak', text: 'A private message about your relationship and household negotiations has reached a journalist. Someone close to the crown is talking.', category: 'random', weight: 10,
+    conditions: { minAge: 18, customCheck: state => state.origin?.status === 'royal' && ((state.royalBehavior?.reckless || 0) >= 30 || (state.royalBehavior?.corrupt || 0) >= 30) },
+    choices: [
+      { id: 'royal_leak_truth', text: 'Acknowledge the mistake and protect the people involved.', effect: { approvalChange: 5, integrityChange: 6, authorityChange: -1, royalTendencyChanges: { benevolent: 4, reckless: -4 }, flagsSet: { royal_leak_resolved: true }, outcomeText: 'You admit what happened without offering a scapegoat. The leak remains damaging, but the people around you are not sacrificed to contain it.', logText: 'Handled a royal information leak with accountability.' } },
+      { id: 'royal_leak_blame', text: 'Blame a junior staff member and control the story.', effect: { approvalChange: -8, integrityChange: -12, fearChange: 8, royalTendencyChanges: { corrupt: 6, ruthless: 5 }, flagsSet: { royal_abuse_allegation: true, royal_leak_resolved: true }, outcomeText: 'The story is contained for a day. The staff member is not, and the household learns that loyalty under pressure is becoming a one-way demand.', logText: 'Scapegoated staff during a royal information leak.' } }
+    ]
+  },
+  {
+    id: 'royal_downfall_crisis', title: 'The Crown’s Breaking Point', text: 'Approval has collapsed, fear is rising, and the people closest to you are no longer certain the institution can carry your choices.', category: 'career', weight: 7,
+    conditions: { minAge: 25, customCheck: state => state.origin?.status === 'royal' && state.royalSuccession?.rank === 'monarch' && ((state.publicApproval ?? 50) <= 20 || (state.publicFear ?? 0) >= 70 || Boolean(state.flags.royal_abuse_allegation)) },
+    choices: [
+      { id: 'royal_downfall_reconcile', text: 'Invite family and advisors to a private reckoning.', effect: { approvalChange: 6, authorityChange: -4, fearChange: -12, integrityChange: 8, royalTendencyChanges: { benevolent: 6, ruthless: -5 }, relationshipChanges: { target: 'all', trust: 5, resentment: -8 }, outcomeText: 'No one forgets the harm, but the room is finally allowed to describe it. Reconciliation begins as a process rather than a speech.', logText: 'Started a private royal reckoning after a scandal.' } },
+      { id: 'royal_downfall_clampdown', text: 'Tighten control and demand loyalty.', conditions: { customCheck: state => (state.royalAuthority ?? 0) >= 45 }, effect: { approvalChange: -10, authorityChange: -12, fearChange: 15, integrityChange: -10, royalTendencyChanges: { corrupt: 5, ruthless: 8 }, relationshipChanges: { target: 'all', trust: -8, resentment: 15 }, flagsSet: { royal_forced_abdication_risk: true }, outcomeText: 'The institution becomes quieter, not safer. People obey in public while preparing for the day obedience is no longer enough.', logText: 'Clamped down after a royal scandal.' } },
+      { id: 'royal_downfall_abdicate', text: 'Step down before the crown becomes a weapon.', effect: { approvalChange: -5, authorityChange: -100, personalFreedomChange: 50, fearChange: -15, integrityChange: 10, flagsSet: { royal_forced_abdication: true }, outcomeText: 'You leave the throne before the family has to remove you. The legacy is damaged, but the last choice is not another act of control.', logText: 'Stepped down during a royal downfall crisis.' } }
+    ]
+  },
+  {
+    id: 'family_parenting_choice', title: 'The Kind of Parent You Are', text: 'Your child is old enough to notice the difference between guidance, control, and absence. The next choice will become part of how they remember you.', category: 'relationship', weight: 12, involvedRelationshipType: 'child',
+    conditions: { minAge: 18, hasRelationshipType: 'child' },
+    choices: [
+      { id: 'parenting_strict', text: 'Set strict rules and high standards.', effect: { relationshipChanges: { target: 'current', trust: -5, resentment: 5 }, outcomeText: 'Your child becomes disciplined and careful around you. They know what you expect; they are less certain whether they can disappoint you safely.', logText: 'Chose strict parenting.' } },
+      { id: 'parenting_supportive', text: 'Listen, encourage, and stay present.', effect: { relationshipChanges: { target: 'current', trust: 8, resentment: -4 }, outcomeText: 'Your child leaves the conversation happier and more secure. Support does not remove every problem, but it gives them somewhere to bring one.', logText: 'Chose supportive parenting.' } },
+      { id: 'parenting_neglectful', text: 'Let them figure everything out alone.', effect: { relationshipChanges: { target: 'current', trust: -12, resentment: 10 }, outcomeText: 'Independence arrives early, carrying a question you may not be able to answer later: where were you when they needed you?', logText: 'Chose a neglectful parenting approach.' } }
+    ]
+  },
+  {
+    id: 'family_inheritance_dispute', title: 'The Inheritance Meeting', text: 'A family member challenges the way an inheritance was divided. The estate is valuable; the resentment is older.', category: 'relationship', weight: 10, involvedRelationshipType: 'sibling',
+    conditions: { minAge: 18, hasRelationshipType: 'sibling', customCheck: state => (state.familyInheritance || 0) > 0 },
+    choices: [
+      { id: 'inheritance_share', text: 'Offer a fairer share and explain the decision.', effect: { cashChange: -1000, relationshipChanges: { target: 'current', trust: 8, resentment: -10 }, outcomeText: 'You give up money to keep the family from turning grief into litigation. The settlement is imperfect, but the relationship survives it.', logText: 'Shared inherited wealth to resolve a family dispute.' } },
+      { id: 'inheritance_refuse', text: 'Refuse to renegotiate.', effect: { relationshipChanges: { target: 'current', trust: -8, suspicion: 5, resentment: 12 }, outcomeText: 'The paperwork is clear. So is the distance that opens between you and the relative who believes clarity was never the same thing as fairness.', logText: 'Refused to renegotiate an inheritance dispute.' } }
+    ]
+  },
+  {
+    id: 'family_sibling_rivalry', title: 'The Family Comparison', text: 'A sibling accuses you of turning every family gathering into a comparison of achievements, money, and attention.', category: 'relationship', weight: 11, involvedRelationshipType: 'sibling',
+    conditions: { minAge: 13, hasRelationshipType: 'sibling' },
+    choices: [
+      { id: 'sibling_reconcile', text: 'Admit the competition and make space for them.', effect: { relationshipChanges: { target: 'current', trust: 8, resentment: -8, suspicion: -3 }, outcomeText: 'The apology is awkward and specific. It does not erase the years of comparison, but it gives the sibling something better than another defense.', logText: 'Reconciled with a sibling after a rivalry.' } },
+      { id: 'sibling_compete', text: 'Point out that you earned your position.', effect: { relationshipChanges: { target: 'current', trust: -6, resentment: 12, suspicion: 4 }, outcomeText: 'You win the argument and lose the evening. The family learns that your success is not the same thing as your generosity.', logText: 'Escalated sibling rivalry by defending status.' } }
+    ]
+  },
+  {
+    id: 'family_parent_conflict', title: 'The Parent You Cannot Please', text: 'A parent criticizes the life you built and insists they know what would have made you happier.', category: 'relationship', weight: 10, involvedRelationshipType: 'parent',
+    conditions: { minAge: 18, hasRelationshipType: 'parent' },
+    choices: [
+      { id: 'parent_boundary', text: 'Set a firm boundary without cruelty.', effect: { relationshipChanges: { target: 'current', trust: 3, suspicion: -2, resentment: 3 }, outcomeText: 'The boundary disappoints them, but it is clear enough to be respected. Adulthood becomes a relationship you negotiate rather than win.', logText: 'Set a respectful boundary with a parent.' } },
+      { id: 'parent_explode', text: 'Tell them exactly how much they hurt you.', effect: { relationshipChanges: { target: 'current', trust: -6, resentment: 10, suspicion: 3 }, outcomeText: 'The truth comes out sharp enough to wound twice. You feel relief first, then wonder whether honesty needed to sound like punishment.', logText: 'Confronted a parent in an explosive argument.' } }
+    ]
+  },
+  {
+    id: 'family_child_bonding', title: 'A Small Childhood Milestone', text: 'Your young child reaches for your attention in the middle of an ordinary day. What you do becomes part of their earliest sense of safety.', category: 'relationship', weight: 10, involvedRelationshipType: 'child',
+    conditions: { minAge: 18, hasRelationshipType: 'child', customCheck: state => Object.values(state.npcs).some(npc => npc.relation === 'child' && npc.age <= 5) },
+    choices: [
+      { id: 'child_bond', text: 'Put everything aside and be present.', effect: { relationshipChanges: { target: 'current', trust: 8, resentment: -4 }, memory: { type: 'early_bonding', intensity: 45, emotionalValue: 25, decayRate: 1, permanent: true }, outcomeText: 'The moment is simple, but your child learns that your attention can be trusted.', logText: 'Prioritized early bonding with a child.' } },
+      { id: 'child_dismiss', text: 'Promise to make time later.', effect: { relationshipChanges: { target: 'current', trust: -4, resentment: 5 }, memory: { type: 'missed_bonding', intensity: 35, emotionalValue: -15, decayRate: 1, permanent: false }, outcomeText: 'The day moves on. Your child notices the promise more than the reason behind it.', logText: 'Missed an early childhood bonding moment.' } }
+    ]
+  },
+  {
+    id: 'family_child_school_hobby', title: 'School and Hobbies', text: 'Your school-age child is discovering interests that may shape the person they become.', category: 'relationship', weight: 10, involvedRelationshipType: 'child',
+    conditions: { minAge: 18, hasRelationshipType: 'child', customCheck: state => Object.values(state.npcs).some(npc => npc.relation === 'child' && npc.age >= 6 && npc.age <= 12) },
+    choices: [
+      { id: 'child_encourage_hobby', text: 'Encourage curiosity over perfect results.', effect: { relationshipChanges: { target: 'current', trust: 6, resentment: -2 }, memory: { type: 'supported_hobby', intensity: 35, emotionalValue: 20, decayRate: 1, permanent: false }, outcomeText: 'Your child feels free to explore without turning every interest into a test.', logText: 'Encouraged a child’s school and hobby interests.' } },
+      { id: 'child_push_grades', text: 'Insist that achievement comes first.', effect: { relationshipChanges: { target: 'current', trust: -3, resentment: 5 }, memory: { type: 'academic_pressure', intensity: 40, emotionalValue: -10, decayRate: 1, permanent: false }, outcomeText: 'The grades improve, but your child becomes careful about sharing what they actually enjoy.', logText: 'Prioritized achievement over a child’s hobbies.' } }
+    ]
+  },
+  {
+    id: 'family_child_independence', title: 'A Child Wants Their Own Direction', text: 'Your teenager asks for room to make decisions that do not match your plans for them.', category: 'relationship', weight: 10, involvedRelationshipType: 'child',
+    conditions: { minAge: 18, hasRelationshipType: 'child', customCheck: state => Object.values(state.npcs).some(npc => npc.relation === 'child' && npc.age >= 13 && npc.age <= 18) },
+    choices: [
+      { id: 'child_trust_choice', text: 'Offer guidance, then let them choose.', effect: { relationshipChanges: { target: 'current', trust: 8, resentment: -5 }, memory: { type: 'supported_independence', intensity: 45, emotionalValue: 25, decayRate: 1, permanent: true }, outcomeText: 'You remain available without making their future a referendum on your expectations.', logText: 'Supported a teenager’s independence.' } },
+      { id: 'child_control_choice', text: 'Demand they follow the safer path.', effect: { relationshipChanges: { target: 'current', trust: -8, resentment: 10 }, memory: { type: 'blocked_independence', intensity: 50, emotionalValue: -25, decayRate: 1, permanent: true }, outcomeText: 'Your fear sounds like certainty. Your teenager hears it as a verdict against their judgment.', logText: 'Tried to control a teenager’s future.' } }
+    ]
+  },
+  {
+    id: 'family_reconciliation', title: 'A Chance to Repair the Family', text: 'An old family wound is still present in the pauses between conversations. Someone has finally left the door open.', category: 'relationship', weight: 8, involvedRelationshipType: 'sibling',
+    conditions: { minAge: 18, hasRelationshipType: 'sibling', customCheck: state => Object.values(state.npcs).some(npc => npc.relation === 'sibling' && npc.resentment >= 20) },
+    choices: [
+      { id: 'family_reconcile', text: 'Apologize specifically and listen.', effect: { relationshipChanges: { target: 'current', trust: 10, resentment: -12, suspicion: -5 }, memory: { type: 'family_reconciliation', intensity: 55, emotionalValue: 30, decayRate: 1, permanent: true }, outcomeText: 'The past does not disappear, but the relationship stops treating it as a sentence.', logText: 'Reconciled with a family member.' } },
+      { id: 'family_reopen_wound', text: 'List every way they hurt you.', effect: { relationshipChanges: { target: 'current', trust: -5, resentment: 8 }, memory: { type: 'reopened_family_wound', intensity: 50, emotionalValue: -25, decayRate: 1, permanent: true }, outcomeText: 'The conversation becomes an archive of grievances instead of a bridge.', logText: 'Reopened an old family wound.' } }
+    ]
+  },
+  {
+    id: 'family_scandal', title: 'A Family Secret Reaches the Public', text: 'A private family conflict has become a story other people feel entitled to discuss.', category: 'relationship', weight: 7, involvedRelationshipType: 'parent',
+    conditions: { minAge: 18, hasRelationshipType: 'parent', customCheck: state => (state.fame || 0) >= 25 && Object.values(state.npcs).some(npc => npc.relation === 'parent' && npc.memories.some(memory => memory.emotionalValue < -20)) },
+    choices: [
+      { id: 'family_scandal_protect', text: 'Protect the family member from the spectacle.', effect: { relationshipChanges: { target: 'current', trust: 8, resentment: -4 }, repChanges: { family: 3 }, memory: { type: 'protected_family_privacy', intensity: 55, emotionalValue: 25, decayRate: 1, permanent: true }, outcomeText: 'You refuse to turn private pain into public content. The story loses its sharpest angle.', logText: 'Protected family privacy during a scandal.' } },
+      { id: 'family_scandal_expose', text: 'Tell your version before someone else does.', effect: { relationshipChanges: { target: 'current', trust: -10, suspicion: 8, resentment: 12 }, repChanges: { online: 3, family: -6 }, memory: { type: 'family_secret_exposed', intensity: 70, emotionalValue: -35, decayRate: 0, permanent: true }, outcomeText: 'The public gets a clear story. Your family gets a permanent memory of who supplied it.', logText: 'Exposed a family secret publicly.' } }
+    ]
+  },
+  {
+    id: 'education_school_choice', title: 'A Year at School', text: 'School is asking more of you now. You have to decide what deserves your time: achievement, friendships, or the freedom to push back.', category: 'school', weight: 12,
+    conditions: { minAge: 5, maxAge: 12, customCheck: state => state.career.type === 'school' },
+    choices: [
+      { id: 'school_study', text: 'Study and take the difficult subjects seriously.', effect: { statChanges: { smarts: 2, happiness: -2 }, flagsSet: { education_choice_study: true }, outcomeText: 'Your grades rise, and so does the sense that discipline can open doors later.', narrativeVariants: { positive: [{ text: 'The work is tedious until the results arrive. Then the difficult subjects feel less like walls and more like keys.', minAge: 8 }], neutral: [{ text: 'You spend the year learning how much progress can come from showing up when the work is not exciting.' }] }, logText: 'Focused on study and school discipline.' } },
+      { id: 'school_socialize', text: 'Spend more time with classmates and build friendships.', effect: { statChanges: { happiness: 4, status: 3 }, flagsSet: { education_choice_social: true }, outcomeText: 'You become more comfortable in groups and learn which friendships feel reciprocal.', narrativeVariants: { positive: [{ text: 'The friendships are not just a distraction from school; they become practice for the person you are learning to be around others.' }], neutral: [{ text: 'You learn names, loyalties, and the quiet social rules no textbook explains.' }] }, logText: 'Prioritized friendships and social skills at school.' } },
+      { id: 'school_rebel', text: 'Push back against rules and do things your own way.', effect: { statChanges: { happiness: 2, status: 2 }, flagsSet: { education_choice_rebel: true }, outcomeText: 'You gain independence, but teachers become less certain they can rely on you.', narrativeVariants: { chaotic: [{ text: 'You turn one harmless rule into a campaign for personal freedom. The adults call it defiance; your friends call it memorable.' }], negative: [{ text: 'The freedom feels real until missed work and disappointed teachers start following you home.' }] }, logText: 'Rebelled against school expectations.' } }
+    ]
+  },
+  {
+    id: 'education_teen_development', title: 'The Direction of Your Teenage Years', text: 'Your teenage years are becoming a portfolio of choices: academics, popularity, creativity, sports, and relationships all compete for room.', category: 'school', weight: 11,
+    conditions: { minAge: 13, maxAge: 18, customCheck: state => state.career.type === 'school' },
+    choices: [
+      { id: 'teen_academics', text: 'Commit to academics.', effect: { statChanges: { smarts: 3 }, flagsSet: { education_focus_academics: true }, outcomeText: 'Your academic reputation improves, creating options that may not pay off until adulthood.', logText: 'Focused teenage development on academics.' } },
+      { id: 'teen_popularity', text: 'Build your social presence.', effect: { statChanges: { status: 5, happiness: 2 }, flagsSet: { education_focus_popularity: true }, outcomeText: 'You become more visible at school and more practiced at reading a room.', logText: 'Focused teenage development on popularity.' } },
+      { id: 'teen_creativity', text: 'Make time for art and creative work.', effect: { statChanges: { smarts: 1, happiness: 4 }, flagsSet: { education_focus_creativity: true }, outcomeText: 'Creative work gives you a language for feelings that do not fit neatly into school subjects.', logText: 'Focused teenage development on creativity.' } },
+      { id: 'teen_sports', text: 'Train and compete in sports.', effect: { statChanges: { health: 3, status: 3 }, flagsSet: { education_focus_sports: true }, outcomeText: 'Training builds stamina, confidence, and a reputation for showing up under pressure.', logText: 'Focused teenage development on sports.' } },
+      { id: 'teen_relationships', text: 'Prioritize relationships and emotional growth.', effect: { statChanges: { happiness: 4 }, flagsSet: { education_focus_relationships: true }, outcomeText: 'You learn that emotional intelligence is a skill, not a personality trait you either have or lack.', logText: 'Focused teenage development on relationships.' } }
+    ]
+  },
+  {
+    id: 'education_university_decision', title: 'What Comes After School?', text: 'Graduation is approaching. University could expand your options, but it also costs time, money, and the comfort of staying close to what you know.', category: 'school', weight: 14,
+    conditions: { minAge: 17, maxAge: 19, flagsFalse: ['university_decision_resolved'], customCheck: state => state.career.type === 'school' || state.career.type === 'unemployed' },
+    choices: [
+      { id: 'university_attend', text: 'Apply to university and pursue a degree.', effect: { statChanges: { smarts: 3, happiness: -1 }, flagsSet: { university_decision_resolved: true }, outcomeText: 'You commit to university. The next few years will be shaped by a major, a campus community, and the pressure to make the opportunity count.', narrativeVariants: { positive: [{ text: 'The acceptance letter does not promise an easy life. It promises room to build one deliberately.', wealthBands: ['comfortable', 'wealthy'] }], neutral: [{ text: 'You choose a longer route into adulthood, hoping the education will make the uncertainty worthwhile.' }], negative: [{ text: 'The offer is real, but the financial pressure is real too. You begin calculating the future in installments.' }] }, logText: 'Chose to attend university.' } },
+      { id: 'university_major_medical', text: 'Choose medicine and health sciences.', effect: { flagsSet: { university_decision_resolved: true }, outcomeText: 'You choose a demanding path toward medicine, where grades and discipline will matter every year.', logText: 'Chose a medical university major.' } },
+      { id: 'university_major_arts', text: 'Choose arts and creative studies.', effect: { flagsSet: { university_decision_resolved: true }, outcomeText: 'You choose creative studies and accept that a less predictable career can still be a serious one.', logText: 'Chose an arts university major.' } },
+      { id: 'university_major_business', text: 'Choose business and commerce.', effect: { flagsSet: { university_decision_resolved: true }, outcomeText: 'You choose business, drawn to negotiation, organizations, and the power of understanding incentives.', logText: 'Chose a business university major.' } },
+      { id: 'university_skip', text: 'Skip university and start earning now.', effect: { statChanges: { happiness: 2 }, flagsSet: { university_decision_resolved: true }, outcomeText: 'You step into work sooner. The choice removes tuition pressure but closes some professional doors for now.', narrativeVariants: { neutral: [{ text: 'You choose a paycheck and practical experience over a credential. It is not a failure, but it will shape which risks remain affordable.' }], positive: [{ text: 'You begin earning and learning on the job, building a life that does not wait for permission from an admissions office.' }] }, logText: 'Chose to enter work instead of university.' } }
     ]
   }
 ];

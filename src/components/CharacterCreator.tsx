@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Crown
 } from 'lucide-react';
-import { AvatarConfig } from '../types';
+import { AvatarConfig, OriginId } from '../types';
+import { getAvailableOrigins, originLabel } from '../utils/origins';
 import { getAvatarUrl } from '../App';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -77,19 +78,21 @@ interface CharacterCreatorProps {
     discipline?: number;
     fertility?: number;
     sexuality?: string;
+    origin?: OriginId;
   }) => void;
   triggerSound: (type: 'click' | 'success' | 'error' | 'ageUp') => void;
 }
 
 export function CharacterCreator({ onStartGame, triggerSound }: CharacterCreatorProps) {
   // Navigation active state
-  const [activeSubScreen, setActiveSubScreen] = useState<'hub' | 'gender' | 'country' | 'city' | 'name' | 'custom_attributes'>('hub');
+  const [activeSubScreen, setActiveSubScreen] = useState<'hub' | 'gender' | 'country' | 'origin' | 'city' | 'name' | 'custom_attributes'>('hub');
 
   // Core character setup states
   const [gender, setGender] = useState<'Male' | 'Female'>('Male');
   const [name, setName] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United States');
   const [selectedCity, setSelectedCity] = useState('Compton');
+  const [selectedOrigin, setSelectedOrigin] = useState<OriginId>('commoner');
   
   // Custom Attributes Pool & stats
   const [pointsPool, setPointsPool] = useState(0);
@@ -300,7 +303,8 @@ export function CharacterCreator({ onStartGame, triggerSound }: CharacterCreator
       startingCash,
       discipline,
       fertility,
-      sexuality
+      sexuality,
+      origin: selectedOrigin
     });
   };
 
@@ -418,6 +422,16 @@ export function CharacterCreator({ onStartGame, triggerSound }: CharacterCreator
                    selectedCountry === 'Germany' ? '🇩🇪' : 
                    selectedCountry === 'Australia' ? '🇦🇺' : '🇮🇳'} {selectedCountry}
                 </span>
+                <span className="text-slate-200 text-sm ml-2">❯</span>
+              </button>
+
+              {/* City Pill */}
+              <button
+                onClick={() => { triggerSound('click'); setActiveSubScreen('origin'); }}
+                className="w-full rounded-full border-[3px] border-white bg-gradient-to-r from-violet-500 to-purple-700 text-white text-center font-black py-3 px-6 shadow-lg transition active:scale-95 text-base uppercase tracking-wider cursor-pointer flex items-center justify-between"
+              >
+                <span className="text-slate-200 text-xs font-bold tracking-normal uppercase">Origin</span>
+                <span className="text-white font-extrabold truncate pl-3">{originLabel(selectedOrigin)}</span>
                 <span className="text-slate-200 text-sm ml-2">❯</span>
               </button>
 
@@ -571,6 +585,8 @@ export function CharacterCreator({ onStartGame, triggerSound }: CharacterCreator
                       setSelectedCountry(country);
                       const defaultCity = CITIES_BY_COUNTRY[country]?.[0] || 'Compton';
                       setSelectedCity(defaultCity);
+                      const origins = getAvailableOrigins(country);
+                      if (!origins.includes(selectedOrigin)) setSelectedOrigin(origins[0] || 'commoner');
                       triggerSound('click');
                       setActiveSubScreen('hub');
                     }}
@@ -586,6 +602,29 @@ export function CharacterCreator({ onStartGame, triggerSound }: CharacterCreator
               })}
             </div>
 
+          </div>
+        )}
+
+        {/* --- PICK YOUR ORIGIN --- */}
+        {activeSubScreen === 'origin' && (
+          <div className="flex-1 flex flex-col p-6 min-h-0">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-800 shrink-0">
+              <button onClick={() => { triggerSound('click'); setActiveSubScreen('hub'); }} className="p-1 text-slate-400 hover:text-white rounded-lg transition"><ArrowLeft size={20} /></button>
+              <h2 className="text-lg font-black uppercase tracking-wider text-slate-200">Life Origin</h2>
+            </div>
+            <div className="text-center py-4 shrink-0">
+              <span className="text-4xl block mb-2">🌱</span>
+              <h3 className="text-xl font-extrabold text-white">Where does your story begin?</h3>
+              <p className="text-xs text-slate-400 mt-1">{selectedCountry} determines which social origins are possible.</p>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1">
+              {getAvailableOrigins(selectedCountry).map((origin, idx) => (
+                <button key={origin} onClick={() => { setSelectedOrigin(origin); triggerSound('success'); setActiveSubScreen('hub'); }} className={`w-full rounded-[2rem] border-[3px] ${selectedOrigin === origin ? 'border-[#00e676]' : 'border-white'} bg-gradient-to-r ${BITLIFE_COLORS[idx % BITLIFE_COLORS.length]} text-white font-black py-4 px-6 shadow-md text-left transition active:scale-95`}>
+                  <div className="flex justify-between items-center"><span className="text-base uppercase tracking-wider">{originLabel(origin)}</span>{selectedOrigin === origin && <span className="text-xs">SELECTED</span>}</div>
+                  <p className="text-[10px] text-white/85 mt-1 font-medium">{origin === 'royal_family' ? 'Royal family, public attention, and succession expectations.' : origin === 'wealthy_family' ? 'Financial security and an established family network.' : origin === 'political_family' ? 'A family shaped by public service and scrutiny.' : 'An open path shaped by the life you build.'}</p>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

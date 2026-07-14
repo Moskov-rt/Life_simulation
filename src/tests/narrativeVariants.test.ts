@@ -108,4 +108,31 @@ describe('Narrative variation layer', () => {
     expect(resolveNarrativeVariant(effect, undefined, failed).text).toBe('After the failure, even a small recovery carries weight.');
     expect(resolveNarrativeVariant(effect, undefined, achieved)).toEqual(resolveNarrativeVariant(effect, undefined, achieved));
   });
+
+  it('selects different text for NPC personality labels and expressed traits without mutating gameplay data', () => {
+    const effect: OutcomeEffect = {
+      statChanges: { happiness: 5 },
+      outcomeText: 'Fallback.',
+      narrativeVariants: { positive: [
+        { text: 'They respond with patience and forgiveness.', npcPersonalityAny: ['forgiving', 'supportive friend'] },
+        { text: 'They remain guarded and openly doubtful.', npcPersonalityAll: ['suspicious', 'guarded'] },
+        { text: 'They immediately frame the news as a career opportunity.', npcTraitsAny: ['ambition', 'greed'], npcTraitsAll: ['ambition', 'responsibility'] }
+      ] }
+    };
+    const forgiving = relationshipToNPC({ id: 'forgiving', name: 'Forgiving Partner', relation: 'partner', archetype: 'supportive friend', personality: ['forgiving'] });
+    const suspicious = relationshipToNPC({ id: 'suspicious', name: 'Suspicious Partner', relation: 'partner', personality: ['Suspicious', 'Guarded'] });
+    const ambitious = relationshipToNPC({ id: 'ambitious', name: 'Ambitious Partner', relation: 'partner', personality: ['practical'] });
+    ambitious.traits.ambition = 85;
+    ambitious.traits.responsibility = 75;
+    ambitious.traits.kindness = 40;
+    const gameplayState = state();
+    const originalState = structuredClone(gameplayState);
+    const originalAmbitiousNpc = structuredClone(ambitious);
+    expect(resolveNarrativeVariant(effect, undefined, gameplayState, forgiving).text).toBe('They respond with patience and forgiveness.');
+    expect(resolveNarrativeVariant(effect, undefined, gameplayState, suspicious).text).toBe('They remain guarded and openly doubtful.');
+    expect(resolveNarrativeVariant(effect, undefined, gameplayState, ambitious).text).toBe('They immediately frame the news as a career opportunity.');
+    expect(resolveNarrativeVariant(effect, undefined, gameplayState, ambitious)).toEqual(resolveNarrativeVariant(effect, undefined, gameplayState, ambitious));
+    expect(gameplayState).toEqual(originalState);
+    expect(ambitious).toEqual(originalAmbitiousNpc);
+  });
 });

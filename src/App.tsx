@@ -45,7 +45,7 @@ import {
   ChevronDown,
   Skull, Plane, Mountain, Star, Dices, Laptop, UserCircle, Scale, Ticket, Wine, Dog, Sun, Smartphone, Palmtree, HandHeart, FileText, Flag
 } from 'lucide-react';
-import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount, CreatorContentStyle, CreatorYearlyActions, ActorYearlyActions, AdultPerformerYearlyActions } from './types';
+import { GameState, Stats, Reputation, Relationship, NPC, Event, Choice, OutcomeEffect, ArchetypeType, AvatarConfig, Illness, IllnessTemplate, SocialMediaAccount, CreatorContentStyle, CreatorYearlyActions, ActorYearlyActions, AdultPerformerYearlyActions, RoyalYearlyActions, OriginId } from './types';
 import { relationshipToNPC } from './utils/saveMigration';
 
 import { EVENTS_POOL } from './events';
@@ -60,6 +60,13 @@ import { mergeOngoingEffects } from './utils/ongoingEffects';
 import { runYearlySimulation } from './utils/ageUpSimulator';
 import { evaluateFameCareerTier } from './utils/fameCareer';
 import { resolveNarrativeVariant } from './utils/narrativeVariants';
+import { createOriginProfile } from './utils/origins';
+import { initialRoyalRank, abdicateRoyalty } from './utils/royalSuccession';
+import { recordRoyalLegacy } from './utils/royalLegacy';
+import { applyRoyalBehavior, DEFAULT_ROYAL_BEHAVIOR } from './utils/royalBehavior';
+import { applyParentingChoice } from './utils/familySystem';
+import { applyEducationChoice } from './utils/educationSystem';
+import { refreshLifestyle } from './utils/wealthIdentity';
 
 import { SICKNESS_TITLES, SICKNESS_DESCRIPTIONS, IGNORE_TEXTS, PRAY_TEXTS, WATER_TEXTS } from './healthTexts';
 import { playClick, playSuccess, playError, playAgeUp } from './utils/audio';
@@ -85,6 +92,7 @@ const LOCATIONS = [
 
 const emptyActorActions = (): ActorYearlyActions => ({ auditionCount: 0, rolesAccepted: 0, networkCount: 0, promoteCount: 0, trainCount: 0, restCount: 0 });
 export const emptyAdultPerformerActions = (): AdultPerformerYearlyActions => ({ performCount: 0, collaborationCount: 0, promotionCount: 0, networkingCount: 0, skillCount: 0, privacyCount: 0, restCount: 0 });
+export const emptyRoyalActions = (): RoyalYearlyActions => ({ education: 0, familyTime: 0, ignoreLessons: 0, publicAppearance: 0, privateFriendship: 0, rebellion: 0, relationshipChoice: 0, charity: 0, diplomacy: 0, ceremony: 0, speech: 0, publicService: 0, freedom: 0 });
 const isActorJob = (job: JobInterview) => ['Extra', 'Supporting Actor', 'Lead Actor', 'Star', 'Legend'].includes(job.title);
 export const isAdultPerformerJob = (job: Pick<JobInterview, 'title'>) => ['Exotic Dancer', 'Webcam Model', 'Adult Film Extra', 'VIP Escort', 'Adult Film Star', 'Adult Studio Director'].includes(job.title);
 const isActorCareer = (career: GameState['career']) => career.track === 'actor';
@@ -1131,10 +1139,13 @@ export default function App() {
     karma?: number;
     willpower?: number;
     startingCash?: number;
+    origin?: OriginId;
   }) => {
     const gender = customSetup ? customSetup.gender : (Math.random() > 0.5 ? 'Male' : 'Female');
     const name = customSetup ? customSetup.name : `${gender === 'Male' ? MALE_NAMES[Math.floor(Math.random() * MALE_NAMES.length)] : FEMALE_NAMES[Math.floor(Math.random() * FEMALE_NAMES.length)]} ${SURNAMES[Math.floor(Math.random() * SURNAMES.length)]}`;
     const location = customSetup ? customSetup.location : LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+    const country = location.split(', ').slice(-1)[0];
+    const originProfile = createOriginProfile(customSetup?.origin || 'commoner', country, 1);
     const avatar = customSetup?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
     
     const startingKarma = customSetup?.karma !== undefined ? customSetup.karma : (Math.floor(Math.random() * 51) + 25);
@@ -1240,10 +1251,10 @@ export default function App() {
 
     // Initial reputation dimensions
     const reputation: Reputation = {
-      family: 80,
+      family: 80 + originProfile.reputationBonus,
       college: 50,
-      online: 50,
-      workplace: 50,
+      online: 50 + Math.floor(originProfile.origin.publicAttention / 3),
+      workplace: 50 + originProfile.reputationBonus,
       dating: 50
     };
 
@@ -1258,7 +1269,7 @@ export default function App() {
     const momJob = parentJobs[Math.floor(Math.random() * parentJobs.length)];
     const dadJob = parentJobs[Math.floor(Math.random() * parentJobs.length)];
 
-    const parents: Relationship[] = [
+    const generatedParents: Relationship[] = [
       {
         id: 'mom',
         name: momName,
@@ -1284,10 +1295,15 @@ export default function App() {
         resentment: 0
       }
     ];
+    const parents: Relationship[] = originProfile.familyMembers.length > 0 ? originProfile.familyMembers : generatedParents;
+    const initialNpcs = Object.fromEntries(parents.map(p => [p.id, relationshipToNPC(p)]));
+    if (initialNpcs.royal_advisor) initialNpcs.royal_advisor.personality = ['cautious', 'loyal'];
+    if (initialNpcs.royal_tutor) initialNpcs.royal_tutor.personality = ['traditional', 'patient'];
+    if (initialNpcs.royal_staff) initialNpcs.royal_staff.personality = ['loyal', 'responsibility'];
 
     initialLogs.push(
-      `My mother is ${momName}, a ${momJob.toLowerCase()} (age ${momAge}).`,
-      `My father is ${dadName}, an ${dadJob.toLowerCase()} (age ${dadAge}).`,
+      `My mother is ${parents[0].name}, a ${parents[0].occupation.toLowerCase()} (age ${parents[0].age}).`,
+      `My father is ${parents[1].name}, a ${parents[1].occupation.toLowerCase()} (age ${parents[1].age}).`,
       `My parents named me ${name}.`,
       `🎂 Age 0 years: Enjoying the warm comfort of infancy.`
     );
@@ -1301,13 +1317,26 @@ export default function App() {
       age: 0,
       alive: true,
       deathReason: '',
-      cash: customSetup?.startingCash || 0,
+      cash: (customSetup?.startingCash || 0) + originProfile.startingCash,
+      origin: originProfile.origin,
+      royalSuccession: originProfile.origin.status === 'royal' ? { rank: initialRoyalRank(0, originProfile.origin.successionPosition), inheritanceEligible: true, regencyActive: false } : undefined,
+      familyWealth: originProfile.familyWealth,
+      familyAssets: [],
+      familyLegacy: { achievements: [], wealthPassedDown: 0, relationshipMilestones: [], reputationSnapshots: [reputation.family] },
+      allowance: originProfile.allowance,
+      publicApproval: originProfile.publicApproval,
+      royalAuthority: originProfile.origin.status === 'royal' ? 35 : 0,
+      personalFreedom: originProfile.origin.status === 'royal' ? 45 : 100,
+      royalLegacy: originProfile.origin.status === 'royal' ? { achievements: [], reforms: [], scandals: [], relationshipMilestones: [], approvalSnapshots: [originProfile.publicApproval] } : undefined,
+      royalBehavior: originProfile.origin.status === 'royal' ? { ...DEFAULT_ROYAL_BEHAVIOR } : undefined,
+      publicFear: 0,
+      royalIntegrity: originProfile.origin.status === 'royal' ? 60 : 50,
       stats,
       reputation,
       relationships: parents as any,
-      npcs: Object.fromEntries(parents.map(p => [p.id, relationshipToNPC(p)])),
+      npcs: initialNpcs,
       illnesses: activeIllnesses,
-      flags,
+      flags: { ...flags, ...originProfile.flags },
       delayedEvents: [],
       followUpFlags: [],
       ongoingEffects: [],
@@ -1328,6 +1357,10 @@ export default function App() {
       recentEventIds: [],
       lastOutcome: null,
       completedEducation: [],
+      education: {
+        level: 'none', grades: 80, discipline: 60, academicReputation: 80, enrolled: false, scholarship: false,
+        interests: { academics: 80, popularity: 50, creativity: 50, sports: 50, relationships: 50 }
+      },
       socialMedia: {
         facebook: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
         instagram: { signedUp: false, followers: 0, verified: false, suspended: false, postsCount: 0 },
@@ -1341,8 +1374,10 @@ export default function App() {
       },
       actorCareer: { active: false, consistency: 0, yearlyActions: emptyActorActions() },
       adultPerformerCareer: { active: false, consistency: 0, yearlyActions: emptyAdultPerformerActions() },
+      royalLifestyle: { active: originProfile.origin.status === 'royal', yearlyActions: emptyRoyalActions() },
     };
 
+    refreshLifestyle(initialGameState);
     setGameState(initialGameState);
     setIsCreatingCharacter(false);
     setPurchasedAssets([]);
@@ -1457,6 +1492,11 @@ export default function App() {
     let nextFlags = { ...gameState.flags };
     let nextDelayed = [...gameState.delayedEvents];
     let nextCash = gameState.cash + (effect.cashChange || 0);
+    let nextApproval = Math.max(0, Math.min(100, (gameState.publicApproval ?? 50) + (effect.approvalChange || 0)));
+    let nextAuthority = Math.max(0, Math.min(100, (gameState.royalAuthority ?? 0) + (effect.authorityChange || 0)));
+    let nextFreedom = Math.max(0, Math.min(100, (gameState.personalFreedom ?? (gameState.origin?.status === 'royal' ? 45 : 100)) + (effect.personalFreedomChange || 0)));
+    let nextFear = Math.max(0, Math.min(100, (gameState.publicFear ?? 0) + (effect.fearChange || 0)));
+    let nextIntegrity = Math.max(0, Math.min(100, (gameState.royalIntegrity ?? (gameState.origin?.status === 'royal' ? 60 : 50)) + (effect.integrityChange || 0)));
     let nextIllnesses = [...gameState.illnesses];
 
     // 1. Apply stat changes
@@ -1725,15 +1765,26 @@ export default function App() {
       cash: nextCash,
       stats: nextStats,
       reputation: nextRep,
+      publicApproval: nextApproval,
+      royalAuthority: nextAuthority,
+      personalFreedom: nextFreedom,
+      publicFear: nextFear,
+      royalIntegrity: nextIntegrity,
       relationships: nextRelationships as any,
       npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)]))
     };
+    refreshLifestyle(narrativeContextState);
     const narrativeNpc = gameState.activeRelationshipContextId ? narrativeContextState.npcs[gameState.activeRelationshipContextId] : undefined;
     const appliedNarrativeEffect: OutcomeEffect = {
       ...effect,
       statChanges: Object.fromEntries(Object.keys(nextStats).map(key => [key, nextStats[key as keyof Stats] - gameState.stats[key as keyof Stats]])),
       repChanges: Object.fromEntries(Object.keys(nextRep).map(key => [key, nextRep[key as keyof Reputation] - gameState.reputation[key as keyof Reputation]])),
       cashChange: nextCash - gameState.cash,
+      approvalChange: nextApproval - (gameState.publicApproval ?? 50),
+      authorityChange: nextAuthority - (gameState.royalAuthority ?? 0),
+      personalFreedomChange: nextFreedom - (gameState.personalFreedom ?? (gameState.origin?.status === 'royal' ? 45 : 100)),
+      fearChange: nextFear - (gameState.publicFear ?? 0),
+      integrityChange: nextIntegrity - (gameState.royalIntegrity ?? (gameState.origin?.status === 'royal' ? 60 : 50)),
       karmaChange: nextKarma - gameState.karma,
       willpowerChange: nextWillpower - gameState.willpower,
       relationshipChanges: result.relationshipChanges ? {
@@ -1767,6 +1818,11 @@ export default function App() {
       cash: nextCash,
       stats: nextStats,
       reputation: nextRep,
+      publicApproval: nextApproval,
+      royalAuthority: nextAuthority,
+      personalFreedom: nextFreedom,
+      publicFear: nextFear,
+      royalIntegrity: nextIntegrity,
       relationships: nextRelationships as any,
               npcs: Object.fromEntries(nextRelationships.map(r => [r.id, relationshipToNPC(r)])),
       flags: nextFlags,
@@ -1788,6 +1844,7 @@ export default function App() {
         cashChange: effect.cashChange
       }
     };
+    refreshLifestyle(updatedState);
 
     if (choice.id === 'bully_attack' || choice.id === 'bully_fight') {
       setActiveFight({
@@ -1805,6 +1862,20 @@ export default function App() {
       return;
     }
 
+    const royalEventId = gameState.currentEvent?.id || '';
+    if (royalEventId === 'royal_governance_choice') recordRoyalLegacy(updatedState, choice.id === 'royal_reform_tradition' ? 'reform' : 'achievement', choice.id);
+    if (royalEventId === 'royal_public_reaction' || royalEventId === 'royal_celebrity_appearance') recordRoyalLegacy(updatedState, 'achievement', choice.id);
+    if (royalEventId === 'royal_relationship_scandal') recordRoyalLegacy(updatedState, 'scandal', choice.id);
+    if (royalEventId === 'royal_leaked_information' || royalEventId === 'royal_power_response' || royalEventId === 'royal_downfall_crisis') recordRoyalLegacy(updatedState, choice.id.includes('respect') || choice.id.includes('reconcile') ? 'relationship' : 'scandal', choice.id);
+    if (royalEventId === 'royal_parent_expectations' || royalEventId === 'royal_sibling_claim' || royalEventId === 'royal_advisor_disagreement') recordRoyalLegacy(updatedState, 'relationship', choice.id);
+    if (choice.id === 'royal_abdicate' || choice.id === 'royal_downfall_abdicate') abdicateRoyalty(updatedState);
+    if (effect.royalTendencyChanges) applyRoyalBehavior(updatedState, effect.royalTendencyChanges);
+    if (royalEventId === 'family_parenting_choice' && gameState.activeRelationshipContextId && updatedState.npcs[gameState.activeRelationshipContextId]) {
+      const style = choice.id === 'parenting_strict' ? 'strict' : choice.id === 'parenting_supportive' ? 'supportive' : 'neglectful';
+      updatedState.npcs[gameState.activeRelationshipContextId] = applyParentingChoice(updatedState.npcs[gameState.activeRelationshipContextId], style, gameState.age);
+      updatedState.relationships = Object.values(updatedState.npcs);
+    }
+    applyEducationChoice(updatedState, gameState.currentEvent?.id || '', choice.id);
     setGameState(updatedState);
     setShowEventPopupModal(false);
     setEventPopupData(null);
@@ -2812,6 +2883,11 @@ export default function App() {
     if (!gameState?.adultPerformerCareer?.active) return;
     triggerSound('click');
     setGameState({ ...gameState, adultPerformerCareer: { ...gameState.adultPerformerCareer, yearlyActions: { ...gameState.adultPerformerCareer.yearlyActions, [action]: gameState.adultPerformerCareer.yearlyActions[action] + 1 } } });
+  };
+
+  const handleRoyalAction = (action: keyof RoyalYearlyActions) => {
+    if (!gameState?.royalLifestyle?.active) return;
+    setGameState({ ...gameState, royalLifestyle: { ...gameState.royalLifestyle, yearlyActions: { ...gameState.royalLifestyle.yearlyActions, [action]: gameState.royalLifestyle.yearlyActions[action] + 1 } } });
   };
 
   const handleUniversityDropOut = () => {
@@ -6072,6 +6148,15 @@ export default function App() {
                         </div>
                       )}
 
+
+                      {gameState.royalLifestyle?.active && (
+                        <div className="p-4 border-b border-indigo-200 bg-indigo-50 space-y-3">
+                          <div className="font-extrabold text-[15px] text-indigo-900">Royal Duties &amp; Lifestyle <span className="text-[11px] text-indigo-600">· Approval {gameState.publicApproval ?? 50}%</span></div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {([['education','Royal education'],['familyTime','Family time'],['ignoreLessons','Ignore lessons'],['publicAppearance','Public appearance'],['privateFriendship','Private friendship'],['rebellion','Rebel'],['relationshipChoice','Relationship choice'],['charity','Charity'],['diplomacy','Diplomacy'],['ceremony','Ceremony'],['speech','Speech'],['publicService','Public service'],['freedom','Personal freedom']] as [keyof RoyalYearlyActions,string][]).filter(([action]) => gameState.age < 13 ? ['education','familyTime','ignoreLessons'].includes(action) : gameState.age < 20 ? ['publicAppearance','privateFriendship','rebellion','relationshipChoice'].includes(action) : ['charity','diplomacy','ceremony','speech','publicService','freedom','relationshipChoice'].includes(action)).map(([action,label]) => <button key={action} onClick={() => handleRoyalAction(action)} className="py-2 text-[10px] font-bold bg-white text-indigo-900 border border-indigo-200 rounded">{label} ({gameState.royalLifestyle?.yearlyActions[action] || 0})</button>)}
+                          </div>
+                        </div>
+                      )}
 
                       {occupationSubView === 'current_job' && gameState.career.type === 'job' && (
                         <div className="flex flex-col">

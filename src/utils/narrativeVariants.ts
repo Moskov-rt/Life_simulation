@@ -1,15 +1,13 @@
-import { CareerGroup, GameState, NPC, NarrativeTone, NarrativeVariant, OutcomeEffect, Reputation, WealthBand } from '../types';
+import { CareerGroup, GameState, NPC, NarrativeTone, NarrativeVariant, OutcomeEffect, Reputation } from '../types';
 import { ChoiceResult } from './choiceResolver';
 import { nextRandom } from './seededRandom';
+import { deriveLifestyle, getWealthBand, wealthBandMatches } from './wealthIdentity';
 
 const numericValues = (record?: object): number[] => record ? Object.values(record).filter((value): value is number => typeof value === 'number') : [];
+const NARRATIVE_TRAIT_THRESHOLD = 60;
+const normalizeLabel = (value: string): string => value.trim().toLowerCase();
 
-export function getWealthBand(cash: number): WealthBand {
-  if (cash < 1_000) return 'struggling';
-  if (cash < 10_000) return 'stable';
-  if (cash < 100_000) return 'comfortable';
-  return 'wealthy';
-}
+export { getWealthBand } from './wealthIdentity';
 
 export function getCareerGroup(career: GameState['career']): CareerGroup {
   const title = (career.title || '').toLowerCase();
@@ -40,6 +38,10 @@ export function determineOutcomeTone(effect: OutcomeEffect, result?: ChoiceResul
   numericValues((result?.statChanges || effect.statChanges) as object).forEach(collect);
   numericValues((result?.repChanges || effect.repChanges) as object).forEach(collect);
   collect(effect.cashChange || 0);
+  collect(effect.approvalChange || 0);
+  collect(effect.authorityChange || 0);
+  collect(effect.fearChange || 0);
+  collect(effect.integrityChange || 0);
   collect(effect.karmaChange || 0);
   collect(effect.willpowerChange || 0);
   const relationship = result?.relationshipChanges || effect.relationshipChanges;
@@ -59,16 +61,37 @@ function matchesContext(variant: NarrativeVariant, state: GameState, npc?: NPC):
   const careerKeys = [state.career.title, state.career.type, state.career.track].filter(Boolean) as string[];
   const memories = npc?.memories || [];
   const relationshipYears = getRelationshipHistoryYears(state.age, npc);
+  const expressedTraits = new Set(Object.entries(npc?.traits || {})
+    .filter(([, value]) => typeof value === 'number' && value >= NARRATIVE_TRAIT_THRESHOLD)
+    .map(([trait]) => trait));
+  const personalityLabels = new Set(npc ? [npc.archetype, ...(npc.personality || [])].map(normalizeLabel) : []);
   if (variant.minAge !== undefined && state.age < variant.minAge) return false;
   if (variant.maxAge !== undefined && state.age > variant.maxAge) return false;
   if (variant.careers && !variant.careers.some(career => careerKeys.includes(career))) return false;
   if (variant.careerGroups && !variant.careerGroups.includes(getCareerGroup(state.career))) return false;
-  if (variant.wealthBands && !variant.wealthBands.includes(getWealthBand(state.cash))) return false;
+  const lifestyle = state.lifestyle || deriveLifestyle(state);
+  const wealthBand = getWealthBand(state.cash);
+  if (variant.wealthBands && !variant.wealthBands.some(band => wealthBandMatches(wealthBand, band))) return false;
+  if (variant.lifestyleLevels && (!lifestyle || !variant.lifestyleLevels.includes(lifestyle.lifestyleLevel))) return false;
+  if (variant.spendingStyles && (!lifestyle || !variant.spendingStyles.includes(lifestyle.spendingStyle))) return false;
+  if (variant.minFinancialStress !== undefined && (lifestyle?.financialStress ?? 0) < variant.minFinancialStress) return false;
+  if (variant.maxFinancialStress !== undefined && (lifestyle?.financialStress ?? 0) > variant.maxFinancialStress) return false;
   if (variant.minFame !== undefined && state.fame < variant.minFame) return false;
   if (variant.maxFame !== undefined && state.fame > variant.maxFame) return false;
+  if (variant.minAuthority !== undefined && (state.royalAuthority ?? 0) < variant.minAuthority) return false;
+  if (variant.maxAuthority !== undefined && (state.royalAuthority ?? 0) > variant.maxAuthority) return false;
+  if (variant.minFear !== undefined && (state.publicFear ?? 0) < variant.minFear) return false;
+  if (variant.maxFear !== undefined && (state.publicFear ?? 0) > variant.maxFear) return false;
+  if (variant.minIntegrity !== undefined && (state.royalIntegrity ?? 50) < variant.minIntegrity) return false;
+  if (variant.maxIntegrity !== undefined && (state.royalIntegrity ?? 50) > variant.maxIntegrity) return false;
+  if (variant.royalTendencies && Object.entries(variant.royalTendencies).some(([key, minimum]) => (state.royalBehavior?.[key as keyof typeof state.royalBehavior] || 0) < (minimum || 0))) return false;
   if (variant.minReputation && Object.entries(variant.minReputation).some(([key, minimum]) => state.reputation[key as keyof Reputation] < (minimum || 0))) return false;
   if (variant.relationshipTypes && (!npc || !variant.relationshipTypes.includes(npc.relation))) return false;
   if (variant.npcArchetypes && (!npc || !variant.npcArchetypes.includes(npc.archetype))) return false;
+  if (variant.npcTraitsAny && !variant.npcTraitsAny.some(trait => expressedTraits.has(trait))) return false;
+  if (variant.npcTraitsAll && !variant.npcTraitsAll.every(trait => expressedTraits.has(trait))) return false;
+  if (variant.npcPersonalityAny && !variant.npcPersonalityAny.some(label => personalityLabels.has(normalizeLabel(label)))) return false;
+  if (variant.npcPersonalityAll && !variant.npcPersonalityAll.every(label => personalityLabels.has(normalizeLabel(label)))) return false;
   if (variant.memoryTypesAny && !variant.memoryTypesAny.some(type => memories.some(memory => memory.type === type))) return false;
   if (variant.memoryTypesAll && !variant.memoryTypesAll.every(type => memories.some(memory => memory.type === type))) return false;
   if (variant.memorySentiment === 'positive' && !memories.some(memory => memory.emotionalValue > 0)) return false;

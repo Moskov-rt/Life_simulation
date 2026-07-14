@@ -1,4 +1,5 @@
 import { GameState, NPC, NPCTraits, NPCLifeState, NPCLifestyle } from '../types';
+import { deriveLifestyle } from './wealthIdentity';
 
 function generateDefaultTraits(): NPCTraits {
   return {
@@ -105,6 +106,45 @@ export function migrateGameState(state: unknown): GameState {
   const source = state as Partial<GameState>;
   const newState = structuredClone(source) as GameState;
   newState.saveVersion = 1;
+  if (!newState.origin) {
+    const country = (newState.location || '').split(', ').slice(-1)[0] || 'Unknown';
+    newState.origin = { id: 'commoner', country, status: 'commoner', publicAttention: 0 };
+  }
+  if (newState.familyWealth === undefined) newState.familyWealth = 0;
+  if (newState.familyInheritance === undefined) newState.familyInheritance = 0;
+  if (!newState.familyAssets) newState.familyAssets = [];
+  if (!newState.familyLegacy) newState.familyLegacy = { achievements: [], wealthPassedDown: 0, relationshipMilestones: [], reputationSnapshots: [newState.reputation?.family ?? 50] };
+  if (!newState.education) {
+    const grades = Number(newState.flags?.schoolGrades ?? 80);
+    newState.education = {
+      level: newState.career?.type === 'school' ? (newState.age < 12 ? 'primary' : 'secondary') : 'none',
+      grades,
+      discipline: Number(newState.flags?.schoolDiscipline ?? 60),
+      academicReputation: Number(newState.flags?.academicReputation ?? grades),
+      major: newState.career?.major,
+      enrolled: newState.career?.type === 'school',
+      scholarship: Boolean(newState.flags?.scholarship),
+      interests: { academics: grades, popularity: Number(newState.flags?.schoolPopularity ?? 50), creativity: 50, sports: 50, relationships: 50 }
+    };
+  }
+  if (!newState.lifestyle) newState.lifestyle = deriveLifestyle(newState);
+  if (newState.allowance === undefined) newState.allowance = 0;
+  if (newState.publicApproval === undefined) newState.publicApproval = 50;
+  if (newState.royalAuthority === undefined) newState.royalAuthority = newState.origin?.status === 'royal' ? 35 : 0;
+  if (newState.personalFreedom === undefined) newState.personalFreedom = newState.origin?.status === 'royal' ? 45 : 100;
+  if (newState.origin?.status === 'royal' && !newState.royalLegacy) newState.royalLegacy = { achievements: [], reforms: [], scandals: [], relationshipMilestones: [], approvalSnapshots: [newState.publicApproval ?? 50] };
+  if (newState.royalBehavior === undefined) newState.royalBehavior = newState.origin?.status === 'royal' ? { benevolent: 50, ambitious: 50, reckless: 0, corrupt: 0, ruthless: 0 } : undefined;
+  if (newState.publicFear === undefined) newState.publicFear = 0;
+  if (newState.royalIntegrity === undefined) newState.royalIntegrity = newState.origin?.status === 'royal' ? 60 : 50;
+  if (!newState.royalLifestyle) {
+    newState.royalLifestyle = {
+      active: newState.origin.status === 'royal',
+      yearlyActions: { education: 0, familyTime: 0, ignoreLessons: 0, publicAppearance: 0, privateFriendship: 0, rebellion: 0, relationshipChoice: 0, charity: 0, diplomacy: 0, ceremony: 0, speech: 0, publicService: 0, freedom: 0 }
+    };
+  }
+  if (newState.origin.status === 'royal' && !newState.royalSuccession) {
+    newState.royalSuccession = { rank: newState.age < 13 ? 'royal_child' : newState.origin.successionPosition === 'heir' ? 'heir' : 'prince_princess', inheritanceEligible: true, regencyActive: false };
+  }
   if (newState.fame === undefined) newState.fame = 0;
   newState.npcs = {};
   if (!newState.followUpFlags) newState.followUpFlags = [];

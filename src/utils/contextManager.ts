@@ -72,10 +72,18 @@ export function generateWorkplaceContacts(state: GameState, roll: () => number):
 export const CONTEXT_CONFIGS: ContextConfig[] = [
   {
     type: 'school',
-    active: state => state.career.type === 'school',
+    active: state => state.career.type === 'school' && !state.career.educationLevel,
     roles: [
       { relation: 'classmate', capacity: 6, retentionRate: 0.85, generate: (state, roll) => generateSchoolContacts(state.age >= 12, roll) },
       { relation: 'teacher', capacity: 1, retentionRate: 1, generate: (state, roll) => generateSchoolContacts(state.age >= 12, roll) }
+    ]
+  },
+  {
+    type: 'university',
+    active: state => state.career.type === 'school' && Boolean(state.career.educationLevel),
+    roles: [
+      { relation: 'classmate', capacity: 6, retentionRate: 0.8, generate: (state, roll) => generateSchoolContacts(true, roll) },
+      { relation: 'teacher', capacity: 1, retentionRate: 1, generate: (state, roll) => generateSchoolContacts(true, roll) }
     ]
   },
   {

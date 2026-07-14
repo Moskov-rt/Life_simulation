@@ -20,7 +20,52 @@ export interface Reputation {
   dating: number;
 }
 
-export type RelationType = 'parent' | 'sibling' | 'cousin' | 'friend' | 'best_friend' | 'partner' | 'spouse' | 'affair' | 'rival' | 'mentor' | 'colleague' | 'supervisor' | 'classmate' | 'teacher' | 'pet';
+export type RelationType = 'parent' | 'sibling' | 'child' | 'grandparent' | 'grandchild' | 'cousin' | 'friend' | 'best_friend' | 'partner' | 'spouse' | 'affair' | 'rival' | 'mentor' | 'colleague' | 'supervisor' | 'classmate' | 'teacher' | 'pet';
+
+export type OriginId = 'commoner' | 'wealthy_family' | 'noble' | 'royal_family' | 'political_family' | 'celebrity_family';
+export type RoyalRank = 'royal_child' | 'prince_princess' | 'heir' | 'monarch' | 'former_monarch';
+
+export interface CharacterOrigin {
+  id: OriginId;
+  country: string;
+  status: 'commoner' | 'wealthy' | 'noble' | 'royal' | 'political' | 'celebrity';
+  successionPosition?: 'heir' | 'spare';
+  publicAttention: number;
+}
+
+export interface RoyalSuccessionState {
+  rank: RoyalRank;
+  inheritanceEligible: boolean;
+  regencyActive: boolean;
+  regentId?: string;
+  previousMonarchId?: string;
+  lastProcessedDeathId?: string;
+  successionDisputed?: boolean;
+}
+
+export interface RoyalLegacy {
+  achievements: string[];
+  reforms: string[];
+  scandals: string[];
+  relationshipMilestones: string[];
+  approvalSnapshots: number[];
+}
+
+export interface RoyalBehavior {
+  benevolent: number;
+  ambitious: number;
+  reckless: number;
+  corrupt: number;
+  ruthless: number;
+}
+
+/** Lightweight cross-generation record; kept on GameState for save compatibility. */
+export interface FamilyLegacy {
+  achievements: string[];
+  wealthPassedDown: number;
+  relationshipMilestones: string[];
+  reputationSnapshots: number[];
+}
 
 export type ArchetypeType = 
   | 'loyal partner' 
@@ -219,7 +264,16 @@ export interface NPCMemoryEffect {
 
 export type NarrativeTone = 'positive' | 'neutral' | 'negative' | 'chaotic';
 
-export type WealthBand = 'struggling' | 'stable' | 'comfortable' | 'wealthy';
+export type WealthBand = 'struggling' | 'lower_class' | 'middle_class' | 'wealthy' | 'rich' | 'elite' | 'stable' | 'comfortable';
+
+export type LifestyleLevel = Exclude<WealthBand, 'stable' | 'comfortable'>;
+export type SpendingStyle = 'survival' | 'careful' | 'balanced' | 'discretionary' | 'luxury' | 'exclusive';
+
+export interface LifestyleState {
+  lifestyleLevel: LifestyleLevel;
+  spendingStyle: SpendingStyle;
+  financialStress: number;
+}
 
 export type CareerGroup = 'actor' | 'creator' | 'adult_performer' | 'medical' | 'corporate' | 'education' | 'unemployed';
 
@@ -230,11 +284,19 @@ export interface NarrativeVariant {
   careers?: string[];
   careerGroups?: CareerGroup[];
   wealthBands?: WealthBand[];
+  lifestyleLevels?: LifestyleLevel[];
+  spendingStyles?: SpendingStyle[];
+  minFinancialStress?: number;
+  maxFinancialStress?: number;
   minFame?: number;
   maxFame?: number;
   minReputation?: Partial<Reputation>;
   relationshipTypes?: RelationType[];
   npcArchetypes?: ArchetypeType[];
+  npcTraitsAny?: Array<keyof NPCTraits>;
+  npcTraitsAll?: Array<keyof NPCTraits>;
+  npcPersonalityAny?: string[];
+  npcPersonalityAll?: string[];
   memoryTypesAny?: string[];
   memoryTypesAll?: string[];
   memorySentiment?: 'positive' | 'negative';
@@ -250,12 +312,25 @@ export interface NarrativeVariant {
   maxRelationshipResentment?: number;
   minRelationshipYears?: number;
   maxRelationshipYears?: number;
+  minAuthority?: number;
+  maxAuthority?: number;
+  minFear?: number;
+  maxFear?: number;
+  minIntegrity?: number;
+  maxIntegrity?: number;
+  royalTendencies?: Partial<RoyalBehavior>;
 }
 
 export interface OutcomeEffect {
   statChanges?: Partial<Stats> & { karma?: number; willpower?: number; cashChange?: number };
   repChanges?: Partial<Reputation>;
   cashChange?: number;
+  approvalChange?: number;
+  authorityChange?: number;
+  personalFreedomChange?: number;
+  fearChange?: number;
+  integrityChange?: number;
+  royalTendencyChanges?: Partial<RoyalBehavior>;
   karmaChange?: number;
   willpowerChange?: number;
   flagsSet?: Record<string, any>;
@@ -400,6 +475,46 @@ export interface ActorYearlyActions {
   restCount: number;
 }
 
+export interface RoyalYearlyActions {
+  education: number;
+  familyTime: number;
+  ignoreLessons: number;
+  publicAppearance: number;
+  privateFriendship: number;
+  rebellion: number;
+  relationshipChoice: number;
+  charity: number;
+  diplomacy: number;
+  ceremony: number;
+  speech: number;
+  publicService: number;
+  freedom: number;
+}
+
+export interface RoyalLifestyle {
+  active: boolean;
+  yearlyActions: RoyalYearlyActions;
+}
+
+export type EducationLevel = 'none' | 'primary' | 'secondary' | 'university' | 'graduate';
+
+export interface EducationState {
+  level: EducationLevel;
+  grades: number;
+  discipline: number;
+  academicReputation: number;
+  major?: string;
+  enrolled: boolean;
+  scholarship: boolean;
+  interests: {
+    academics: number;
+    popularity: number;
+    creativity: number;
+    sports: number;
+    relationships: number;
+  };
+}
+
 export interface AdultPerformerCareer {
   active: boolean;
   consistency: number;
@@ -437,6 +552,20 @@ export interface GameState {
   avatar: string;
   avatarConfig?: AvatarConfig;
   location: string;
+  origin?: CharacterOrigin;
+  royalSuccession?: RoyalSuccessionState;
+  familyWealth?: number;
+  familyInheritance?: number;
+  familyAssets?: string[];
+  familyLegacy?: FamilyLegacy;
+  allowance?: number;
+  publicApproval?: number;
+  royalAuthority?: number;
+  personalFreedom?: number;
+  royalLegacy?: RoyalLegacy;
+  royalBehavior?: RoyalBehavior;
+  publicFear?: number;
+  royalIntegrity?: number;
   age: number;
   alive: boolean;
   deathReason: string;
@@ -482,9 +611,12 @@ export interface GameState {
     cashChange?: number;
   } | null;
   completedEducation: { level: string; major: string }[];
+  education?: EducationState;
+  lifestyle?: LifestyleState;
   socialMedia: Record<string, SocialMediaAccount>;
   creatorCareer?: CreatorCareer;
   adultPerformerCareer?: AdultPerformerCareer;
   actorCareer?: ActorCareer;
+  royalLifestyle?: RoyalLifestyle;
   secretExposure?: SecretExposure;
 }

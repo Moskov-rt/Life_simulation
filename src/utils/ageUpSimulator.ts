@@ -1,4 +1,4 @@
-import { GameState, Event as GameEvent, Stats, Reputation, SocialMediaAccount, Illness, IllnessTemplate, CreatorYearlyActions, CreatorTier, AdultPerformerYearlyActions, ActorYearlyActions } from '../types';
+import { GameState, Event as GameEvent, Stats, Reputation, SocialMediaAccount, Illness, IllnessTemplate, CreatorYearlyActions, CreatorTier, AdultPerformerYearlyActions, ActorYearlyActions, RoyalYearlyActions } from '../types';
 import { applyYearlyDrift } from './relationshipVectors';
 import { evaluateSecretExposureEvents } from './exposureEvents';
 import { processOngoingEffects } from './ongoingEffects';
@@ -9,6 +9,11 @@ import { relationshipToNPC } from './saveMigration';
 import { processContextTurnover } from './contextManager';
 import { clampFameCareerMetric, evaluateFameCareerTier, fameCareerTierSalary, fameCareerTierTitle, updateFameCareerConsistency } from './fameCareer';
 import { nextRandom } from './seededRandom';
+import { ensureRoyalSuccession, advanceRoyalRankForAge, resolveRoyalSuccession, resolveRegencyComingOfAge } from './royalSuccession';
+import { recordRoyalLegacy } from './royalLegacy';
+import { processFamilyInheritance } from './familySystem';
+import { advanceEducationYear, ensureEducationState } from './educationSystem';
+import { refreshLifestyle } from './wealthIdentity';
 
 export { nextRandom } from './seededRandom';
 
@@ -56,6 +61,31 @@ const actorActions = (actions: ActorYearlyActions) => actions.auditionCount + ac
 const ACTOR_TIERS = [{ title: 'Extra', salary: 15000 }, { title: 'Supporting Actor', salary: 60000 }, { title: 'Lead Actor', salary: 150000 }, { title: 'Star', salary: 500000 }, { title: 'Legend', salary: 2000000 }] as const;
 const ADULT_TIERS = [{ title: 'Adult Film Extra', salary: 40000 }, { title: 'Adult Performer', salary: 85000 }, { title: 'Established Performer', salary: 130000 }, { title: 'Adult Film Star', salary: 180000 }, { title: 'Studio Director', salary: 240000 }] as const;
 const fameCareerInactivityPenalty = (career: GameState['career'], consistency: number) => Math.max(2, 6 - ((career.tier || 1) >= 3 ? 1 : 0) - (consistency >= 50 ? 2 : 0) - ((career.yearsInRole || 0) >= 5 ? 1 : 0));
+const royalActionTotal = (actions: RoyalYearlyActions) => Object.values(actions).reduce((sum, value) => sum + value, 0);
+
+function resolveRoyalLifestyle(state: GameState, actions: RoyalYearlyActions, logs: string[]) {
+  if (!state.royalLifestyle?.active || royalActionTotal(actions) === 0) return;
+  const duty = actions.education + actions.publicAppearance + actions.charity + actions.diplomacy + actions.ceremony + actions.speech + actions.publicService;
+  const freedom = actions.ignoreLessons + actions.rebellion + actions.privateFriendship + actions.freedom;
+  const approvalDelta = duty * 3 - freedom * 2;
+  state.publicApproval = Math.max(0, Math.min(100, (state.publicApproval ?? 50) + approvalDelta));
+  state.personalFreedom = Math.max(0, Math.min(100, (state.personalFreedom ?? 45) + freedom * 5 - duty * 3));
+  state.stats.happiness = Math.max(0, Math.min(100, state.stats.happiness + freedom * 3 - duty));
+  const familyDelta = duty * 2 - freedom * 3;
+  if (actions.charity || actions.publicService) recordRoyalLegacy(state, 'achievement', 'public_service');
+  if (actions.diplomacy || actions.ceremony || actions.speech) recordRoyalLegacy(state, 'achievement', 'public_duty');
+  if (actions.rebellion || actions.freedom) recordRoyalLegacy(state, 'relationship', 'personal_freedom');
+  Object.values(state.npcs || {}).forEach(npc => {
+    if (npc.relation === 'parent' || npc.relation === 'mentor' || npc.relation === 'teacher' || npc.relation === 'supervisor') {
+      npc.trust = Math.max(0, Math.min(100, npc.trust + familyDelta));
+      npc.resentment = Math.max(0, Math.min(100, npc.resentment - familyDelta));
+      npc.vectors.trust = Math.max(-100, Math.min(100, npc.vectors.trust + familyDelta));
+      npc.vectors.resentment = Math.max(0, Math.min(100, npc.vectors.resentment - familyDelta));
+      npc.memories.push({ id: `royal_lifestyle_${state.age}_${npc.id}`, type: duty >= freedom ? 'royal_duty' : 'royal_freedom', sourceId: 'player', targetId: npc.id, tick: state.age, intensity: Math.min(100, 25 + Math.abs(familyDelta)), emotionalValue: familyDelta, decayRate: 2, permanent: false });
+    }
+  });
+  logs.push(`👑 Royal lifestyle: ${duty > freedom ? 'duty strengthened public approval and family trust' : 'personal freedom protected happiness but reduced approval'}.`);
+}
 
 export function runYearlySimulation(gameState: GameState, context: AgeUpContext): YearlySimulationResult {
   // 1. Capture previous values (Deep clone to preserve strict immutability of input state)
@@ -85,9 +115,14 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   // Age increments exactly once
   workingState.age += 1;
   const nextAge = workingState.age;
+  ensureRoyalSuccession(workingState);
+  if (advanceRoyalRankForAge(workingState)) newLogs.push('👑 You came of age within the royal household and your rank was formally recognized.');
+  if (resolveRegencyComingOfAge(workingState)) newLogs.push('👑 The regency ends as the young monarch comes of age.');
   workingState.flags.actorFirstAuditionEligibleThisYear = false;
   workingState.flags.actorAwardEligibleThisYear = false;
   if (!isActor(workingState)) workingState.flags.actorAwardEligiblePending = false;
+  const royalActions = workingState.royalLifestyle?.active ? structuredClone(workingState.royalLifestyle.yearlyActions) : null;
+  if (royalActions) resolveRoyalLifestyle(workingState, royalActions, newLogs);
 
   const creatorProfile = workingState.creatorCareer?.active && workingState.career.type === 'job' ? workingState.creatorCareer.profile : null;
   const creatorActions = creatorProfile ? structuredClone(creatorProfile.yearlyActions) : null;
@@ -588,9 +623,27 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
     applyYearlyDrift(npc, driftAction as any);
     workingState.relationships.push(npc);
   });
+  Object.values(workingState.npcs).forEach(npc => {
+    if (npc.isDeceased && !workingState.flags[`inheritance_received_${npc.id}`]) {
+      const inherited = processFamilyInheritance(workingState, npc);
+      if (inherited > 0) newLogs.push(`💰 Family inheritance: received $${inherited.toLocaleString()} from ${npc.name}.`);
+    }
+  });
+
+  if (workingState.royalSuccession?.rank !== 'former_monarch') {
+    const deceasedMonarch = Object.values(workingState.npcs).find(npc => npc.isDeceased && npc.occupation === 'Head of State' && npc.id !== workingState.royalSuccession?.lastProcessedDeathId);
+    if (deceasedMonarch) {
+      const succession = resolveRoyalSuccession(workingState, deceasedMonarch.id, currentSeed);
+      currentSeed = succession.nextSeed;
+      newLogs.push(...succession.logs);
+    }
+  }
+  ensureEducationState(workingState);
+  advanceEducationYear(workingState, nextAge);
 
   // 4.5 Process Generic Context Turnover (School, Workplace retention & replenishment)
   processContextTurnover(workingState, roll);
+  refreshLifestyle(workingState);
 
   // 5. Process ongoing effects
   const ongoingResult = processOngoingEffects(workingState.ongoingEffects, workingState);
@@ -758,6 +811,9 @@ export function runYearlySimulation(gameState: GameState, context: AgeUpContext)
   }
   if (workingState.actorCareer) {
     workingState.actorCareer.yearlyActions = { auditionCount: 0, rolesAccepted: 0, networkCount: 0, promoteCount: 0, trainCount: 0, restCount: 0 };
+  }
+  if (workingState.royalLifestyle) {
+    workingState.royalLifestyle.yearlyActions = { education: 0, familyTime: 0, ignoreLessons: 0, publicAppearance: 0, privateFriendship: 0, rebellion: 0, relationshipChoice: 0, charity: 0, diplomacy: 0, ceremony: 0, speech: 0, publicService: 0, freedom: 0 };
   }
 
   // 12. Advance RNG seed deterministically
